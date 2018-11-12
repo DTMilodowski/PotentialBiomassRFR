@@ -6,19 +6,29 @@ The pipeline used to perform the PCA is saved and will be loaded
 in the script performing the training.
 """
 
-import xarray as xr #xarray to read all types of formats
-import glob
-from sklearn.preprocessing import StandardScaler
-from sklearn.decomposition import PCA
-from sklearn.pipeline import make_pipeline
+from useful import *
+
+pipeline = make_pipeline(StandardScaler(),PCA(n_components=0.95))
+
+predictors, landmask = get_predictors(2000,2009)
+pipeline.fit(predictors)
+
+if sys.argv[1] == 'save':
+    joblib.dump(pipeline,'/disk/scratch/local.2/jexbraya/pantrop-AGB-LUH/saved_algorithms/pca_pipeline.pkl')
+
+X = pipeline.transform(predictors)
+
+#calculate a correlation matrix
+corrmat = np.zeros([predictors.shape[1],X.shape[1]])
+for ii in range(corrmat.shape[0]):
+    for jj in range(corrmat.shape[1]):
+        corrmat[ii,jj] = pearsonr(predictors[:,ii],X[:,jj])[0]
 
 
-### first get datasets
-#LUH2 data provided by Uni of Maryland
-luh = xr.open_dataset('/disk/scratch/local.2/jexbraya/LUH2/states.nc',decode_times=False)
-#worldclim2 data regridded to 0.25x0.25 
-wc2 = xr.concat([xr.open_rasterio(f) for f in sorted(glob.glob('/disk/scratch/local.2/jexbraya/WorldClim2/0.25deg/*tif'))],dim='band')
-#soilgrids data regridded to 0.25x0.25
-soil= xr.concat([xr.open_rasterio(f) for f in sorted(glob.glob('/disk/scratch/local.2/jexbraya/soilgrids/0.25deg/*tif'))],dim='band')
 
-#create the land mask knowing that northernmost pixels (row id 0) are all empty
+
+
+
+
+
+
