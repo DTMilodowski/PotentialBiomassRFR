@@ -1,6 +1,6 @@
 """
 12/11/2018 - JFE
-This file contains the definition of some useful functions 
+This file contains the definition of some useful functions
 for the pantrop-AGB-LUH work
 """
 
@@ -8,11 +8,6 @@ import xarray as xr #xarray to read all types of formats
 import glob
 import numpy as np
 import sys
-from sklearn.externals import joblib
-from sklearn.preprocessing import StandardScaler
-from sklearn.decomposition import PCA
-from sklearn.pipeline import make_pipeline
-from scipy.stats import pearsonr
 
 def get_predictors(y0=2000,y1=None,return_landmask = True):
 
@@ -29,18 +24,21 @@ def get_predictors(y0=2000,y1=None,return_landmask = True):
     #LUH2 data provided by Uni of Maryland
     luh = xr.open_dataset('/disk/scratch/local.2/jexbraya/LUH2/states.nc',decode_times=False)
     luh_mask = ~luh.primf[0].isnull()
+    print('Loaded LUH data')
 
-    #worldclim2 data regridded to 0.25x0.25 
+    #worldclim2 data regridded to 0.25x0.25
     wc2 = xr.concat([xr.open_rasterio(f) for f in sorted(glob.glob('/disk/scratch/local.2/jexbraya/WorldClim2/0.25deg/*tif'))],dim='band')
     wc2_mask = wc2[0]!=wc2[0,0,0]
     for ii in range(wc2.shape[0]):
         wc2_mask = wc2_mask & (wc2[ii]!=wc2[ii,0,0])
+    print('Loaded WC2 data')
 
     #soilgrids data regridded to 0.25x0.25
     soil= xr.concat([xr.open_rasterio(f) for f in sorted(glob.glob('/disk/scratch/local.2/jexbraya/soilgrids/0.25deg/*tif'))],dim='band')
     soil_mask = soil[0]!=soil[0,0,0]
     for ii in range(soil.shape[0]):
         soil_mask = soil_mask & (soil[ii]!=soil[ii,0,0])
+    print('Loaded SOILGRIDS data')
 
     #also load the AGB data to only perform the PCA for places where there is both AGB and uncertainty
     agb = xr.open_rasterio('/disk/scratch/local.2/jexbraya/AGB/Avitable_AGB_Map_0.25d.tif')
@@ -69,17 +67,18 @@ def get_predictors(y0=2000,y1=None,return_landmask = True):
         else:
             predictors[:,counter] = luh[landuse][(luh_time==y0)].values[0][landmask]
         counter += 1
-
+    print('Extracted LUH data')
     #then wc2
     for bi in wc2:
         predictors[:,counter] = bi.values[landmask]
         counter += 1
-
+    print('Extracted WC2 data')
     #then soil properties
     for sp in soil:
         predictors[:,counter] = sp.values[landmask]
         counter += 1
-       
+    print('Extracted SOILGRIDS data')
+
     if return_landmask:
         return(predictors,landmask)
     else:
