@@ -7,6 +7,11 @@ in the script performing the training.
 """
 
 from useful import *
+from sklearn.externals import joblib
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
+from sklearn.pipeline import make_pipeline
+from scipy.stats import pearsonr
 
 pipeline = make_pipeline(StandardScaler(),PCA(n_components=0.95))
 
@@ -23,12 +28,3 @@ corrmat = np.zeros([predictors.shape[1],X.shape[1]])
 for ii in range(corrmat.shape[0]):
     for jj in range(corrmat.shape[1]):
         corrmat[ii,jj] = pearsonr(predictors[:,ii],X[:,jj])[0]
-
-
-
-
-
-
-
-
-
