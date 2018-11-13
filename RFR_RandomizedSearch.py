@@ -27,9 +27,9 @@ X_train, X_test, y_train, y_test = train_test_split(X,y,test_size = 0.25, random
 #define the parameters for the gridsearch
 random_grid = { "bootstrap":[True,False],
                 "n_estimators": np.linspace(200,2000,10,dtype='i'),
-                "max_depth": np.linspace(5,20,5,dtype='i'),
+                "max_depth": list(np.linspace(5,100,20,dtype='i'))+[None],
                 "max_features": np.linspace(.1,1.,10),
-                "min_samples_leaf": np.linspace(10,100,10,dtype='i') }
+                "min_samples_leaf": np.linspace(5,50,10,dtype='i') }
 
 #create the random forest object and fit it out of the box
 rf = RandomForestRegressor(n_jobs=20,random_state=26)
@@ -41,7 +41,7 @@ print(oob_cal,oob_val)
 #perform a randomized search on hyper parameters using training subset of data
 rf_random = RandomizedSearchCV(estimator=rf,param_distributions=random_grid,cv=3,
                             verbose = 3,scoring = 'neg_mean_squared_error',
-                            random_state=26, n_iter=50, n_jobs=1)
+                            random_state=26, n_iter=100, n_jobs=1)
 
 rf_random.fit(X_train,y_train)
 
