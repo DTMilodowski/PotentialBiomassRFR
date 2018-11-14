@@ -38,5 +38,5 @@ rf_grid = GridSearchCV(estimator=rf,param_grid=param_grid,cv=3,
 
 rf_grid.fit(X_train,y_train)
 
-#save the fitted rf_random
+#save the fitted rf_grid
 joblib.dump(rf_grid,'/disk/scratch/local.2/jexbraya/pantrop-AGB-LUH/saved_algorithms/rf_grid.pkl')
