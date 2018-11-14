@@ -10,7 +10,7 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-#load the fitted rf_random
+#load the fitted rf_grid
 rf_grid = joblib.load('/disk/scratch/local.2/jexbraya/pantrop-AGB-LUH/saved_algorithms/rf_grid.pkl')
 
 # create a pandas dataframe storing parameters and results of the cv
