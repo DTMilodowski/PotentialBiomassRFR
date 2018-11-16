@@ -9,7 +9,7 @@ import glob
 import numpy as np
 import sys
 
-def get_predictors(y0=2000,y1=None,return_landmask = True):
+def get_predictors(y0=2000,y1=None,luh_file='/disk/scratch/local.2/jexbraya/LUH2/states.nc',return_landmask = True):
 
     #check that both years are defined, if not assume only one year of data needed
     if y1 == None:
@@ -22,9 +22,15 @@ def get_predictors(y0=2000,y1=None,return_landmask = True):
 
     ### first get datasets
     #LUH2 data provided by Uni of Maryland
-    luh = xr.open_dataset('/disk/scratch/local.2/jexbraya/LUH2/states.nc',decode_times=False)
+    luh = xr.open_dataset(luh_file,decode_times=False)
     luh_mask = ~luh.primf[0].isnull()
     print('Loaded LUH data')
+
+    #define time
+    if luh_file == '/disk/scratch/local.2/jexbraya/LUH2/states.nc':
+        luh_time = 850+luh.time.values
+    else:
+        luh_time = 2015+luh.time.values
 
     #worldclim2 data regridded to 0.25x0.25
     wc2 = xr.concat([xr.open_rasterio(f) for f in sorted(glob.glob('/disk/scratch/local.2/jexbraya/WorldClim2/0.25deg/*tif'))],dim='band')
@@ -59,7 +65,6 @@ def get_predictors(y0=2000,y1=None,return_landmask = True):
     counter = 0
 
     #first LUH
-    luh_time = 850+luh.time.values
     for landuse in luh_pred:
         #get average over the period
         if y0 != y1:
