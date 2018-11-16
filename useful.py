@@ -26,7 +26,7 @@ def get_predictors(y0=2000,y1=None,luh_file='/disk/scratch/local.2/jexbraya/LUH2
     luh_mask = ~luh.primf[0].isnull()
     print('Loaded LUH data')
 
-    #define time
+    #define time - start in 850 for the historical, 2015 for the SSPs
     if luh_file == '/disk/scratch/local.2/jexbraya/LUH2/states.nc':
         luh_time = 850+luh.time.values
     else:
