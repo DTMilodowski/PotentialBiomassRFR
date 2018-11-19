@@ -88,3 +88,15 @@ def get_predictors(y0=2000,y1=None,luh_file='/disk/scratch/local.2/jexbraya/LUH2
         return(predictors,landmask)
     else:
         return(predictors)
+
+
+# get areas for a global grid with 0.25x0.25 res
+def get_areas():
+    latorig = np.arange(90-1/8.,-90.,-1/4.)
+    lonorig = np.arange(-180+1/8.,180.,1/4.)
+    areas = np.zeros([latorig.size,lonorig.size])
+    res = np.abs(latorig[1]-latorig[0])
+    for la,latval in enumerate(latorig):
+        areas[la]= (6371e3)**2 * ( np.deg2rad(0+res/2.)-np.deg2rad(0-res/2.) ) * (np.sin(np.deg2rad(latval+res/2.))-np.sin(np.deg2rad(latval-res/2.)))
+
+    return areas
