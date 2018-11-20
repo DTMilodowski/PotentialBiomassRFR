@@ -85,3 +85,4 @@ axgr[0].set_xlabel('');axgr[0].set_ylabel('')
 axgr[0].coastlines('50m')
 
 fig.show()
+fig.savefig('fig1_dAGB.png',bbox_inches='tight',dpi=300)

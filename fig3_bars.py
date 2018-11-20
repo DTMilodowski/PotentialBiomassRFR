@@ -100,3 +100,4 @@ for mm, mask in enumerate([mask_pantrop,mask_america,mask_africa,mask_asia]):
     ax.hlines(0,ax.get_xlim()[0],ax.get_xlim()[1])
     ax.set_ylim(-50,20)
 fig.show()
+fig.savefig('fig3_bars.png',dpi=300,bbox_inches='tight')
