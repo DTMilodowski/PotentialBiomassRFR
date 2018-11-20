@@ -60,8 +60,8 @@ fig.clf()
 axgr = AxesGrid(fig,111,nrows_ncols=(1,1),axes_class=axes_class,label_mode='',cbar_mode='single',cbar_pad = 0.25,cbar_size="3%",axes_pad=.5)
 
 #plot
-dAGB.plot.imshow(ax=axgr[0],cbar_ax=axgr.cbar_axes[0],vmin=0,vmax=100,extend='max',
-                    interpolation='nearest',cbar_kwargs={'label':'Mg ha$^{-1}$'},
+(dAGB*.48).plot.imshow(ax=axgr[0],cbar_ax=axgr.cbar_axes[0],vmin=0,vmax=50,extend='max',
+                    interpolation='nearest',cbar_kwargs={'label':'Mg C ha$^{-1}$'},
                     cmap='YlOrRd')
 
 #add grey mask for regions outside the study
@@ -70,7 +70,7 @@ axgr[0].add_feature(cfeat.OCEAN,zorder=-1,facecolor='silver')
 
 #tighten axes
 axgr[0].set_xlim(-120,160)
-axgr[0].set_ylim(-60,40)
+axgr[0].set_ylim(-60.,40.)
 
 #set labels
 axgr[0].set_yticks(np.arange(-60,41,20))
@@ -81,5 +81,7 @@ axgr[0].xaxis.set_major_formatter(LongitudeFormatter())
 
 axgr[0].set_title('')
 axgr[0].set_xlabel('');axgr[0].set_ylabel('')
+
+axgr[0].coastlines('50m')
 
 fig.show()
