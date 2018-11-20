@@ -26,7 +26,7 @@ y = xr.open_rasterio('/disk/scratch/local.2/jexbraya/AGB/Avitable_AGB_Map_0.25d.
 X_train, X_test, y_train, y_test = train_test_split(X,y,test_size = 0.25, random_state=26)
 
 #define the parameters for the gridsearch
-param_grid = { "max_features": np.linspace(.35,.65,7), "min_samples_leaf": np.linspace(40,60,5,dtype='i')}
+param_grid = { "max_features": np.linspace(.35,.7,8), "min_samples_leaf": np.linspace(1,10,10,dtype='i')}
 
 #create the random forest object with predefined parameters
 rf = RandomForestRegressor(n_jobs=20,random_state=26,
@@ -39,4 +39,4 @@ rf_grid = GridSearchCV(estimator=rf,param_grid=param_grid,cv=3,
 rf_grid.fit(X_train,y_train)
 
 #save the fitted rf_grid
-joblib.dump(rf_grid,'/disk/scratch/local.2/jexbraya/pantrop-AGB-LUH/saved_algorithms/rf_grid.pkl')
+joblib.dump(rf_grid,'/disk/scratch/local.2/jexbraya/pantrop-AGB-LUH/saved_algorithms/rf_grid.pkl',compress=1)
