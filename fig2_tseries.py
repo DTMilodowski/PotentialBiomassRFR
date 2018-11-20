@@ -40,10 +40,10 @@ for sc,scen in enumerate(['ssp126','ssp434','ssp245','ssp460','ssp370','ssp585']
     toplot = (pot.ts_mean-ref)*.48
     toplot.plot(ax=ax,color=cols[scen],ls='-',lw=2,label=scenlong[scen])
 
-plt.ylabel('Impact of LULCC on AGB [Pg C]')
-plt.xlabel('Year')
-plt.ylim(-40,40)
-plt.legend(loc='lower left')
-plt.fill_between([2000,2009],[-50,-50],[50,50],color='silver',edgecolor='silver',zorder=-1)
+ax.set_ylabel('Impact of LULCC on AGB [Pg C]')
+ax.set_xlabel('Year')
+ax.legend(loc='lower left')
+ax.fill_between([2000,2009],[-45,-45],[45,45],color='silver',edgecolor='silver',zorder=-1)
+ax.set_ylim(-45,45)
 plt.grid(True,ls=':')
 plt.show()
