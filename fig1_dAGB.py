@@ -62,27 +62,16 @@ axgr = AxesGrid(fig,111,nrows_ncols=(1,1),axes_class=axes_class,label_mode='',cb
 #plot
 (dAGB*.48).plot.imshow(ax=axgr[0],cbar_ax=axgr.cbar_axes[0],vmin=0,vmax=50,extend='max',
                     interpolation='nearest',cbar_kwargs={'label':'Mg C ha$^{-1}$'},
-                    cmap='YlOrRd')
+                    cmap='YlOrRd',xticks=np.arange(-120,161,40),yticks=np.arange(-60,41,20),
+                    add_labels=False,ylim=(-60,40),xlim=(-120,160))
 
-#add grey mask for regions outside the study
+#add grey mask for land regions outside the study, and black for the oceans
 axgr[0].add_feature(cfeat.LAND,zorder=-1,facecolor='silver')
-axgr[0].add_feature(cfeat.OCEAN,zorder=-1,facecolor='silver')
-
-#tighten axes
-axgr[0].set_xlim(-120,160)
-axgr[0].set_ylim(-60.,40.)
+axgr[0].add_feature(cfeat.OCEAN,zorder=-1,facecolor='k')
 
 #set labels
-axgr[0].set_yticks(np.arange(-60,41,20))
 axgr[0].yaxis.set_major_formatter(LatitudeFormatter())
-
-axgr[0].set_xticks(np.arange(-120,161,40))
 axgr[0].xaxis.set_major_formatter(LongitudeFormatter())
-
-axgr[0].set_title('')
-axgr[0].set_xlabel('');axgr[0].set_ylabel('')
-
-axgr[0].coastlines('50m')
 
 fig.show()
 fig.savefig('fig1_dAGB.png',bbox_inches='tight',dpi=300)
