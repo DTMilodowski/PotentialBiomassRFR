@@ -15,10 +15,6 @@ import pandas as pd
 areas = get_areas()
 _,landmask = get_predictors()
 
-#create the figure / ax
-fig=plt.figure('bars');fig.clf()
-ax = fig.add_subplot(111)
-
 #load agb
 med = xr.open_rasterio('/disk/scratch/local.2/jexbraya/AGB/Avitable_AGB_Map_0.25d.tif')
 med.values[med.values == med.nodatavals[0]] = np.nan
@@ -98,6 +94,6 @@ for mm, mask in enumerate([mask_pantrop,mask_america,mask_africa,mask_asia]):
     ax.text(0.03,0.97,titles[mm],transform = ax.transAxes,weight='bold',va='top',ha='left')
     ax.set_ylabel('Future impact of LULCC on AGB [Pg C]')
     ax.hlines(0,ax.get_xlim()[0],ax.get_xlim()[1])
-    ax.set_ylim(-50,20)
+    ax.set_ylim(-40,20)
 fig.show()
 fig.savefig('fig3_bars.png',dpi=300,bbox_inches='tight')
