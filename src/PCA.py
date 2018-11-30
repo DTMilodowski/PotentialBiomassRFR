@@ -1,4 +1,11 @@
 """
+30/11/2018 - DTM
+edited to account for country codes (for regional analyses)
+
+command line arguements
+1 - country code
+2 - save
+
 09/11/2018 - JFE
 This script performs a PCA to reduce the dimensionality of the
 predictors for the pantropical-AGB-LUH study.
@@ -15,11 +22,12 @@ from scipy.stats import pearsonr
 
 pipeline = make_pipeline(StandardScaler(),PCA(n_components=0.95))
 
-predictors, landmask = get_predictors(2000,2009)
+country_code = sys.argv[1]
+predictors, landmask = get_predictors(country_code)
 pipeline.fit(predictors)
-
-if sys.argv[1] == 'save':
-    joblib.dump(pipeline,'/disk/scratch/local.2/jexbraya/pantrop-AGB-LUH/saved_algorithms/pca_pipeline.pkl')
+path2alg = '/home/dmilodow/DataStore_DTM/FOREST2020/PotentialBiomassRFR/saved_algorithms'
+if sys.argv[2] == 'save':
+    joblib.dump(pipeline,'%s/%s_pca_pipeline.pkl' % (path2alg,country_code))
 
 X = pipeline.transform(predictors)
 
