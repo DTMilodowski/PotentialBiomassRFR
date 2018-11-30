@@ -10,12 +10,15 @@ for the pantrop-AGB-LUH work
 """
 
 import xarray as xr #xarray to read all types of formats
+from affine import Affine
 import glob
 import numpy as np
 import sys
+import set_training_areas
 
 # Load predictor variables
-def get_predictors(country_code,return_landmask = True):
+def get_predictors(country_code,return_landmask = True, training_subset=False, subset_def=1):
+
     path = '/disk/scratch/local.2/dmilodow/PotentialBiomass/processed/%s/' % country_code
     path2wc = path+'wc2/'
     path2sg = path+'soilgrids/'
@@ -52,7 +55,11 @@ def get_predictors(country_code,return_landmask = True):
 
     #create the land mask knowing that top left pixels (NW) are all empty
     # for now, ignoring uncertainty as want to include N. Australia in training
-    landmask = (wc2_mask.values & soil_mask.values & agb_mask.values)# & unc_mask.values)
+    if training_subset:
+        training_mask = set_training_areas.set(path,subset=subset_def):
+        landmask = (training_mask & wc2_mask.values & soil_mask.values & agb_mask.values)# & unc_mask.values)
+    else:
+        landmask = (wc2_mask.values & soil_mask.values & agb_mask.values)# & unc_mask.values)
 
     #create the empty array to store the predictors
     predictors = np.zeros([landmask.sum(),soil.shape[0]+wc2.shape[0]])
