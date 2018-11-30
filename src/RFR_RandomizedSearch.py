@@ -11,15 +11,21 @@ from sklearn.model_selection import GridSearchCV, RandomizedSearchCV, train_test
 from sklearn.metrics import mean_squared_error
 from sklearn.externals import joblib
 
-pca = joblib.load('/disk/scratch/local.2/jexbraya/pantrop-AGB-LUH/saved_algorithms/pca_pipeline.pkl')
+path2alg = '/home/dmilodow/DataStore_DTM/FOREST2020/PotentialBiomassRFR/saved_algorithms'
+path2data = '/disk/scratch/local.2/dmilodow/PotentialBiomass/processed/%s/' % country_code
+path2wc = path2data+'wc2/'
+path2sg = path2data+'soilgrids/'
+path2agb = path2data+'agb/'
 
-predictors,landmask = get_predictors(y0=2000,y1=2009)
+pca = joblib.load('%s/%s_pca_pipeline.pkl' % (path2alg,country_code))
+
+predictors,landmask = get_predictors(country_code)
 
 #transform the data
 X = pca.transform(predictors)
 
 #get the agb data
-y = xr.open_rasterio('/disk/scratch/local.2/jexbraya/AGB/Avitable_AGB_Map_0.25d.tif')[0].values[landmask]
+y = xr.open_rasterio('%sAvitabile_AGB_%s_1km.tif' % (path2agb,country_code))[0].values[landmask]
 
 #split train and test subset, specifying random seed
 X_train, X_test, y_train, y_test = train_test_split(X,y,test_size = 0.25, random_state=26)
@@ -46,4 +52,4 @@ rf_random = RandomizedSearchCV(estimator=rf,param_distributions=random_grid,cv=3
 rf_random.fit(X_train,y_train)
 
 #save the fitted rf_random
-joblib.dump(rf_random,'/disk/scratch/local.2/jexbraya/pantrop-AGB-LUH/saved_algorithms/rf_random.pkl')
+joblib.dump(rf_random,'%s/%s_rf_random.pkl' % (path2alg,country_code))
