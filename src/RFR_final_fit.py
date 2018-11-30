@@ -23,7 +23,7 @@ rf = joblib.load('%s%s_rf_grid.pkl' % (path2alg,country_code)).best_estimator_
 pca = joblib.load('%s%s_pca_pipeline.pkl' % (path2alg,country_code))
 
 #refit to whole dataset - get predictors and targets
-predictors,landmask = get_predictors(country_code)
+predictors,landmask = get_predictors(country_code, training_subset=True)
 X = pca.transform(predictors)
 med = xr.open_rasterio('%sAvitabile_AGB_%s_1km.tif' % (path2agb,country_code))[0].values[landmask]
 unc = xr.open_rasterio('%sAvitabile_AGB_Uncertainty_%s_1km.tif' % (path2agb,country_code))[0].values[landmask]
@@ -40,5 +40,5 @@ for aa, agb in enumerate([med,med+unc,med-unc]):
     agb[agb<0] = 0
     rf.fit(X,agb)
     print(mean_squared_error(rf.predict(X),agb))
-    joblib.dump(rf,'/disk/scratch/local.2/jexbraya/pantrop-AGB-LUH/saved_algorithms/rf_%s.pkl' % lvls[aa])
+    joblib.dump(rf,'%s%s_rf_%s.pkl' % (path2alg,country_code,lvls[aa]))
 """
