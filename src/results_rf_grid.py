@@ -31,7 +31,7 @@ cv_res['ratio_score'] = cv_res['mean_test_score'] / cv_res['mean_train_score']
 
 #do some plots
 pca = joblib.load('%s%s_pca_pipeline.pkl' % (path2alg,country_code))
-predictors,landmask = get_predictors(country_code)
+predictors,landmask = get_predictors(country_code, training_subset=True)
 
 #transform the data
 X = pca.transform(predictors)

@@ -34,7 +34,7 @@ sns.pairplot(data=cv_res,hue='bootstrap')
 plt.savefig('%s%s_RFrandom_pairplot.png' % (path2calval,country_code))
 
 pca = joblib.load('%s%s_pca_pipeline.pkl' % (path2alg,country_code))
-predictors,landmask = get_predictors(country_code)
+predictors,landmask = get_predictors(country_code, training_subset=True)
 
 #transform the data
 X = pca.transform(predictors)
