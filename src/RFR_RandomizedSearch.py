@@ -15,8 +15,6 @@ country_code = sys.argv[1]
 
 path2alg = '/home/dmilodow/DataStore_DTM/FOREST2020/PotentialBiomassRFR/saved_algorithms'
 path2data = '/disk/scratch/local.2/dmilodow/PotentialBiomass/processed/%s/' % country_code
-path2wc = path2data+'wc2/'
-path2sg = path2data+'soilgrids/'
 path2agb = path2data+'agb/'
 
 pca = joblib.load('%s/%s_pca_pipeline.pkl' % (path2alg,country_code))
