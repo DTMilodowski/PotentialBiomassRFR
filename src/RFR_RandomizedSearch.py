@@ -11,6 +11,8 @@ from sklearn.model_selection import GridSearchCV, RandomizedSearchCV, train_test
 from sklearn.metrics import mean_squared_error
 from sklearn.externals import joblib
 
+country_code = sys.argv[1]
+
 path2alg = '/home/dmilodow/DataStore_DTM/FOREST2020/PotentialBiomassRFR/saved_algorithms'
 path2data = '/disk/scratch/local.2/dmilodow/PotentialBiomass/processed/%s/' % country_code
 path2wc = path2data+'wc2/'
