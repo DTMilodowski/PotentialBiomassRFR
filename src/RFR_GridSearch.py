@@ -13,12 +13,13 @@ from sklearn.metrics import mean_squared_error
 from sklearn.externals import joblib
 
 country_code = sys.argv[1]
+version = sys.argv[2]
 
 path2alg = '/home/dmilodow/DataStore_DTM/FOREST2020/PotentialBiomassRFR/saved_algorithms'
 path2data = '/disk/scratch/local.2/dmilodow/PotentialBiomass/processed/%s/' % country_code
 path2agb = path2data+'agb/'
 
-pca = joblib.load('%s/%s_pca_pipeline.pkl' % (path2alg,country_code))
+pca = joblib.load('%s/%s_%s_pca_pipeline.pkl' % (path2alg,country_code,version))
 
 predictors,landmask = get_predictors(country_code, training_subset=True)
 
