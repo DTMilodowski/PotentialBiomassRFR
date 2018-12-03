@@ -23,11 +23,12 @@ from scipy.stats import pearsonr
 pipeline = make_pipeline(StandardScaler(),PCA(n_components=0.95))
 
 country_code = sys.argv[1]
+version = sys.argv[2]
 predictors, landmask = get_predictors(country_code)
 pipeline.fit(predictors)
 path2alg = '/home/dmilodow/DataStore_DTM/FOREST2020/PotentialBiomassRFR/saved_algorithms'
-if sys.argv[2] == 'save':
-    joblib.dump(pipeline,'%s/%s_pca_pipeline.pkl' % (path2alg,country_code))
+if sys.argv[3] == 'save':
+    joblib.dump(pipeline,'%s/%s_%s_pca_pipeline.pkl' % (path2alg,country_code,version))
 
 X = pipeline.transform(predictors)
 
