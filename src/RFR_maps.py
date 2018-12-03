@@ -15,6 +15,7 @@ from sklearn.externals import joblib
 import pandas as pd
 
 country_code = sys.argv[1]
+version = sys.argv[2]
 
 path2alg = '/home/dmilodow/DataStore_DTM/FOREST2020/PotentialBiomassRFR/saved_algorithms/'
 path2calval = '/home/dmilodow/DataStore_DTM/FOREST2020/PotentialBiomassRFR/calval/'
@@ -25,10 +26,10 @@ path2output = '/home/dmilodow/DataStore_DTM/FOREST2020/PotentialBiomassRFR/outpu
 agb = xr.open_rasterio('%sAvitabile_AGB_%s_1km.tif' % (path2agb,country_code))[0].values
 
 #load the fitted rfs and pca
-rf_med = joblib.load('%s%s_rf_mean.pkl' % (path2alg,country_code)).best_estimator_
+rf_med = joblib.load('%s%s_%s_rf_mean.pkl' % (path2alg,country_code,version)).best_estimator_
 #rf_upp = joblib.load('%s%s_rf_upp.pkl' % (path2alg,country_code)).best_estimator_
 #rf_low = joblib.load('%s%s_rf_low.pkl' % (path2alg,country_code)).best_estimator_
-pca = joblib.load('%s%s_pca_pipeline.pkl' % (path2alg,country_code))
+pca = joblib.load('%s%s_%s_pca_pipeline.pkl' % (path2alg,country_code,version))
 
 """
 lat = np.arange(90-0.125,-90,-0.25)
@@ -75,4 +76,4 @@ encoding = {'AGB_mean':{'zlib':True,'complevel':1},
             'AGB_lower':{'zlib':True,'complevel':1},}
 
 
-agb_rf.to_netcdf('%s%s_AGB_potential_RFR_worldclim_soilgrids.nc' % (path2output,country_code),encoding=encoding)
+agb_rf.to_netcdf('%s%s_%s_AGB_potential_RFR_worldclim_soilgrids.nc' % (path2output,country_code,version),encoding=encoding)

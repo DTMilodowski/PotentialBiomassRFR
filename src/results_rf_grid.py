@@ -12,6 +12,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 
 country_code = sys.argv[1]
+country_code = sys.argv[2]
 
 path2alg = '/home/dmilodow/DataStore_DTM/FOREST2020/PotentialBiomassRFR/saved_algorithms/'
 path2calval = '/home/dmilodow/DataStore_DTM/FOREST2020/PotentialBiomassRFR/calval/'
@@ -30,7 +31,7 @@ cv_res['mean_test_score'] = .5*(-rf_grid.cv_results_['mean_test_score'])**.5
 cv_res['ratio_score'] = cv_res['mean_test_score'] / cv_res['mean_train_score']
 
 #do some plots
-pca = joblib.load('%s%s_pca_pipeline.pkl' % (path2alg,country_code))
+pca = joblib.load('%s%s_%s_pca_pipeline.pkl' % (path2alg,country_code,version))
 predictors,landmask = get_predictors(country_code, training_subset=True)
 
 #transform the data
@@ -64,5 +65,5 @@ for dd, df in enumerate([df_train,df_test]):
 
 #show / save
 fig.show()
-plt.savefig('%s%s_RFgridsearch_calval.png' % (path2calval,country_code))
+plt.savefig('%s%s_%s_RFgridsearch_calval.png' % (path2calval,country_code,version))
 #plt.show()

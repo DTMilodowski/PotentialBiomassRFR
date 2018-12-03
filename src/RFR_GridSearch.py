@@ -46,4 +46,4 @@ rf_grid = GridSearchCV(estimator=rf,param_grid=param_grid,cv=3,
 rf_grid.fit(X_train,y_train)
 
 #save the fitted rf_grid
-joblib.dump(rf_grid,'%s/%s_rf_grid.pkl' % (path2alg,country_code))
+joblib.dump(rf_grid,'%s/%s_%s_rf_grid.pkl' % (path2alg,country_code,version))

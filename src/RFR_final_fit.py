@@ -12,6 +12,7 @@ from sklearn.externals import joblib
 import pandas as pd
 
 country_code = sys.argv[1]
+version = sys.argv[2]
 
 path2alg = '/home/dmilodow/DataStore_DTM/FOREST2020/PotentialBiomassRFR/saved_algorithms/'
 path2calval = '/home/dmilodow/DataStore_DTM/FOREST2020/PotentialBiomassRFR/calval/'
@@ -19,8 +20,8 @@ path2data = '/disk/scratch/local.2/dmilodow/PotentialBiomass/processed/%s/' % co
 path2agb = path2data+'agb/'
 
 #load the fitted  the fitted rf_grid and PCA
-rf = joblib.load('%s%s_rf_grid.pkl' % (path2alg,country_code)).best_estimator_
-pca = joblib.load('%s%s_pca_pipeline.pkl' % (path2alg,country_code))
+rf = joblib.load('%s%s_%s_rf_grid.pkl' % (path2alg,country_code,version)).best_estimator_
+pca = joblib.load('%s%s_%s_pca_pipeline.pkl' % (path2alg,country_code,version))
 
 #refit to whole dataset - get predictors and targets
 predictors,landmask = get_predictors(country_code, training_subset=True)
@@ -32,7 +33,7 @@ lvls='mean'
 agb[agb<0] = 0
 rf.fit(X,agb)
 print(mean_squared_error(rf.predict(X),agb))
-joblib.dump(rf,'%s%s_rf_mean.pkl' % (path2alg,country_code))
+joblib.dump(rf,'%s%s_%s_rf_mean.pkl' % (path2alg,country_code,version))
 """
 # commented out for now - code for +/-uncertainty levels
 lvls = ['mean','upper','lower']

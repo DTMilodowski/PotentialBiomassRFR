@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 
 country_code = sys.argv[1]
+version = sys.argv[2]
 path2alg = '/home/dmilodow/DataStore_DTM/FOREST2020/PotentialBiomassRFR/saved_algorithms/'
 path2calval = '/home/dmilodow/DataStore_DTM/FOREST2020/PotentialBiomassRFR/calval/'
 path2data = '/disk/scratch/local.2/dmilodow/PotentialBiomass/processed/%s/' % country_code
@@ -31,9 +32,9 @@ cv_res['ratio_score'] = cv_res['mean_test_score'] / cv_res['mean_train_score']
 #do some plots
 sns.set()
 sns.pairplot(data=cv_res,hue='bootstrap')
-plt.savefig('%s%s_RFrandom_pairplot.png' % (path2calval,country_code))
+plt.savefig('%s%s_%s_RFrandom_pairplot.png' % (path2calval,country_code,version))
 
-pca = joblib.load('%s%s_pca_pipeline.pkl' % (path2alg,country_code))
+pca = joblib.load('%s%s_%s_pca_pipeline.pkl' % (path2alg,country_code,version))
 predictors,landmask = get_predictors(country_code, training_subset=True)
 
 #transform the data
@@ -67,5 +68,5 @@ for dd, df in enumerate([df_train,df_test]):
 
 #show / save
 fig.show()
-plt.savefig('%s%s_RFrandom_calval.png' % (path2calval,country_code))
+plt.savefig('%s%s_%s_RFrandom_calval.png' % (path2calval,country_code,version))
 #plt.show()

@@ -53,4 +53,4 @@ rf_random = RandomizedSearchCV(estimator=rf,param_distributions=random_grid,cv=3
 rf_random.fit(X_train,y_train)
 
 #save the fitted rf_random
-joblib.dump(rf_random,'%s/%s_rf_random.pkl' % (path2alg,country_code))
+joblib.dump(rf_random,'%s/%s_%s_rf_random.pkl' % (path2alg,country_code,version))
