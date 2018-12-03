@@ -80,12 +80,12 @@ def get_predictors(country_code,return_landmask = True, training_subset=False, s
 
     #first wc2
     for bi in wc2:
-        predictors[:,counter] = bi.values[landmask]
+        predictors[:,counter] = bi.values[landmask[0]]
         counter += 1
     print('Extracted WC2 data')
     #then soil properties
     for sp in soil:
-        predictors[:,counter] = sp.values[landmask]
+        predictors[:,counter] = sp.values[landmask[0]]
         counter += 1
     print('Extracted SOILGRIDS data')
 
