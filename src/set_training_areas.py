@@ -31,7 +31,7 @@ def set(path,subset=1):
 
         # load hinterland forests
         hfl = xr.open_rasterio(glob.glob('%s/forestcover/HFL*tif' % path)[0]).values
-        forestmask=forestmask*(hf==1)
+        forestmask=forestmask*(hfl==1)
         # merge masks
         training_mask=sparsemask+forestmask
 
@@ -39,6 +39,6 @@ def set(path,subset=1):
     elif subset == 2:
         # load hinterland forests
         hfl = xr.open_rasterio(glob.glob('%s/forestcover/HFL*tif' % path)[0]).values
-        training_mask=hf==1
+        training_mask=hfl==1
 
     return training_mask
