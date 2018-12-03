@@ -15,6 +15,7 @@ import glob
 import numpy as np
 import sys
 import set_training_areas
+import rasterio
 
 # Load predictor variables
 def get_predictors(country_code,return_landmask = True, training_subset=False, subset_def=1):
@@ -24,11 +25,15 @@ def get_predictors(country_code,return_landmask = True, training_subset=False, s
     path2sg = path+'soilgrids/'
     path2agb = path+'agb/'
 
-    wc2 = xr.concat([xr.open_rasterio(f) for f in sorted(glob.glob(path2wc+'*tif'))],dim='band')
     #worldclim2 data
-    wc2_mask = wc2[0]!=wc2[0,0,0]
+    nodata=[]
+    for ff in sorted(glob.glob(path2wc+'*tif')):
+        nodata.append(rasterio.open(ff).nodatavals[0])
+
+    wc2 = xr.concat([xr.open_rasterio(f) for f in sorted(glob.glob(path2wc+'*tif'))],dim='band')
+    wc2_mask = wc2[0]!=nodata[0]#wc2[0]!=wc2[0,0,0]
     for ii in range(wc2.shape[0]):
-        wc2_mask = wc2_mask & (wc2[ii]!=wc2[ii,0,0])
+        wc2_mask = wc2_mask & (wc2[ii]!=nodata[ii])#(wc2[ii]!=wc2[ii,0,0])
     print('Loaded WC2 data')
 
     #soilgrids data - filter out a bunch of variables correlated with land cover
@@ -40,23 +45,29 @@ def get_predictors(country_code,return_landmask = True, training_subset=False, s
         if soilfiles_all[ff].split('/')[-1].split('.')[0].split('_')[0] in filtervars:
             soilfiles.append(soilfiles_all[ff])
 
+    nodata=[]
+    for ff in sorted(soilfiles):
+        nodata.append(rasterio.open(ff).nodatavals[0])
+
     soil= xr.concat([xr.open_rasterio(f) for f in sorted(soilfiles)],dim='band')
-    soil_mask = soil[0]!=soil[0,0,0]
+    soil_mask = soil[0]!=nodata[0]#soil[0]!=soil[0,0,0]
     for ii in range(soil.shape[0]):
-        soil_mask = soil_mask & (soil[ii]!=soil[ii,0,0])
+        soil_mask = soil_mask & soil[ii]!=nodata[0]#(soil[ii]!=soil[ii,0,0])
     print('Loaded SOILGRIDS data')
 
     #also load the AGB data to only perform the PCA for places where there is both AGB and uncertainty
-    agb = xr.open_rasterio('%sAvitabile_AGB_%s_1km.tif' % (path2agb,country_code))
-    agb_mask = agb[0]!=agb.nodatavals[0]
+    agb_file = '%sAvitabile_AGB_%s_1km.tif' % (path2agb,country_code)
+    agb = xr.open_rasterio(agb_file)
+    agb_mask = agb[0]!=rasterio.open(agb_file).nodatavals[0]
 
-    unc = xr.open_rasterio('%sAvitabile_AGB_Uncertainty_%s_1km.tif' % (path2agb,country_code))
-    unc_mask = unc[0]!=unc.nodatavals[0]
+    unc_file = '%sAvitabile_AGB_%s_1km.tif' % (path2agb,country_code)
+    unc = xr.open_rasterio(unc_file)
+    unc_mask = unc[0]!=rasterio.open(unc_file).nodatavals[0]
 
     #create the land mask knowing that top left pixels (NW) are all empty
     # for now, ignoring uncertainty as want to include N. Australia in training
     if training_subset:
-        training_mask = set_training_areas.set(path,subset=subset_def):
+        training_mask = set_training_areas.set(path,subset=subset_def)
         landmask = (training_mask & wc2_mask.values & soil_mask.values & agb_mask.values)# & unc_mask.values)
     else:
         landmask = (wc2_mask.values & soil_mask.values & agb_mask.values)# & unc_mask.values)
