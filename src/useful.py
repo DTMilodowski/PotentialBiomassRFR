@@ -90,7 +90,7 @@ def get_predictors(country_code,return_landmask = True, training_subset=False, s
     print('Extracted SOILGRIDS data')
 
     if return_landmask:
-        return(predictors,landmask)
+        return(predictors,landmask[0])
     else:
         return(predictors)
 
