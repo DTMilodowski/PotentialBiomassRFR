@@ -10,6 +10,7 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import GridSearchCV, train_test_split
 from sklearn.metrics import mean_squared_error
 from sklearn.externals import joblib
+import forestci as fci # Wager et al. 2014 confidence intervals for scikit-learn RF
 
 from matplotlib import pyplot as plt
 import seaborn as sns
@@ -58,15 +59,24 @@ Xall = pca.transform(predictors)
 n_training_pixels = np.zeros(iterations)
 agbpot = np.zeros(iterations)*np.nan
 AGBpot = np.zeros((iterations,agb.values.shape[0],agb.values.shape[1]))*np.nan
+error = np.zeros((iterations,agb.values.shape[0],agb.values.shape[1]))*np.nan
+variance_IJ_unbiased = np.zeros((iterations,agb.values.shape[0],agb.values.shape[1]))*np.nan
 
-# 1st iteration done already
+# get variance and error
+variance_IJ_unbiased[0][landmask] = fci.random_forest_error(rf, X, Xall)
+error[0] = np.sqrt(variance_IJ_unbiased[0])
+
+# 1st iteration
 AGBpot[0][landmask] = rf.predict(Xall)
 n_training_pixels[0] = np.sum(trainmask)
 agbpot[0] = np.nansum(AGBpot[0][landmask])
+# get variance and error
+variance_IJ_unbiased[0][landmask] = fci.random_forest_error(rf, X, Xall)
+error[0] = np.sqrt(variance_IJ_unbiased[0])
 
 # subsequent iterations
 for ii in range(1,iterations):
-    trainmask, trainflag = set_training_areas.set_revised(path2data,agb.values,AGBpot[ii-1],landmask)
+    trainmask, trainflag = set_training_areas.set_revised(path2data,agb.values,AGBpot[ii-1]+error[ii-1],landmask)
     yii = agb.values[trainmask]
     Xii = Xall[trainmask[landmask]]
     if load=='load':
@@ -74,7 +84,10 @@ for ii in range(1,iterations):
     else:
         rf.fit(Xii,yii)
         joblib.dump(rf,'%s/%s_%s_rf_single_pass%i.pkl' % (path2alg,country_code,version,ii+1))
+    # fit model
     AGBpot[ii][landmask] = rf.predict(Xall)
+    variance_IJ_unbiased[ii][landmask] = fci.random_forest_error(rf, Xii, Xall)
+    error[ii] = np.sqrt(variance_IJ_unbiased[ii])
 
     # summaries
     n_training_pixels[ii] = np.sum(trainmask)
