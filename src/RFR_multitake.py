@@ -43,11 +43,12 @@ rf = RandomForestRegressor(bootstrap=True, criterion='mse', max_depth=None,
            min_weight_fraction_leaf=0.0, n_estimators=500, n_jobs=-1,
            oob_score=True, random_state=None, verbose=0, warm_start=False)
 
-rf.fit(X,y)
+if load=='load':
+    rf = joblib.load('%s/%s_%s_rf_single_pass1.pkl' % (path2alg,country_code,version))
+else:
+    rf.fit(X,y)
+    joblib.dump(rf,'%s/%s_%s_rf_single_pass1.pkl' % (path2alg,country_code,version))
 
-#save the fitted rf_grid
-joblib.dump(rf,'%s/%s_%s_rf_single_pass1.pkl' % (path2alg,country_code,version))
-rf = joblib.load('%s/%s_%s_rf_single_pass1.pkl' % (path2alg,country_code,version))
 
 # Get full land mask
 predictors,landmask = get_predictors(country_code, training_subset=False)
@@ -65,11 +66,14 @@ agbpot[0] = np.nansum(AGBpot[0][landmask])
 
 # subsequent iterations
 for ii in range(1,iterations):
-    trainmask, trainflag = set_training_areas.set_revised(path2data,agb_rf.AGBobs.values,agb_rf.AGBpot1.values,landmask)
+    trainmask, trainflag = set_training_areas.set_revised(path2data,agb.values,AGBpot[ii-1],landmask)
     yii = agb.values[trainmask]
     Xii = Xall[trainmask[landmask]]
-    rf.fit(X_train,y_train)
-    joblib.dump(rf,'%s/%s_%s_rf_single_pass%i.pkl' % (path2alg,country_code,version,ii+1))
+    if load=='load':
+        rf = joblib.load('%s/%s_%s_rf_single_pass%i.pkl' % (path2alg,country_code,version,ii+1))
+    else:
+        rf.fit(Xii,yii)
+        joblib.dump(rf,'%s/%s_%s_rf_single_pass%i.pkl' % (path2alg,country_code,version,ii+1))
     AGBpot[ii][landmask] = rf.predict(Xall)
 
     # summaries
