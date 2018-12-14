@@ -58,39 +58,43 @@ def get_predictors(country_code,return_landmask = True, training_subset=False, s
     #also load the AGB data to only perform the PCA for places where there is both AGB and uncertainty
     agb_file = '%sAvitabile_AGB_%s_1km.tif' % (path2agb,country_code)
     agb = xr.open_rasterio(agb_file)
-    agb_mask = agb[0]!=rasterio.open(agb_file).nodatavals[0]
+    agb_mask = agb.values[0]!=np.float32(agb.nodatavals[0])
 
     unc_file = '%sAvitabile_AGB_%s_1km.tif' % (path2agb,country_code)
     unc = xr.open_rasterio(unc_file)
-    unc_mask = unc[0]!=rasterio.open(unc_file).nodatavals[0]
+    unc_mask = unc[0]!=unc.nodatavals[0]
 
     #create the land mask knowing that top left pixels (NW) are all empty
     # for now, ignoring uncertainty as want to include N. Australia in training
     if training_subset:
         training_mask = set_training_areas.set(path,subset=subset_def)
-        landmask = (training_mask & wc2_mask.values & soil_mask.values & agb_mask.values)# & unc_mask.values)
+        landmask = (training_mask & wc2_mask.values & soil_mask.values & agb_mask)# & unc_mask.values)
     else:
-        landmask = (wc2_mask.values & soil_mask.values & agb_mask.values)# & unc_mask.values)
+        landmask = (wc2_mask.values & soil_mask.values & agb_mask)# & unc_mask.values)
 
     #create the empty array to store the predictors
     predictors = np.zeros([landmask.sum(),soil.shape[0]+wc2.shape[0]])
 
+    # check the mask dimensions
+    if len(landmask.shape)>2:
+        print('\t\t caution shape of landmask is: ', landmask.shape)
+        landmask = landmask[0]
+
     #iterate over variables to create the large array with data
     counter = 0
-
     #first wc2
     for bi in wc2:
-        predictors[:,counter] = bi.values[landmask[0]]
+        predictors[:,counter] = bi.values[landmask]
         counter += 1
     print('Extracted WC2 data')
     #then soil properties
     for sp in soil:
-        predictors[:,counter] = sp.values[landmask[0]]
+        predictors[:,counter] = sp.values[landmask]
         counter += 1
     print('Extracted SOILGRIDS data')
 
     if return_landmask:
-        return(predictors,landmask[0])
+        return(predictors,landmask)
     else:
         return(predictors)
 
