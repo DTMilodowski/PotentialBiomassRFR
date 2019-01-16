@@ -6,6 +6,7 @@ soil properties and land use.
 
 from useful import *
 import set_training_areas
+from sklearn.preprocessing import MinMaxScaler
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import GridSearchCV, train_test_split
 from sklearn.metrics import mean_squared_error
@@ -16,10 +17,10 @@ from matplotlib import pyplot as plt
 import seaborn as sns
 sns.set()
 
-country_code = 'INDO'#sys.argv[1]
-version = '001'#sys.argv[2]
-iterations = int[sys.argv[3]]
-load = sys.argv[4]
+country_code = 'WAFR'#sys.argv[1]
+version = '002'#sys.argv[2]
+iterations = 5#int[sys.argv[3]]
+load = 'new'#sys.argv[4]
 
 path2alg = '/home/dmilodow/DataStore_DTM/FOREST2020/PotentialBiomassRFR/saved_algorithms'
 path2data = '/disk/scratch/local.2/dmilodow/PotentialBiomass/processed/%s/' % country_code
@@ -27,14 +28,28 @@ path2agb = path2data+'agb/'
 
 pca = joblib.load('%s/%s_%s_pca_pipeline.pkl' % (path2alg,country_code,version))
 
+# load all predictors to generate preprocessing minmax scalar transformation
+predictors_full,landmask = get_predictors(country_code, training_subset=False)
+# Get full land mask
+Xall = pca.transform(predictors_full)
+scaler = MinMaxScaler()
+scaler.fit(Xall)
+Xall = scaler.transform(Xall)
+
+# load predictors for trainings data only
 predictors,trainmask = get_predictors(country_code, training_subset=True)
 
 #transform the data
-X = pca.transform(predictors)
+X = scaler.transform(pca.transform(predictors))
 
 #get the agb data
 agb = xr.open_rasterio('%sAvitabile_AGB_%s_1km.tif' % (path2agb,country_code))[0]
-y = agb.values[trainmask]
+
+yscaler = MinMaxScaler()
+yscaler.fit(agb.values[trainmask].reshape(-1, 1))
+y = yscaler.transform(agb.values[trainmask].reshape(-1, 1))
+back_correction_of_variance = (np.max(agb.values[trainmask])-np.min(agb.values[trainmask]))**2.
+
 
 #create the random forest object with predefined parameters
 rf = RandomForestRegressor(bootstrap=True, criterion='mse', max_depth=None,
@@ -50,11 +65,6 @@ else:
     rf.fit(X,y)
     joblib.dump(rf,'%s/%s_%s_rf_single_pass1.pkl' % (path2alg,country_code,version))
 
-
-# Get full land mask
-predictors,landmask = get_predictors(country_code, training_subset=False)
-Xall = pca.transform(predictors)
-
 # set up some arrays
 n_training_pixels = np.zeros(iterations)
 agbpot = np.zeros(iterations)*np.nan
@@ -62,6 +72,7 @@ AGBpot = np.zeros((iterations,agb.values.shape[0],agb.values.shape[1]))*np.nan
 error = np.zeros((iterations,agb.values.shape[0],agb.values.shape[1]))*np.nan
 variance_IJ_unbiased = np.zeros((iterations,agb.values.shape[0],agb.values.shape[1]))*np.nan
 
+"""
 # get variance and error
 variance_IJ_unbiased[0][landmask] = fci.random_forest_error(rf, X, Xall)
 error[0] = np.sqrt(variance_IJ_unbiased[0])
@@ -74,10 +85,28 @@ agbpot[0] = np.nansum(AGBpot[0][landmask])
 variance_IJ_unbiased[0][landmask] = fci.random_forest_error(rf, X, Xall)
 error[0] = np.sqrt(variance_IJ_unbiased[0])
 
+"""
+
+# getting variance is memory and processor intensive - restrict next phase to the
+# additional forest only
+# - get additional stable forest areas
+other_stable_forest = set_training_areas.get_stable_forest_outside_training_areas(path2data,trainmask,landmask)
+predictors_osf = get_predictors_for_defined_mask(country_code,other_stable_forest)
+Xosf = scaler.transform(pca.transform(predictors_osf))
+
+
+# 1st iteration
+AGBpot[0][landmask] = yscaler.inverse_transform(rf.predict(Xall))
+n_training_pixels[0] = np.sum(trainmask)
+agbpot[0] = np.nansum(AGBpot[0][landmask])
+# get variance and error
+variance_IJ_unbiased[0][other_stable_forest] = back_correction_of_variance*fci.random_forest_error(rf, X, Xosf, memory_constrained = True, memory_limit = 20000)
+error[0] = np.sqrt(variance_IJ_unbiased[0])
+
 # subsequent iterations
 for ii in range(1,iterations):
     trainmask, trainflag = set_training_areas.set_revised(path2data,agb.values,AGBpot[ii-1]+error[ii-1],landmask)
-    yii = agb.values[trainmask]
+    yii = yscaler.transform(agb.values[trainmask].reshape(-1, 1))
     Xii = Xall[trainmask[landmask]]
     if load=='load':
         rf = joblib.load('%s/%s_%s_rf_single_pass%i.pkl' % (path2alg,country_code,version,ii+1))
@@ -85,8 +114,8 @@ for ii in range(1,iterations):
         rf.fit(Xii,yii)
         joblib.dump(rf,'%s/%s_%s_rf_single_pass%i.pkl' % (path2alg,country_code,version,ii+1))
     # fit model
-    AGBpot[ii][landmask] = rf.predict(Xall)
-    variance_IJ_unbiased[ii][landmask] = fci.random_forest_error(rf, Xii, Xall)
+    AGBpot[ii][landmask] = yscalar.inverse_transform(rf.predict(Xall))
+    variance_IJ_unbiased[ii][landmask] = back_correction_of_variance*fci.random_forest_error(rf, Xii, Xall)
     error[ii] = np.sqrt(variance_IJ_unbiased[ii])
 
     # summaries
