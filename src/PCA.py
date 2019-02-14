@@ -20,7 +20,7 @@ from sklearn.decomposition import PCA
 from sklearn.pipeline import make_pipeline
 from scipy.stats import pearsonr
 
-pipeline = make_pipeline(StandardScaler(),PCA(n_components=0.95))
+pipeline = make_pipeline(StandardScaler(),PCA(n_components=0.99))
 
 country_code = sys.argv[1]
 version = sys.argv[2]
