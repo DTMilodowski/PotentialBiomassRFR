@@ -36,7 +36,7 @@ def set(path,subset=1):
     elif subset == 2:
         # load hinterland forests
         hfl = xr.open_rasterio(glob.glob('%s/forestcover/HFL*tif' % path)[0]).values[0]
-        training_mask=hfl==1
+        training_mask=(hfl==1)
 
     return training_mask
 
@@ -70,8 +70,6 @@ def set_revised(path,AGBobs,AGBpot,landmask):
             forestmask *= (lc==lc_p)
             sparsemask *= (lc==lc_p)
 
-        additional_forest = forestmask.copy()
-
         # load hinterland forests
         hfl = xr.open_rasterio(glob.glob('%s/forestcover/HFL*tif' % path)[0]).values[0]
         forestmask_init=forestmask*(hfl==1)
@@ -87,3 +85,24 @@ def set_revised(path,AGBobs,AGBpot,landmask):
         training_mask=(sparsemask+forestmask_init+forestmask_added)*landmask
 
         return training_mask, training_flag
+
+def get_stable_forest_outside_training_areas(path,trainmask_init,landmask):
+
+        lcfiles = sorted(glob.glob('%s/esacci/*lccs-class*tif' % path))
+        lc = xr.open_rasterio(lcfiles[0]).values[0]
+        forestmask=np.ones(lc.shape)
+        training_flag=np.zeros(lc.shape)
+
+        forestmask =(lc>=50)*(lc<=90) + (lc==160)  + (lc==170)
+
+        # loop through years and only keep pixels tha do not change from year to year
+        lc_start = 1993
+        lc_end = 2015
+
+        for ff in range(len(lcfiles)):
+            lc_p = lc.copy()
+            lc = xr.open_rasterio(lcfiles[ff]).values[0]
+            forestmask *= (lc==lc_p)
+
+        # mask out initial training dataset from stable forest
+        return forestmask*(trainmask_init!=1)*landmask
