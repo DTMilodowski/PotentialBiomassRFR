@@ -33,7 +33,7 @@ X_train, X_test, y_train, y_test = train_test_split(X,y,test_size = 0.25, random
 #create the random forest object with predefined parameters
 rf = RandomForestRegressor(n_jobs=20,random_state=26,
                             n_estimators = 1000,bootstrap=True,
-                            min_samples_leaf = 20,max_features = 6)
+                            min_samples_leaf = 0.005,max_features = 8)
 
 rf.fit(X_train,y_train)
 

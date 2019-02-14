@@ -28,7 +28,7 @@ path2agb = path2data+'agb/'
 
 pca = joblib.load('%s/%s_%s_pca_pipeline.pkl' % (path2alg,country_code,version))
 
-# load all predictors to generate preprocessing minmax scalar transformation
+# load all predictors to generate preprocessing minmax scaler transformation
 predictors_full,landmask = get_predictors(country_code, training_subset=False)
 # Get full land mask
 Xall = pca.transform(predictors_full)
@@ -96,7 +96,7 @@ Xosf = scaler.transform(pca.transform(predictors_osf))
 
 
 # 1st iteration
-AGBpot[0][landmask] = yscaler.inverse_transform(rf.predict(Xall))
+AGBpot[0][landmask] = yscaler.inverse_transform(rf.predict(Xall).reshape(-1, 1)).ravel()
 n_training_pixels[0] = np.sum(trainmask)
 agbpot[0] = np.nansum(AGBpot[0][landmask])
 # get variance and error
@@ -114,8 +114,8 @@ for ii in range(1,iterations):
         rf.fit(Xii,yii)
         joblib.dump(rf,'%s/%s_%s_rf_single_pass%i.pkl' % (path2alg,country_code,version,ii+1))
     # fit model
-    AGBpot[ii][landmask] = yscalar.inverse_transform(rf.predict(Xall))
-    variance_IJ_unbiased[ii][landmask] = back_correction_of_variance*fci.random_forest_error(rf, Xii, Xall)
+    AGBpot[ii][landmask] = yscaler.inverse_transform(rf.predict(Xall).reshape(-1, 1)).ravel()
+    variance_IJ_unbiased[ii][other_stable_forest] = back_correction_of_variance*fci.random_forest_error(rf, Xii, Xosf, memory_constrained = True, memory_limit = 20000)
     error[ii] = np.sqrt(variance_IJ_unbiased[ii])
 
     # summaries
@@ -176,7 +176,7 @@ plt.subplot(3,2,4); plt.imshow(AGBpot4,vmin=0,vmax=350);plt.colorbar()
 plt.subplot(3,2,6); plt.imshow(AGBpot5,vmin=0,vmax=350);plt.colorbar()
 plt.show()
 
-ref = agb_rf.AGBobs.values
+ref = agb.values
 plt.subplot(3,2,1); plt.imshow(agb_rf.AGBobs.values-ref,vmin=-100,vmax=100,cmap='bwr');plt.colorbar()
 plt.subplot(3,2,3); plt.imshow(agb_rf.AGBpot1.values-ref,vmin=-100,vmax=100,cmap='bwr');plt.colorbar()
 plt.subplot(3,2,5); plt.imshow(agb_rf.AGBpot2.values-ref,vmin=-100,vmax=100,cmap='bwr');plt.colorbar()

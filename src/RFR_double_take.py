@@ -90,9 +90,9 @@ X3= Xall[trainmask3[landmask]]
 
 #split train and test subset, specifying random seed
 X_train, X_test, y_train, y_test = train_test_split(X3,y3,test_size = 0.25, random_state=26)
-#rf.fit(X_train,y_train)
+rf.fit(X_train,y_train)
 
-#joblib.dump(rf,'%s/%s_%s_rf_single_pass3.pkl' % (path2alg,country_code,version))
+joblib.dump(rf,'%s/%s_%s_rf_single_pass3.pkl' % (path2alg,country_code,version))
 rf = joblib.load('%s/%s_%s_rf_single_pass3.pkl' % (path2alg,country_code,version))
 
 agb_rf.AGBpot3.values[landmask] = rf.predict(Xall)
