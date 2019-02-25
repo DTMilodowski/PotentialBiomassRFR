@@ -113,7 +113,7 @@ for ii in range(0,iterations):
 #save to a nc file
 comp = dict(zlib=True, complevel=1)
 encoding = {var: comp for var in agb_rf.data_vars}
-nc_file = '%s%s_%s_AGB_potential_RFR_worldclim_soilgrids_2pass.nc' % (path2output,
+nc_file = '%s%s_%s_AGB_potential_RFR_worldclim_soilgrids.nc' % (path2output,
                                 country_code,version)
 agb_rf.to_netcdf(path=nc_file)#,encoding=encoding)
 
