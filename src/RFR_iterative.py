@@ -8,6 +8,9 @@ import cal_val as cv
 import map_figures as mf
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import GridSearchCV, train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
+from sklearn.pipeline import make_pipeline
 from sklearn.metrics import mean_squared_error
 from sklearn.externals import joblib
 
@@ -26,7 +29,8 @@ path2agb = path2data+'agb/'
 path2calval = '/home/dmilodow/DataStore_DTM/FOREST2020/PotentialBiomassRFR/calval/'
 path2output = '/home/dmilodow/DataStore_DTM/FOREST2020/PotentialBiomassRFR/output/'
 
-pca = joblib.load('%s/%s_%s_pca_pipeline.pkl' % (path2alg,country_code,version))
+#pca = joblib.load('%s/%s_%s_pca_pipeline.pkl' % (path2alg,country_code,version))
+pca = make_pipeline(StandardScaler(),PCA(n_components=0.999))
 
 # load all predictors to generate preprocessing minmax scaler transformation
 predictors_full,landmask = useful.get_predictors(country_code, training_subset=False)
@@ -38,6 +42,9 @@ initial_training_mask = useful.get_mask(country_code,mask_def=1)
 other_stable_forest_mask = useful.get_mask(country_code,mask_def=2)
 
 # Run PCA transformation on predictor variables
+# fit PCA
+pca.fit(predictors)
+joblib.dump(pca,'%s/%s_%s_pca_pipeline.pkl' % (path2alg,country_code,version))
 Xall = pca.transform(predictors_full)
 
 yall = agb.values[landmask]
