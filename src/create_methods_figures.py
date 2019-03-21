@@ -19,7 +19,9 @@ from matplotlib.colors import ListedColormap
 # some colormaps
 warm = ListedColormap(sns.cubehelix_palette(20))
 wet = ListedColormap(sns.cubehelix_palette(20, start=.5, rot=-.75))
-soil = ListedColormap(sns.cubehelix_palette(8, start=22, rot=0.1))
+soil = ListedColormap(sns.cubehelix_palette(20, start=22, rot=0.1))
+greens = ListedColormap(sns.cubehelix_palette(8, start=2, rot=0, dark=0.4, light=.95))
+
 #---------------------------
 # Plot some Worldclim2 data
 path2wc = '/disk/scratch/local.2/dmilodow/PotentialBiomass/processed/BRA/wc2/'
@@ -111,3 +113,37 @@ ds=xr.open_rasterio(filename).sel(band=1)
 ds.values = ds.values.astype('float')
 ds.values[ds.values==ds.nodatavals]=np.nan
 fig_sg04 = sfig.plot_xarray(ds,savefile,cmap=soil)
+
+#----------------------------
+# Plot landcover data
+filename =  '/disk/scratch/local.2/dmilodow/PotentialBiomass/processed/BRA/forestcover/HFL_2013_BRA.tif'
+ds=xr.open_rasterio(filename).sel(band=1)
+ds.values = ds.values.astype('float')
+ds.values[ds.values==ds.nodatavals]=np.nan
+fig_lc01 = sfig.plot_xarray(ds,savefile,cmap=greens)
+
+path2lc = '/disk/scratch/local.2/dmilodow/PotentialBiomass/processed/BRA/esacci/'
+filename = '%sESACCI-LC-L4-LCCS-Map-P1Y-2008-v2.0.7-1km-mode-lccs-class-BRA.tif' % path2lc
+savefile = '../figures/ESACCI_2008_BRA.png'
+ds=xr.open_rasterio(filename).sel(band=1)
+ds.values = sfig.aggregate_classes(ds.values)
+lc,lc_labs=sfig.esa_cci_colormap(ds.values)
+fig_lc02 = sfig.plot_xarray(ds,savefile,cmap=lc)
+
+filename = '%sESACCI-LC-L4-LCCS-Map-P1Y-2009-v2.0.7-1km-mode-lccs-class-BRA.tif' % path2lc
+savefile = '../figures/ESACCI_2009_BRA.png'
+ds=xr.open_rasterio(filename).sel(band=1)
+ds.values = sfig.aggregate_classes(ds.values)
+fig_lc03 = sfig.plot_xarray(ds,savefile,cmap=lc)
+
+filename = '%sESACCI-LC-L4-LCCS-Map-P1Y-2010-v2.0.7-1km-mode-lccs-class-BRA.tif' % path2lc
+savefile = '../figures/ESACCI_2010_BRA.png'
+ds=xr.open_rasterio(filename).sel(band=1)
+ds.values = sfig.aggregate_classes(ds.values)
+fig_lc04 = sfig.plot_xarray(ds,savefile,cmap=lc)
+
+filename = '%sESACCI-LC-L4-LCCS-Map-P1Y-2011-v2.0.7-1km-mode-lccs-class-BRA.tif' % path2lc
+savefile = '../figures/ESACCI_2011_BRA.png'
+ds=xr.open_rasterio(filename).sel(band=1)
+ds.values = sfig.aggregate_classes(ds.values)
+fig_lc05 = sfig.plot_xarray(ds,savefile,cmap=lc)
