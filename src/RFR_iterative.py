@@ -43,7 +43,7 @@ other_stable_forest_mask = useful.get_mask(country_code,mask_def=2)
 
 # Run PCA transformation on predictor variables
 # fit PCA
-pca.fit(predictors)
+pca.fit(predictors_full)
 joblib.dump(pca,'%s/%s_%s_pca_pipeline.pkl' % (path2alg,country_code,version))
 Xall = pca.transform(predictors_full)
 
