@@ -94,17 +94,20 @@ fig_sg01 = sfig.plot_xarray(ds,savefile,cmap=soil)
 filename = '%sSNDPPT_M_sl1_1km_ll_BRA.tif' % path2sg
 savefile = '../figures/SNDPPT_M_sl1_1km_ll_BRA.png'
 ds=xr.open_rasterio(filename).sel(band=1)
+ds.values = ds.values.astype('float')
 ds.values[ds.values==ds.nodatavals]=np.nan
 fig_sg02 = sfig.plot_xarray(ds,savefile,cmap=soil)
 
 filename = '%sSLTPPT_M_sl1_1km_ll_BRA.tif' % path2sg
 savefile = '../figures/SLTPPT_M_sl1_1km_ll_BRA.png'
 ds=xr.open_rasterio(filename).sel(band=1)
+ds.values = ds.values.astype('float')
 ds.values[ds.values==ds.nodatavals]=np.nan
 fig_sg03 = sfig.plot_xarray(ds,savefile,cmap=soil)
 
 filename = '%sCLYPPT_M_sl1_1km_ll_BRA.tif' % path2sg
 savefile = '../figures/CLYPPT_M_sl1_1km_ll_BRA.png'
 ds=xr.open_rasterio(filename).sel(band=1)
+ds.values = ds.values.astype('float')
 ds.values[ds.values==ds.nodatavals]=np.nan
-fig_sg03 = sfig.plot_xarray(ds,savefile,cmap=soil)
+fig_sg04 = sfig.plot_xarray(ds,savefile,cmap=soil)
