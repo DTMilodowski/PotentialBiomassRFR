@@ -19,6 +19,7 @@ from matplotlib.colors import ListedColormap
 # some colormaps
 warm = ListedColormap(sns.cubehelix_palette(20))
 wet = ListedColormap(sns.cubehelix_palette(20, start=.5, rot=-.75))
+soil = ListedColormap(sns.cubehelix_palette(8, start=22, rot=0.1))
 #---------------------------
 # Plot some Worldclim2 data
 path2wc = '/disk/scratch/local.2/dmilodow/PotentialBiomass/processed/BRA/wc2/'
@@ -78,3 +79,32 @@ savefile = '../figures/wc2.0_bio_30s_15_BRA.png'
 ds=xr.open_rasterio(filename).sel(band=1)
 ds.values[ds.values==ds.nodatavals]=np.nan
 fig_wc15 = sfig.plot_xarray(ds,savefile,cmap=wet)
+
+#---------------------------
+# Plot some SoilGrids data
+path2sg = '/disk/scratch/local.2/dmilodow/PotentialBiomass/processed/BRA/soilgrids/'
+
+filename = '%sBDRICM_M_1km_ll_BRA.tif' % path2sg
+savefile = '../figures/BDRICM_M_1km_ll_BRA.png'
+ds=xr.open_rasterio(filename).sel(band=1)
+ds.values = ds.values.astype('float')
+ds.values[ds.values==ds.nodatavals]=np.nan
+fig_sg01 = sfig.plot_xarray(ds,savefile,cmap=soil)
+
+filename = '%sSNDPPT_M_sl1_1km_ll_BRA.tif' % path2sg
+savefile = '../figures/SNDPPT_M_sl1_1km_ll_BRA.png'
+ds=xr.open_rasterio(filename).sel(band=1)
+ds.values[ds.values==ds.nodatavals]=np.nan
+fig_sg02 = sfig.plot_xarray(ds,savefile,cmap=soil)
+
+filename = '%sSLTPPT_M_sl1_1km_ll_BRA.tif' % path2sg
+savefile = '../figures/SLTPPT_M_sl1_1km_ll_BRA.png'
+ds=xr.open_rasterio(filename).sel(band=1)
+ds.values[ds.values==ds.nodatavals]=np.nan
+fig_sg03 = sfig.plot_xarray(ds,savefile,cmap=soil)
+
+filename = '%sCLYPPT_M_sl1_1km_ll_BRA.tif' % path2sg
+savefile = '../figures/CLYPPT_M_sl1_1km_ll_BRA.png'
+ds=xr.open_rasterio(filename).sel(band=1)
+ds.values[ds.values==ds.nodatavals]=np.nan
+fig_sg03 = sfig.plot_xarray(ds,savefile,cmap=soil)
