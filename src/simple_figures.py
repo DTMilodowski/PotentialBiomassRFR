@@ -15,7 +15,7 @@ sns.set()                           # set some nice default plotting options
 from matplotlib.colors import ListedColormap
 # Plot simple map figure
 def plot_xarray(xarr, figure_name,figsize_x=8,figsize_y=6,vmin=None,vmax=None,cmap='viridis',add_colorbar=False,
-                extend ='neither',cbar_kwargs={},show=False):
+                extend ='neither',cbar_kwargs={},show=False,title=""):
     if vmin is None:
         vmin = np.nanmin(xarr)
     if vmax is None:
@@ -27,10 +27,11 @@ def plot_xarray(xarr, figure_name,figsize_x=8,figsize_y=6,vmin=None,vmax=None,cm
     else:
         xarr.plot(ax=axis, vmin=vmin, vmax=vmax, cmap=cmap, add_colorbar=add_colorbar)
     axis.set_aspect("equal")
+    axis.set_title(title,fontsize=16)
     fig.savefig(figure_name)
     if show:
         fig.show()
-    return fig
+    return fig,axis
 
 # function to make ESA CCI colormap
 #  1. Agriculture
