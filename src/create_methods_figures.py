@@ -113,13 +113,15 @@ ds=xr.open_rasterio(filename).sel(band=1)
 ds.values = ds.values.astype('float')
 ds.values[ds.values==ds.nodatavals]=np.nan
 fig_sg04 = sfig.plot_xarray(ds,savefile,cmap=soil)
-
+ds_temp=ds.copy()
 #----------------------------
 # Plot landcover data
 filename =  '/disk/scratch/local.2/dmilodow/PotentialBiomass/processed/BRA/forestcover/HFL_2013_BRA.tif'
+savefile = '../figures/HFL_2013_BRA.png'
 ds=xr.open_rasterio(filename).sel(band=1)
 ds.values = ds.values.astype('float')
-ds.values[ds.values==ds.nodatavals]=np.nan
+ds.values[ds.values==ds.nodatavals]=0
+ds.values[np.isnan(ds_temp.values)]=np.nan
 fig_lc01 = sfig.plot_xarray(ds,savefile,cmap=greens)
 
 path2lc = '/disk/scratch/local.2/dmilodow/PotentialBiomass/processed/BRA/esacci/'
@@ -147,3 +149,116 @@ savefile = '../figures/ESACCI_2011_BRA.png'
 ds=xr.open_rasterio(filename).sel(band=1)
 ds.values = sfig.aggregate_classes(ds.values)
 fig_lc05 = sfig.plot_xarray(ds,savefile,cmap=lc)
+
+#-------------------------------------
+# Plot biomass
+filename =  '/disk/scratch/local.2/dmilodow/PotentialBiomass/processed/BRA/agb/Avitabile_AGB_BRA_1km.tif'
+savefile = '../figures/AGB_Avitabile_BRA.png'
+ds=xr.open_rasterio(filename).sel(band=1)
+ds.values = ds.values.astype('float')
+ds.values[ds.values<0]=np.nan
+fig_obs = sfig.plot_xarray(ds,savefile,cmap='viridis',vmin=0,vmax=400)
+
+# Plot potential biomass
+filename =  '../output/BRA_003_AGB_potential_RFR_worldclim_soilgrids.nc'
+savefile = '../figures/AGBpot_Avitabile_BRA.png'
+ds=xr.open_dataset(filename)
+ds['AGBpot3'].values = ds['AGBpot3'].values.astype('float')
+ds['AGBpot3'].values[ds['AGBpot3'].values<0]=np.nan
+fig_pot = sfig.plot_xarray(ds['AGBpot3'],savefile,cmap='viridis',vmin=0,vmax=400)
+
+#
+
+# Plot restoration potential
+savefile = '../figures/AGBseq_Avitabile_BRA.png'
+seq=(ds['AGBpot3']-ds['AGBobs'])/2.
+fig_seq = sfig.plot_xarray(seq,savefile,cmap='plasma',vmin=0,vmax=100)
+
+
+savefile = '../figures/AGBseq_Brazil.png'
+cbar_kwargs={'label': 'AGB$_{seq}$ / Mg(C) ha$^{-1}$','orientation':'horizontal'}
+fig_indo_seq,ax = sfig.plot_xarray(seq,savefile,cmap='plasma',extend ='max',
+                                vmin=0,vmax=125,cbar_kwargs=cbar_kwargs,
+                                figsize_x=8,figsize_y = 8,add_colorbar =True,
+                                title= 'Sequestration potential')
+
+## "Key countries"
+# Indonesia
+area_file = '/home/dmilodow/DataStore_DTM/EOlaboratory/EOlab/IndonesiaPotentialAGB/indonesia_cell_areas_data.tif'
+areas = xr.open_rasterio(area_file).sel(band=1)
+
+filename =  '/home/dmilodow/DataStore_DTM/EOlaboratory/EOlab/IndonesiaPotentialAGB/indonesia_AGBobs_data.tif'
+savefile = '../figures/AGBobs_Indo.png'
+ds=xr.open_rasterio(filename).sel(band=1)
+ds = ds.rename(x='longitude',y='latitude')
+ds.values = ds.values.astype('float')
+ds.values[ds.values==ds.nodatavals]=np.nan
+cbar_kwargs={'label': 'AGB$_{obs}$ / Mg(C) ha$^{-1}$','orientation':'vertical'}
+fig_indo_obs,ax = sfig.plot_xarray(ds,savefile,cmap='viridis',extend ='max',
+                                vmin=0,vmax=250,cbar_kwargs=cbar_kwargs,
+                                figsize_x=16,figsize_y = 6,add_colorbar =True,
+                                title= 'Observed AGB (mid 2000s)')
+
+filename =  '/home/dmilodow/DataStore_DTM/EOlaboratory/EOlab/IndonesiaPotentialAGB/indonesia_AGBpot_data.tif'
+savefile = '../figures/AGBpot_Indo.png'
+ds=xr.open_rasterio(filename).sel(band=1)
+ds = ds.rename(x='longitude',y='latitude')
+ds.values = ds.values.astype('float')
+ds.values[ds.values==ds.nodatavals]=np.nan
+cbar_kwargs={'label': 'AGB$_{pot}$ / Mg(C) ha$^{-1}$','orientation':'vertical'}
+fig_indo_pot,ax = sfig.plot_xarray(ds,savefile,cmap='viridis',extend ='max',
+                                vmin=0,vmax=250,cbar_kwargs=cbar_kwargs,
+                                figsize_x=16,figsize_y = 6,add_colorbar =True,
+                                title= 'Potential AGB')
+
+filename =  '/home/dmilodow/DataStore_DTM/EOlaboratory/EOlab/IndonesiaPotentialAGB/indonesia_AGBseq_data.tif'
+savefile = '../figures/AGBseq_Indo.png'
+ds=xr.open_rasterio(filename).sel(band=1)
+ds = ds.rename(x='longitude',y='latitude')
+ds.values = ds.values.astype('float')
+ds.values[ds.values==ds.nodatavals]=np.nan
+cbar_kwargs={'label': 'AGB$_{seq}$ / Mg(C) ha$^{-1}$','orientation':'vertical'}
+fig_indo_seq,ax = sfig.plot_xarray(ds,savefile,cmap='plasma',extend ='max',
+                                vmin=0,vmax=125,cbar_kwargs=cbar_kwargs,
+                                figsize_x=16,figsize_y = 6,add_colorbar =True,
+                                title= 'Sequestration potential')
+
+# Ghana
+area_file = '/home/dmilodow/DataStore_DTM/EOlaboratory/EOlab/GhanaPotentialAGB/ghana_cell_areas_data.tif'
+areas = xr.open_rasterio(area_file).sel(band=1)
+
+filename =  '/home/dmilodow/DataStore_DTM/EOlaboratory/EOlab/GhanaPotentialAGB/ghana_AGBobs_data.tif'
+savefile = '../figures/AGBobs_Ghana.png'
+ds=xr.open_rasterio(filename).sel(band=1)
+ds = ds.rename(x='longitude',y='latitude')
+ds.values = ds.values.astype('float')
+ds.values[ds.values==ds.nodatavals]=np.nan
+cbar_kwargs={'label': 'AGB$_{obs}$ / Mg(C) ha$^{-1}$','orientation':'vertical'}
+fig_indo_obs,ax = sfig.plot_xarray(ds,savefile,cmap='viridis',extend ='max',
+                                vmin=0,vmax=250,cbar_kwargs=cbar_kwargs,
+                                figsize_x=16,figsize_y = 6,add_colorbar =True,
+                                title= 'Observed AGB (mid 2000s)')
+
+filename =  '/home/dmilodow/DataStore_DTM/EOlaboratory/EOlab/GhanaPotentialAGB/ghana_AGBpot_data.tif'
+savefile = '../figures/AGBpot_Ghana.png'
+ds=xr.open_rasterio(filename).sel(band=1)
+ds = ds.rename(x='longitude',y='latitude')
+ds.values = ds.values.astype('float')
+ds.values[ds.values==ds.nodatavals]=np.nan
+cbar_kwargs={'label': 'AGB$_{pot}$ / Mg(C) ha$^{-1}$','orientation':'vertical'}
+fig_indo_pot,ax = sfig.plot_xarray(ds,savefile,cmap='viridis',extend ='max',
+                                vmin=0,vmax=250,cbar_kwargs=cbar_kwargs,
+                                figsize_x=16,figsize_y = 6,add_colorbar =True,
+                                title= 'Potential AGB')
+
+filename =  '/home/dmilodow/DataStore_DTM/EOlaboratory/EOlab/GhanaPotentialAGB/ghana_AGBseq_data.tif'
+savefile = '../figures/AGBseq_Ghana.png'
+ds=xr.open_rasterio(filename).sel(band=1)
+ds = ds.rename(x='longitude',y='latitude')
+ds.values = ds.values.astype('float')
+ds.values[ds.values==ds.nodatavals]=np.nan
+cbar_kwargs={'label': 'AGB$_{seq}$ / Mg(C) ha$^{-1}$','orientation':'vertical'}
+fig_indo_seq,ax = sfig.plot_xarray(ds,savefile,cmap='plasma',extend ='max',
+                                vmin=0,vmax=125,cbar_kwargs=cbar_kwargs,
+                                figsize_x=16,figsize_y = 6,add_colorbar =True,
+                                title= 'Sequestration potential')
