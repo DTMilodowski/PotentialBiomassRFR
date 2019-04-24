@@ -21,7 +21,7 @@ sns.set()
 country_code = sys.argv[1]#'WAFR'
 version = sys.argv[2]#'002'
 iterations = int(sys.argv[3])#5
-load = sys.argv[4]#'new'
+#load = sys.argv[4]#'new'
 
 path2alg = '/home/dmilodow/DataStore_DTM/FOREST2020/PotentialBiomassRFR/saved_algorithms'
 path2data = '/disk/scratch/local.2/dmilodow/PotentialBiomass/processed/%s/' % country_code
