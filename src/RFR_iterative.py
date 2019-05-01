@@ -81,11 +81,6 @@ iterations = AGBpot.shape[0]
 joblib.dump(rf,'%s/%s_%s_rf_iterative.pkl' % (path2alg,country_code,
                                                 version))
 
-# Initial cal-val plot
-training_mask_final = (training_set[-1]>0)*landmask
-cal_r2,val_r2 = cv.cal_val_train_test(Xall[training_mask_final[landmask]],agb.values[training_mask_final],
-                                rf,path2calval, country_code, version)
-
 # convert training set and AGBpot to xdarray for easy plotting and export to
 # netcdf
 # first deal with metadata and coordinates
@@ -125,7 +120,12 @@ nc_file = '%s%s_%s_AGB_potential_RFR_worldclim_soilgrids.nc' % (path2output,
 agb_rf.to_netcdf(path=nc_file)#,encoding=encoding)
 
 # plot stuff
+# Initial cal-val plot
 mf.plot_AGBpot_iterations(agb_rf,iterations,country_code,version,path2output = path2output)
 mf.plot_training_residuals(agb_rf,iterations,country_code,version,path2output=path2output,vmin=[0,0,-50],vmax=[200,200,50])
 mf.plot_training_areas_iterative(agb_rf,iterations,country_code,version,path2output = path2output)
 mf.plot_AGB_AGBpot_training(agb_rf,iterations,country_code,version,path2output = path2output)
+
+training_mask_final = (training_set[-1]>0)*landmask
+cal_r2,val_r2 = cv.cal_val_train_test(Xall[training_mask_final[landmask]],agb.values[training_mask_final],
+                                rf,path2calval, country_code, version)
