@@ -19,8 +19,6 @@ def set(path,subset=1):
         forestmask =(lc>=50)*(lc<=90) + (lc==160)  + (lc==170)
 
         # loop through years and only keep pixels tha do not change from year to year
-        lc_start = 1993
-        lc_end = 2015
         for ff in range(len(lcfiles)):
             lc_p = lc.copy()
             lc = xr.open_rasterio(lcfiles[ff]).values[0]
@@ -37,6 +35,57 @@ def set(path,subset=1):
         # load hinterland forests
         hfl = xr.open_rasterio(glob.glob('%s/forestcover/HFL*tif' % path)[0]).values[0]
         training_mask=(hfl==1)
+
+    # subset 3: Mapbiomas
+    elif subset == 3:
+        mbfiles = sorted(glob.glob('%s/mapbiomas/*tif' % path))
+        lc = xr.open_rasterio(mbfiles[0]).values[0]
+        forest=np.ones(lc.shape)
+        nonforest=np.ones(lc.shape)
+        bare=np.ones(lc.shape)
+
+        forest = np.all((lc>=2,lc<=5),axis=0)
+        nonforest = np.all((lc>=10,lc<=13),axis=0)
+        bare = np.all((lc==23,lc==29),axis=0)
+
+        for ff in range(len(mbfiles)):
+            lc_p = lc.copy()
+            lc = xr.open_rasterio(mbfiles[ff]).values[0]
+            forest *= (lc==lc_p)
+            nonforest *= (lc==lc_p)
+            bare *= (lc==lc_p)
+
+        training_mask = forest+non_forest+bare
+
+    # MAPBIOMAS & HFL
+    elif subset = 4:
+        mbfiles = sorted(glob.glob('%s/mapbiomas/*tif' % path))
+        lc = xr.open_rasterio(mbfiles[0]).values[0]
+        forest=np.ones(lc.shape)
+        nonforest=np.ones(lc.shape)
+        bare=np.ones(lc.shape)
+
+        forest = np.all((lc>=2,lc<=5),axis=0)
+        nonforest = np.all((lc>=10,lc<=13),axis=0)
+        bare = np.all((lc==23,lc==29),axis=0)
+        nodata = lc==0
+
+        for ff in range(len(mbfiles)):
+            lc_p = lc.copy()
+            lc = xr.open_rasterio(mbfiles[ff]).values[0]
+            update = (lc==lc_p)
+            forest *= update
+            nonforest *= update
+            bare *= update
+            nodata *= update
+
+        # load hinterland forests
+        hfl = xr.open_rasterio(glob.glob('%s/forestcover/HFL*tif' % path)[0]).values[0]
+        hfl_mask=(hfl==1)
+
+        hfl_outside_biomass_extent = hfl_mask*nodata
+
+        training_mask = forest*hfl_mask + non_forest + bare + hfl_outside_biomass_extent
 
     return training_mask
 
@@ -61,9 +110,6 @@ def set_revised(path,AGBobs,AGBpot,landmask):
         forestmask =(lc>=50)*(lc<=90) + (lc==160)  + (lc==170)
 
         # loop through years and only keep pixels tha do not change from year to year
-        lc_start = 1993
-        lc_end = 2015
-
         for ff in range(len(lcfiles)):
             lc_p = lc.copy()
             lc = xr.open_rasterio(lcfiles[ff]).values[0]
@@ -96,9 +142,6 @@ def get_stable_forest_outside_training_areas(path,trainmask_init,landmask):
         forestmask =(lc>=50)*(lc<=90) + (lc==160)  + (lc==170)
 
         # loop through years and only keep pixels tha do not change from year to year
-        lc_start = 1993
-        lc_end = 2015
-
         for ff in range(len(lcfiles)):
             lc_p = lc.copy()
             lc = xr.open_rasterio(lcfiles[ff]).values[0]
