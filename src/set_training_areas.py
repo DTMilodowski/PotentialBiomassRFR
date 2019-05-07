@@ -132,20 +132,56 @@ def set_revised(path,AGBobs,AGBpot,landmask):
 
         return training_mask, training_flag
 
-def get_stable_forest_outside_training_areas(path,trainmask_init,landmask):
+def get_stable_forest_outside_training_areas(path,trainmask_init,landmask,method = 1):
 
+    # ESA-CCI basis
+    if method == 1:
         lcfiles = sorted(glob.glob('%s/esacci/*lccs-class*tif' % path))
         lc = xr.open_rasterio(lcfiles[0]).values[0]
-        forestmask=np.ones(lc.shape)
-        training_flag=np.zeros(lc.shape)
-
         forestmask =(lc>=50)*(lc<=90) + (lc==160)  + (lc==170)
 
-        # loop through years and only keep pixels tha do not change from year to year
+        # loop through years and only keep pixels that do not change from year to year
         for ff in range(len(lcfiles)):
             lc_p = lc.copy()
             lc = xr.open_rasterio(lcfiles[ff]).values[0]
             forestmask *= (lc==lc_p)
 
-        # mask out initial training dataset from stable forest
-        return forestmask*(trainmask_init!=1)*landmask
+    # MapBiomas basis
+    elif method == 2:
+        mbfiles = sorted(glob.glob('%s/mapbiomas/*tif' % path))
+        lc = xr.open_rasterio(mbfiles[0]).values[0]
+
+        forestmask = np.all((lc>=2,lc<=5),axis=0)
+
+        for ff in range(len(mbfiles)):
+            lc_p = lc.copy()
+            lc = xr.open_rasterio(mbfiles[ff]).values[0]
+            forestmask *= (lc==lc_p)
+
+    # MapBiomas & ESA-CCI outside of Brazil
+    elif method == 3:
+        mbfiles = sorted(glob.glob('%s/mapbiomas/*tif' % path))
+        lc = xr.open_rasterio(mbfiles[0]).values[0]
+        forestmask = np.all((lc>=2,lc<=5),axis=0)
+        nodata = lc==0
+
+        for ff in range(len(mbfiles)):
+            lc_p = lc.copy()
+            lc = xr.open_rasterio(mbfiles[ff]).values[0]
+            forestmask *= (lc==lc_p)
+            nodata *= (lc==lc_p)
+
+        lcfiles = sorted(glob.glob('%s/esacci/*lccs-class*tif' % path))
+        lc = xr.open_rasterio(lcfiles[0]).values[0]
+        lcmask =(lc>=50)*(lc<=90) + (lc==160)  + (lc==170) + (lc>=120)*(lc<130) + (lc>=140)*(lc<160) + (lc>=200)*(lc<210)
+
+        # loop through years and only keep pixels that do not change from year to year
+        for ff in range(len(lcfiles)):
+            lc_p = lc.copy()
+            lc = xr.open_rasterio(lcfiles[ff]).values[0]
+            lcmask *= (lc==lc_p)
+
+        forestmask = forestmask + lcmask*nodata
+
+    # mask out initial training dataset from stable forest
+    return forestmask*(trainmask_init!=1)*landmask
