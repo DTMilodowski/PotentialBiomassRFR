@@ -58,7 +58,7 @@ def set(path,subset=1):
         training_mask = forest+non_forest+bare
 
     # MAPBIOMAS & HFL
-    elif subset = 4:
+    elif subset == 4:
         mbfiles = sorted(glob.glob('%s/mapbiomas/*tif' % path))
         lc = xr.open_rasterio(mbfiles[0]).values[0]
         forest=np.ones(lc.shape)
