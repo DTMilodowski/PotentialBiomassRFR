@@ -179,6 +179,10 @@ def get_predictors_for_defined_mask(country_code,mask):
 # --- 1           -> training mask (hinterland forest landscapes
 #                    and stable sparsely vegetated ESA-CCI classes)
 # --- 2           -> other stable forest areas from ESA-CCI
+# --- 3           -> mapbiomas stable natural land cover classes
+# --- 4           -> other stable forest areas from ESA-CCI
+# --- 5           -> mapbiomas and hinterland forest landscapes
+# --- 6           -> other stable forest areas from mapbiomas
 def get_mask(country_code, mask_def=0):
 
     path = '/disk/scratch/local.2/dmilodow/PotentialBiomass/processed/%s/' % country_code
@@ -219,6 +223,26 @@ def get_mask(country_code, mask_def=0):
         landmask = (wc2_mask & soil_mask & agb_mask)
         trainmask = set_training_areas.set(path,subset=1)
         mask = set_training_areas.get_stable_forest_outside_training_areas(path,trainmask,landmask)
+    # training mask (mapbiomas based)
+    elif(mask_def == 3):
+        landmask = (wc2_mask & soil_mask & agb_mask)
+        trainmask = set_training_areas.set(path,subset=3)
+        mask = set_training_areas.get_stable_forest_outside_training_areas(path,trainmask,landmask)
+    # other stable forest (initially mapbiomas based forest extent)
+    elif(mask_def == 4):
+        landmask = (wc2_mask & soil_mask & agb_mask)
+        trainmask = set_training_areas.set(path,subset=3)
+        mask = set_training_areas.get_stable_forest_outside_training_areas(path,trainmask,landmask)
+    # training mask (mapbiomas & HFL)
+    elif(mask_def == 5):
+        landmask = (wc2_mask & soil_mask & agb_mask)
+        trainmask = set_training_areas.set(path,subset=4)
+    # other stable forest (initially mapbiomas based forest extent)
+    elif(mask_def == 6):
+        landmask = (wc2_mask & soil_mask & agb_mask)
+        trainmask = set_training_areas.set(path,subset=4)
+        mask = set_training_areas.get_stable_forest_outside_training_areas(path,trainmask,landmask,option=1)
+
     else:
         mask = (training_mask & wc2_mask & soil_mask & agb_mask)
     # check the mask dimensions
