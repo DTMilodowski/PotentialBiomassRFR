@@ -83,9 +83,9 @@ def set(path,subset=1):
         hfl = xr.open_rasterio(glob.glob('%s/forestcover/HFL*tif' % path)[0]).values[0]
         hfl_mask=(hfl==1)
 
-        hfl_outside_biomass_extent = hfl_mask*nodata
+        hfl_outside_biomas_extent = hfl_mask*nodata
 
-        training_mask = forest*hfl_mask + non_forest + bare + hfl_outside_biomass_extent
+        training_mask = forest*hfl_mask + nonforest + bare + hfl_outside_biomas_extent
 
     return training_mask
 
