@@ -11,8 +11,6 @@ def set(path,subset=1):
     if subset == 1:
         lcfiles = sorted(glob.glob('%s/esacci/*lccs-class*tif' % path))
         lc = xr.open_rasterio(lcfiles[0]).values[0]
-        forestmask=np.ones(lc.shape)
-        sparsemask=np.ones(lc.shape)
 
         sparsemask = (lc>=120)*(lc<130) + (lc>=140)*(lc<160) + (lc>=200)*(lc<210) # shrub, lichen, sparse, bare
         #sparsemask = (lc>=140)*(lc<160) + (lc>=200)*(lc<210)# lichen, sparse, bare
@@ -97,8 +95,6 @@ def set_revised(path,AGBobs,AGBpot,landmask):
 
         lcfiles = sorted(glob.glob('%s/esacci/*lccs-class*tif' % path))
         lc = xr.open_rasterio(lcfiles[0]).values[0]
-        forestmask=np.ones(lc.shape)
-        sparsemask=np.ones(lc.shape)
         training_flag=np.zeros(lc.shape)
 
         sparsemask = (lc>=120)*(lc<130) + (lc>=140)*(lc<160) + (lc>=200)*(lc<210) # shrub, lichen, sparse, bare
@@ -145,27 +141,32 @@ def get_stable_forest_outside_training_areas(path,trainmask_init,landmask,method
     # MapBiomas basis
     elif method == 2:
         mbfiles = sorted(glob.glob('%s/mapbiomas/*tif' % path))
-        lc = xr.open_rasterio(mbfiles[0]).values[0]
+        mb = xr.open_rasterio(mbfiles[0]).values
 
+        lc = mb[0]
         forestmask = np.all((lc>=2,lc<=5),axis=0)
 
-        for ff in range(len(mbfiles)):
+        for yy in range(mb.shape[0]):
             lc_p = lc.copy()
-            lc = xr.open_rasterio(mbfiles[ff]).values[0]
-            forestmask *= (lc==lc_p)
+            lc = mb[yy]
+            update = (lc==lc_p)
+            forestmask *= update
 
     # MapBiomas & ESA-CCI outside of Brazil
     elif method == 3:
         mbfiles = sorted(glob.glob('%s/mapbiomas/*tif' % path))
-        lc = xr.open_rasterio(mbfiles[0]).values[0]
+        mb = xr.open_rasterio(mbfiles[0]).values
+
+        lc = mb[0]
         forestmask = np.all((lc>=2,lc<=5),axis=0)
         nodata = lc==0
 
-        for ff in range(len(mbfiles)):
+        for yy in range(mb.shape[0]):
             lc_p = lc.copy()
-            lc = xr.open_rasterio(mbfiles[ff]).values[0]
-            forestmask *= (lc==lc_p)
-            nodata *= (lc==lc_p)
+            lc = mb[yy]
+            update = (lc==lc_p)
+            forestmask *= update
+            nodata *= update
 
         lcfiles = sorted(glob.glob('%s/esacci/*lccs-class*tif' % path))
         lc = xr.open_rasterio(lcfiles[0]).values[0]
