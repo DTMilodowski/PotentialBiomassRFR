@@ -237,11 +237,17 @@ def get_mask(country_code, mask_def=0):
     elif(mask_def == 5):
         landmask = (wc2_mask & soil_mask & agb_mask)
         trainmask = set_training_areas.set(path,subset=4)
-    # other stable forest (initially mapbiomas based forest extent)
+    # other stable forest (ESA CCI)
     elif(mask_def == 6):
         landmask = (wc2_mask & soil_mask & agb_mask)
         trainmask = set_training_areas.set(path,subset=4)
-        mask = set_training_areas.get_stable_forest_outside_training_areas(path,trainmask,landmask,option=1)
+        mask = set_training_areas.get_stable_forest_outside_training_areas(path,trainmask,landmask,method=2)
+    # other stable forest (Mapbiomas & ESA CCI)
+    elif(mask_def == 7):
+        landmask = (wc2_mask & soil_mask & agb_mask)
+        trainmask = set_training_areas.set(path,subset=4)
+        mask = set_training_areas.get_stable_forest_outside_training_areas(path,trainmask,landmask,method=3)
+
 
     else:
         mask = (training_mask & wc2_mask & soil_mask & agb_mask)
