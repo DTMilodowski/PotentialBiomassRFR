@@ -262,3 +262,24 @@ fig_indo_seq,ax = sfig.plot_xarray(ds,savefile,cmap='plasma',extend ='max',
                                 vmin=0,vmax=125,cbar_kwargs=cbar_kwargs,
                                 figsize_x=16,figsize_y = 6,add_colorbar =True,
                                 title= 'Sequestration potential')
+
+
+filename= '/home/dmilodow/DataStore_GCEL/FireDanger/ECMWF_FWI_GLOBAL/fwi.nc'
+savefile='/home/dmilodow/DataStore_DTM/FOREST2020/hazardsINLAndscapes/fireINLAndscapes/notebooks/milodowski/iteration2_GWIS_fires/figures/fwi'
+ds = xr.open_dataset(filename).sel(lat=slice(34, 13), lon=slice(-118,-84))
+start_date = np.datetime64('2005-05-01')
+end_date = np.datetime64('2005-07-01')
+dates = np.arange(start_date,end_date,np.timedelta64(7,'D'))
+count = 1
+fig=[]
+for dd in dates:
+    fig.append(sfig.plot_xarray(ds.fwi.sel(time=dd),'%s%i.png' % (savefile,count),cmap='inferno',vmin=0,vmax=80))
+    count+=1
+
+path2lc = '/disk/scratch/local.2/dmilodow/PotentialBiomass/processed/MEX/esacci/'
+filename = '%sESACCI-LC-L4-LCCS-Map-P1Y-2012-v2.0.7-1km-mode-lccs-class-MEX.tif' % path2lc
+savefile = '/home/dmilodow/DataStore_DTM/FOREST2020/hazardsINLAndscapes/fireINLAndscapes/notebooks/milodowski/iteration2_GWIS_fires/figures/ESACCI_2012_MEX.png'
+ds=xr.open_rasterio(filename).sel(band=1).sel(y=slice(34, 13), x=slice(-118,-84))
+ds.values = sfig.aggregate_classes(ds.values)
+lc,lc_labs=sfig.esa_cci_colormap(ds.values)
+fig_lc02 = sfig.plot_xarray(ds,savefile,cmap=lc)
