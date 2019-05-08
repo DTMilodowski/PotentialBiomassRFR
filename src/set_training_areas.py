@@ -41,8 +41,8 @@ def set(path,subset=1):
 
         lc = mb[0]
         forest = np.all((lc>=2,lc<=5),axis=0)
-        nonforest = np.all((lc>=10,lc<=13),axis=0)
-        bare = np.all((lc==23,lc==29),axis=0)
+        nonforest = np.any((lc==10,lc==11,lc==12),axis=0)
+        bare = np.any((lc==23,lc==29,lc==32),axis=0)
 
         for yy in range(mb.shape[0]):
             lc_p = lc.copy()
@@ -60,8 +60,8 @@ def set(path,subset=1):
 
         lc = mb[0]
         forest = np.all((lc>=2,lc<=5),axis=0)
-        nonforest = np.all((lc>=10,lc<=13),axis=0)
-        bare = np.all((lc==23,lc==29),axis=0)
+        nonforest = np.any((lc==10,lc==11,lc==12),axis=0)
+        bare = np.any((lc==23,lc==29,lc==32),axis=0)
         nodata = lc==0
 
         for yy in range(mb.shape[0]):
@@ -179,6 +179,42 @@ def get_stable_forest_outside_training_areas(path,trainmask_init,landmask,method
             lcmask *= (lc==lc_p)
 
         forestmask = forestmask + lcmask*nodata
+
+        # MapBiomas & ESA-CCI outside of Brazil with buffer around agriculture
+        # pasture and urban areas (3km - see Chaplin-Kramer et al, Nature Comm.,
+        # 2015)
+        elif method == 4:
+            mbfiles = sorted(glob.glob('%s/mapbiomas/*tif' % path))
+            mb = xr.open_rasterio(mbfiles[0]).values
+
+            lc = mb[0]
+            forestmask = np.all((lc>=2,lc<=5),axis=0)
+            humanmask = np.any((np.all((lc>=13,lc<=21),axis=0),lc==9,lc==24,lc==30),axis=0)
+            nodata = lc==0
+
+            for yy in range(mb.shape[0]):
+                lc_p = lc.copy()
+                lc = mb[yy]
+                update = (lc==lc_p)
+                forestmask *= update
+                nodata *= update
+
+            humanmask = np.any((np.all((lc>=13,lc<=21),axis=0),lc==9,lc==24,lc==30),axis=0)
+            struct = ndimage.generate_binary_structure(2, 2)
+            buffermask = ndimage.binary_dilation(humanmask, structure=struct,iterations=2)
+            buffermask = buffermask == False
+
+            lcfiles = sorted(glob.glob('%s/esacci/*lccs-class*tif' % path))
+            lc = xr.open_rasterio(lcfiles[0]).values[0]
+            lcmask =(lc>=50)*(lc<=90) + (lc==160)  + (lc==170) + (lc>=120)*(lc<130) + (lc>=140)*(lc<160) + (lc>=200)*(lc<210)
+
+            # loop through years and only keep pixels that do not change from year to year
+            for ff in range(len(lcfiles)):
+                lc_p = lc.copy()
+                lc = xr.open_rasterio(lcfiles[ff]).values[0]
+                lcmask *= (lc==lc_p)
+
+            forestmask = forestmask*buffermask + lcmask*nodata
 
     # mask out initial training dataset from stable forest
     return forestmask*(trainmask_init!=1)*landmask
