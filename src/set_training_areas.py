@@ -39,40 +39,36 @@ def set(path,subset=1):
     # subset 3: Mapbiomas
     elif subset == 3:
         mbfiles = sorted(glob.glob('%s/mapbiomas/*tif' % path))
-        lc = xr.open_rasterio(mbfiles[0]).values[0]
-        forest=np.ones(lc.shape)
-        nonforest=np.ones(lc.shape)
-        bare=np.ones(lc.shape)
+        mb = xr.open_rasterio(mbfiles[0]).values
 
+        lc = mb[0]
         forest = np.all((lc>=2,lc<=5),axis=0)
         nonforest = np.all((lc>=10,lc<=13),axis=0)
         bare = np.all((lc==23,lc==29),axis=0)
 
-        for ff in range(len(mbfiles)):
+        for yy in range(mb.shape[0]):
             lc_p = lc.copy()
-            lc = xr.open_rasterio(mbfiles[ff]).values[0]
+            lc = mb[yy]
             forest *= (lc==lc_p)
             nonforest *= (lc==lc_p)
             bare *= (lc==lc_p)
 
-        training_mask = forest+non_forest+bare
+        training_mask = forest+nonforest+bare
 
     # MAPBIOMAS & HFL
     elif subset == 4:
         mbfiles = sorted(glob.glob('%s/mapbiomas/*tif' % path))
-        lc = xr.open_rasterio(mbfiles[0]).values[0]
-        forest=np.ones(lc.shape)
-        nonforest=np.ones(lc.shape)
-        bare=np.ones(lc.shape)
+        mb = xr.open_rasterio(mbfiles[0]).values
 
+        lc = mb[0]
         forest = np.all((lc>=2,lc<=5),axis=0)
         nonforest = np.all((lc>=10,lc<=13),axis=0)
         bare = np.all((lc==23,lc==29),axis=0)
         nodata = lc==0
 
-        for ff in range(len(mbfiles)):
+        for yy in range(mb.shape[0]):
             lc_p = lc.copy()
-            lc = xr.open_rasterio(mbfiles[ff]).values[0]
+            lc = mb[yy]
             update = (lc==lc_p)
             forest *= update
             nonforest *= update
