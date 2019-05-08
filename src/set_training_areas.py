@@ -5,6 +5,7 @@ Create training mask for RFR routine
 """
 import numpy as np
 import xarray as xr
+from scipy import ndimage
 import glob
 def set(path,subset=1):
     # subset 1: HFL and ESACCI)
@@ -22,11 +23,19 @@ def set(path,subset=1):
             lc = xr.open_rasterio(lcfiles[ff]).values[0]
             forestmask *= (lc==lc_p)
             sparsemask *= (lc==lc_p)
+
+
+        humanmask += np.any((lc==190,np.all((lc>=10,lc<=40),axis=0)),axis=0)*nodata
+        struct = ndimage.generate_binary_structure(2, 2)
+        buffermask = ndimage.binary_dilation(humanmask, structure=struct,iterations=2)
+        buffermask = buffermask == False
+
         # load hinterland forests
         hfl = xr.open_rasterio(glob.glob('%s/forestcover/HFL*tif' % path)[0]).values[0]
         forestmask=forestmask*(hfl==1)
         # merge masks
         training_mask=sparsemask+forestmask
+        training_mask*=buffermask
 
     # subset 2: HFL only
     elif subset == 2:
@@ -51,7 +60,13 @@ def set(path,subset=1):
             nonforest *= (lc==lc_p)
             bare *= (lc==lc_p)
 
+        humanmask = np.any((np.all((lc>=13,lc<=21),axis=0),lc==9,lc==24,lc==30),axis=0)
+        struct = ndimage.generate_binary_structure(2, 2)
+        buffermask = ndimage.binary_dilation(humanmask, structure=struct,iterations=2)
+        buffermask = buffermask == False
+
         training_mask = forest+nonforest+bare
+        training_mask*=buffermask
 
     # MAPBIOMAS & HFL
     elif subset == 4:
@@ -73,6 +88,11 @@ def set(path,subset=1):
             bare *= update
             nodata *= update
 
+        humanmask = np.any((np.all((lc>=13,lc<=21),axis=0),lc==9,lc==24,lc==30),axis=0)
+        struct = ndimage.generate_binary_structure(2, 2)
+        buffermask = ndimage.binary_dilation(humanmask, structure=struct,iterations=2)
+        buffermask = buffermask == False
+
         # load hinterland forests
         hfl = xr.open_rasterio(glob.glob('%s/forestcover/HFL*tif' % path)[0]).values[0]
         hfl_mask=(hfl==1)
@@ -80,6 +100,7 @@ def set(path,subset=1):
         hfl_outside_biomas_extent = hfl_mask*nodata
 
         training_mask = forest*hfl_mask + nonforest + bare + hfl_outside_biomas_extent
+        training_mask*=buffermask
 
     return training_mask
 
@@ -152,8 +173,30 @@ def get_stable_forest_outside_training_areas(path,trainmask_init,landmask,method
             update = (lc==lc_p)
             forestmask *= update
 
-    # MapBiomas & ESA-CCI outside of Brazil
+    # MapBiomas basis with buffer around agriculture pasture and urban areas
+    # (3km - see Chaplin-Kramer et al, Nature Comm., 2015)
     elif method == 3:
+        mbfiles = sorted(glob.glob('%s/mapbiomas/*tif' % path))
+        mb = xr.open_rasterio(mbfiles[0]).values
+
+        lc = mb[0]
+        forestmask = np.all((lc>=2,lc<=5),axis=0)
+
+        for yy in range(mb.shape[0]):
+            lc_p = lc.copy()
+            lc = mb[yy]
+            update = (lc==lc_p)
+            forestmask *= update
+
+        humanmask = np.any((np.all((lc>=13,lc<=21),axis=0),lc==9,lc==24,lc==30),axis=0)
+        struct = ndimage.generate_binary_structure(2, 2)
+        buffermask = ndimage.binary_dilation(humanmask, structure=struct,iterations=2)
+        buffermask = buffermask == False
+
+        forestmask*=buffermask
+
+    # MapBiomas & ESA-CCI outside of Brazil
+    elif method == 4:
         mbfiles = sorted(glob.glob('%s/mapbiomas/*tif' % path))
         mb = xr.open_rasterio(mbfiles[0]).values
 
@@ -180,16 +223,15 @@ def get_stable_forest_outside_training_areas(path,trainmask_init,landmask,method
 
         forestmask = forestmask + lcmask*nodata
 
-        # MapBiomas & ESA-CCI outside of Brazil with buffer around agriculture
-        # pasture and urban areas (3km - see Chaplin-Kramer et al, Nature Comm.,
-        # 2015)
-        elif method == 4:
+    # MapBiomas & ESA-CCI outside of Brazil with buffer around agriculture
+    # pasture and urban areas (3km - see Chaplin-Kramer et al, Nature Comm.,
+    # 2015)
+    elif method == 5:
             mbfiles = sorted(glob.glob('%s/mapbiomas/*tif' % path))
             mb = xr.open_rasterio(mbfiles[0]).values
 
             lc = mb[0]
             forestmask = np.all((lc>=2,lc<=5),axis=0)
-            humanmask = np.any((np.all((lc>=13,lc<=21),axis=0),lc==9,lc==24,lc==30),axis=0)
             nodata = lc==0
 
             for yy in range(mb.shape[0]):
@@ -200,9 +242,6 @@ def get_stable_forest_outside_training_areas(path,trainmask_init,landmask,method
                 nodata *= update
 
             humanmask = np.any((np.all((lc>=13,lc<=21),axis=0),lc==9,lc==24,lc==30),axis=0)
-            struct = ndimage.generate_binary_structure(2, 2)
-            buffermask = ndimage.binary_dilation(humanmask, structure=struct,iterations=2)
-            buffermask = buffermask == False
 
             lcfiles = sorted(glob.glob('%s/esacci/*lccs-class*tif' % path))
             lc = xr.open_rasterio(lcfiles[0]).values[0]
@@ -214,7 +253,13 @@ def get_stable_forest_outside_training_areas(path,trainmask_init,landmask,method
                 lc = xr.open_rasterio(lcfiles[ff]).values[0]
                 lcmask *= (lc==lc_p)
 
-            forestmask = forestmask*buffermask + lcmask*nodata
+            humanmask += np.any((lc==190,np.all((lc>=10,lc<=40),axis=0)),axis=0)*nodata
+            struct = ndimage.generate_binary_structure(2, 2)
+            buffermask = ndimage.binary_dilation(humanmask, structure=struct,iterations=2)
+            buffermask = buffermask == False
+
+            forestmask = forestmask + lcmask*nodata
+            forestmask *= buffermask
 
     # mask out initial training dataset from stable forest
     return forestmask*(trainmask_init!=1)*landmask
