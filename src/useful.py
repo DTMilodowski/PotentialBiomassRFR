@@ -233,7 +233,7 @@ def get_mask(country_code, mask_def=0):
         landmask = (wc2_mask & soil_mask & agb_mask)
         trainmask = set_training_areas.set(path,subset=3)
         mask = set_training_areas.get_stable_forest_outside_training_areas(path,trainmask,landmask,method==4)
-    # training mask (mapbiomas & HFL)
+    # training mask (mapbiomas & HFL & ESA-CCI bare areas)
     elif(mask_def == 5):
         landmask = (wc2_mask & soil_mask & agb_mask)
         mask = set_training_areas.set(path,subset=4)

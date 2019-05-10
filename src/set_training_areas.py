@@ -25,7 +25,7 @@ def set(path,subset=1):
             sparsemask *= (lc==lc_p)
 
 
-        humanmask += np.any((lc==190,np.all((lc>=10,lc<=40),axis=0)),axis=0)*nodata
+        humanmask += np.any((lc==190,np.all((lc>=10,lc<=40),axis=0)),axis=0)
         struct = ndimage.generate_binary_structure(2, 2)
         buffermask = ndimage.binary_dilation(humanmask, structure=struct,iterations=2)
         buffermask = buffermask == False
@@ -89,9 +89,6 @@ def set(path,subset=1):
             nodata *= update
 
         humanmask = np.any((np.all((lc>=13,lc<=21),axis=0),lc==9,lc==24,lc==30),axis=0)
-        struct = ndimage.generate_binary_structure(2, 2)
-        buffermask = ndimage.binary_dilation(humanmask, structure=struct,iterations=2)
-        buffermask = buffermask == False
 
         # load hinterland forests
         hfl = xr.open_rasterio(glob.glob('%s/forestcover/HFL*tif' % path)[0]).values[0]
@@ -99,7 +96,27 @@ def set(path,subset=1):
 
         hfl_outside_biomas_extent = hfl_mask*nodata
 
-        training_mask = forest*hfl_mask + nonforest + bare + hfl_outside_biomas_extent
+        # load ESA-CCI data
+        lcfiles = sorted(glob.glob('%s/esacci/*lccs-class*tif' % path))
+        lc = xr.open_rasterio(lcfiles[0]).values[0]
+        esacci_bare = (lc>=200)*(lc<210) + (lc == 220) # bare, ice
+
+        # loop through years and only keep pixels tha do not change from year to year
+        for ff in range(len(lcfiles)):
+            lc_p = lc.copy()
+            lc = xr.open_rasterio(lcfiles[ff]).values[0]
+            esacci_bare *= (lc==lc_p)
+
+        humanmask += np.any((lc==190,np.all((lc>=10,lc<=40),axis=0)),axis=0)*nodata
+
+        struct = ndimage.generate_binary_structure(2, 2)
+        buffermask = ndimage.binary_dilation(humanmask, structure=struct,iterations=2)
+        buffermask = buffermask == False
+
+        esacci_bare_outside_biomas_extent = esacci_bare*nodata
+
+
+        training_mask = forest*hfl_mask + nonforest + bare + hfl_outside_biomas_extent + esacci_bare_outside_biomas_extent
         training_mask*=buffermask
 
     return training_mask
