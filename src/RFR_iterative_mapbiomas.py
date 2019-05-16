@@ -38,7 +38,7 @@ predictors_full,landmask = useful.get_predictors(country_code, training_subset=F
 agb = xr.open_rasterio('%sAvitabile_AGB_%s_1km.tif' % (path2agb,country_code))[0]
 
 # Get additional data masks
-initial_training_mask = useful.get_mask(country_code,mask_def=5)
+initial_training_mask = useful.get_mask(country_code,mask_def=8)
 other_stable_forest_mask = useful.get_mask(country_code,mask_def=7)
 
 # Run PCA transformation on predictor variables
