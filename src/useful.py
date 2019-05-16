@@ -184,6 +184,7 @@ def get_predictors_for_defined_mask(country_code,mask):
 # --- 5           -> mapbiomas and hinterland forest landscapes
 # --- 6           -> other stable forest areas from mapbiomas
 # --- 7           -> other stable forest areas from mapbiomas & ESACCI
+# --- 8           -> mapbiomas and hinterland forest landscapes & ESACCI natural non-forest
 def get_mask(country_code, mask_def=0):
 
     path = '/disk/scratch/local.2/dmilodow/PotentialBiomass/processed/%s/' % country_code
@@ -247,6 +248,10 @@ def get_mask(country_code, mask_def=0):
         landmask = (wc2_mask & soil_mask & agb_mask)
         trainmask = set_training_areas.set(path,subset=4)
         mask = set_training_areas.get_stable_forest_outside_training_areas(path,trainmask,landmask,method=5)
+    # training mask (mapbiomas & HFL & ESA-CCI natural non-forest areas)
+    elif(mask_def == 8):
+        landmask = (wc2_mask & soil_mask & agb_mask)
+        mask = set_training_areas.set(path,subset=5)
     else:
         mask = (training_mask & wc2_mask & soil_mask & agb_mask)
     # check the mask dimensions
