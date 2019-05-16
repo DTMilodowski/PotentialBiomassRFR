@@ -119,6 +119,61 @@ def set(path,subset=1):
         training_mask = forest*hfl_mask + nonforest + bare + hfl_outside_biomas_extent + esacci_bare_outside_biomas_extent
         training_mask*=buffermask
 
+    # MAPBIOMAS & HFL & ESA-CCI (outside Brazil)
+    elif subset == 5:
+        mbfiles = sorted(glob.glob('%s/mapbiomas/*tif' % path))
+        mb = xr.open_rasterio(mbfiles[0]).values
+
+        lc = mb[0]
+        forest = np.all((lc>=2,lc<=5),axis=0)
+        nonforest = np.any((lc==10,lc==11,lc==12),axis=0)
+        bare = np.any((lc==23,lc==29,lc==32),axis=0)
+        nodata = lc==0
+
+        for yy in range(mb.shape[0]):
+            lc_p = lc.copy()
+            lc = mb[yy]
+            update = (lc==lc_p)
+            forest *= update
+            nonforest *= update
+            bare *= update
+            nodata *= update
+
+        humanmask = np.any((np.all((lc>=13,lc<=21),axis=0),lc==9,lc==24,lc==30),axis=0)
+
+        # load hinterland forests
+        hfl = xr.open_rasterio(glob.glob('%s/forestcover/HFL*tif' % path)[0]).values[0]
+        hfl_mask=(hfl==1)
+
+        hfl_outside_biomas_extent = hfl_mask*nodata
+
+        # load ESA-CCI data
+        lcfiles = sorted(glob.glob('%s/esacci/*lccs-class*tif' % path))
+        lc = xr.open_rasterio(lcfiles[0]).values[0]
+        esacci_bare = (lc>=200)*(lc<210) + (lc == 220) # bare, ice
+        esacci_natural_non_forest = (lc>=110)*(lc<160) + (lc>=200)*(lc<210) # shrub, lichen, sparse, bare
+
+
+        # loop through years and only keep pixels tha do not change from year to year
+        for ff in range(len(lcfiles)):
+            lc_p = lc.copy()
+            lc = xr.open_rasterio(lcfiles[ff]).values[0]
+            esacci_natural_non_forest *= (lc==lc_p)
+
+        humanmask += np.any((lc==190,np.all((lc>=10,lc<=40),axis=0)),axis=0)*nodata
+
+        struct = ndimage.generate_binary_structure(2, 2)
+        buffermask = ndimage.binary_dilation(humanmask, structure=struct,iterations=2)
+        buffermask = buffermask == False
+
+        esacci_nf_outside_biomas_extent = esacci_natural_non_forest*nodata
+
+
+        training_mask = forest*hfl_mask + nonforest + bare + hfl_outside_biomas_extent + esacci_nf_outside_biomas_extent
+        training_mask*=buffermask
+
+
+
     return training_mask
 
 # A function that revises the training areas to account for forested areas that
