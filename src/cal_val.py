@@ -29,7 +29,7 @@ def cal_val_train_test(X,y,rf,path2calval,country_code,version):
 
     # sort the data points according to z for nicer plotting aesthetics
     idx_train = z_train.argsort()
-    idx_test = z_train.argsort()
+    idx_test = z_test.argsort()
 
     #create some pandas df
     df_train = pd.DataFrame({'obs':y_train[idx_train],'sim':y_train_predict[idx_train],
@@ -52,7 +52,8 @@ def cal_val_train_test(X,y,rf,path2calval,country_code,version):
     #for dd, df in enumerate([df_train.sample(1000),df_test.sample(1000)]):
     for dd, df in enumerate([df_train,df_test]):
         ax = fig.add_subplot(1,2,dd+1,aspect='equal')
-        sns.regplot(x='obs',y='sim',data=df,scatter_kws={'s':1},line_kws={'color':'k'},ax=ax)
+        sns.regplot(x='obs',y='sim',hue='density',data=df,scatter_kws={'s':1},
+                    line_kws={'color':'k'},legend=False,ax=ax)
         ax.annotate(labels[dd], xy=(0.95,0.05), xycoords='axes fraction',
                         backgroundcolor='none',horizontalalignment='right',
                         verticalalignment='bottom', fontsize=10)
