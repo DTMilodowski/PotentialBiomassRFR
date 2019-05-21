@@ -20,11 +20,24 @@ def cal_val_train_test(X,y,rf,path2calval,country_code,version):
     rmse = [np.sqrt(mean_squared_error(y_train,y_train_predict)),
             np.sqrt(mean_squared_error(y_test,y_test_predict))]
 
+    # estimate the density of points (for plotting density of points in cal-val
+    # figures)
+    xy_train = np.vstack(y_train,y_train_predict)
+    xy_test = np.vstack(y_test,y_test_predict)
+    z_train = stats.gaussian_kde(xy_train)(xy_train)
+    z_test = stats.gaussian_kde(xy_test)(xy_test)
+
+    # sort the data points according to z for nicer plotting aesthetics
+    idx_train = z_train.argsort()
+    idx_test = z_train.argsort()
+
     #create some pandas df
-    df_train = pd.DataFrame({'obs':y_train,'sim':y_train_predict})
+    df_train = pd.DataFrame({'obs':y_train[idx_train],'sim':y_train_predict[idx_train],
+                            'density':z_train[idx_train]})
     df_train.sim[df_train.sim<0] = 0.
 
-    df_test =  pd.DataFrame({'obs':y_test,'sim':y_test_predict})
+    df_test =  pd.DataFrame({'obs':y_test[idx_test],'sim':y_test_predict[idx_test],
+                            'density':z_test[idx_test]})
     df_test.sim[df_test.sim<0] = 0.
 
     #plot
