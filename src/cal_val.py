@@ -2,9 +2,11 @@ import pandas as pd
 import seaborn as sns
 import numpy as np
 import scipy.stats as stats
+from scipy.interpolate import interpn
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import r2_score, mean_squared_error
+from sklearn.linear_model import LinearRegression
 
 # function to carry out cal/val for a random forest regression
 def cal_val_train_test(X,y,rf,path2calval,country_code,version):
@@ -22,14 +24,20 @@ def cal_val_train_test(X,y,rf,path2calval,country_code,version):
 
     # estimate the density of points (for plotting density of points in cal-val
     # figures)
-    xy_train = np.vstack(y_train,y_train_predict)
-    xy_test = np.vstack(y_test,y_test_predict)
-    z_train = stats.gaussian_kde(xy_train)(xy_train)
-    z_test = stats.gaussian_kde(xy_test)(xy_test)
-
-    # sort the data points according to z for nicer plotting aesthetics
+    data_train , x_e, y_e = np.histogram2d( y_train, y_train_predict, bins = 50)
+    z_train = interpn( ( 0.5*(x_e[1:] + x_e[:-1]), 0.5*(y_e[1:]+y_e[:-1]) ),
+                        data_train, np.vstack([y_train,y_train_predict]).T,
+                        method = "splinef2d", bounds_error = False)
+    data_test , x_e, y_e = np.histogram2d( y_test, y_test_predict, bins = 50)
+    z_test = interpn( ( 0.5*(x_e[1:] + x_e[:-1]) , 0.5*(y_e[1:]+y_e[:-1]) ),
+                        data_test, np.vstack([y_test,y_test_predict]).T,
+                        method = "splinef2d", bounds_error = False )
     idx_train = z_train.argsort()
     idx_test = z_test.argsort()
+
+    # regression obs vs. model
+    cal_reg = LinearRegression().fit(y_train.reshape(-1, 1),y_train_predict)
+    val_reg = LinearRegression().fit(y_test.reshape(-1, 1),y_test_predict)
 
     #create some pandas df
     df_train = pd.DataFrame({'obs':y_train[idx_train],'sim':y_train_predict[idx_train],
@@ -42,6 +50,8 @@ def cal_val_train_test(X,y,rf,path2calval,country_code,version):
 
     #plot
     sns.set()
+    cmap = sns.light_palette('seagreen',as_cmap=True)
+
     fig = plt.figure('cal/val random',figsize=(10,6))
     fig.clf()
     #first ax
@@ -52,8 +62,12 @@ def cal_val_train_test(X,y,rf,path2calval,country_code,version):
     #for dd, df in enumerate([df_train.sample(1000),df_test.sample(1000)]):
     for dd, df in enumerate([df_train,df_test]):
         ax = fig.add_subplot(1,2,dd+1,aspect='equal')
-        sns.regplot(x='obs',y='sim',hue='density',data=df,scatter_kws={'s':1},
-                    line_kws={'color':'k'},legend=False,ax=ax)
+        sns.scatterplot(x='obs',y='sim', data=cal_df, marker='.', hue='density',
+                    palette=cmap, edgecolor='none', legend=False, ax=ax)
+        x_range = np.array([np.min(cal_df['cal_obs']),np.max(cal_df['cal_obs'])])
+        ax.plot(x_range,cal_reg.predict(x_range.reshape(-1, 1)),'-',color='black')
+        ax.plot(x_range,x_range,'--',color='black')
+
         ax.annotate(labels[dd], xy=(0.95,0.05), xycoords='axes fraction',
                         backgroundcolor='none',horizontalalignment='right',
                         verticalalignment='bottom', fontsize=10)
