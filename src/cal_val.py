@@ -62,9 +62,9 @@ def cal_val_train_test(X,y,rf,path2calval,country_code,version):
     #for dd, df in enumerate([df_train.sample(1000),df_test.sample(1000)]):
     for dd, df in enumerate([df_train,df_test]):
         ax = fig.add_subplot(1,2,dd+1,aspect='equal')
-        sns.scatterplot(x='obs',y='sim', data=cal_df, marker='.', hue='density',
+        sns.scatterplot(x='obs',y='sim', data=df, marker='.', hue='density',
                     palette=cmap, edgecolor='none', legend=False, ax=ax)
-        x_range = np.array([np.min(cal_df['cal_obs']),np.max(cal_df['cal_obs'])])
+        x_range = np.array([np.min(df['obs']),np.max(df['obs'])])
         ax.plot(x_range,cal_reg.predict(x_range.reshape(-1, 1)),'-',color='black')
         ax.plot(x_range,x_range,'--',color='black')
 
