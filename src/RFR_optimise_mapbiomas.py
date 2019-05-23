@@ -2,25 +2,33 @@ import numpy as np
 import sys
 import xarray as xr #xarray to read all types of formats
 from affine import Affine
+import pickle
+
+from matplotlib import pyplot as plt
+import seaborn as sns
+sns.set()
+
 import useful
 import set_training_areas
 import cal_val as cv
 import map_figures as mf
+
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.model_selection import GridSearchCV, train_test_split
+from sklearn.model_selection import GridSearchCV, train_test_split, StratifiedShuffleSplit
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 from sklearn.pipeline import make_pipeline
 from sklearn.metrics import mean_squared_error
 from sklearn.externals import joblib
 
-from matplotlib import pyplot as plt
-import seaborn as sns
-sns.set()
+from hyperopt import tpe, Trials, fmin, hp, STATUS_OK,space_eval
+from hyperopt.pyll.base import scope
+from functools import partial
 
 country_code = sys.argv[1]#'WAFR'
 version = sys.argv[2]#'002'
 iterations = int(sys.argv[3])#5
+training_sample_size = 250000
 #load = sys.argv[4]#'new'
 
 path2alg = '/home/dmilodow/DataStore_DTM/FOREST2020/PotentialBiomassRFR/saved_algorithms'
@@ -29,6 +37,12 @@ path2agb = path2data+'agb/'
 path2calval = '/home/dmilodow/DataStore_DTM/FOREST2020/PotentialBiomassRFR/calval/'
 path2output = '/home/dmilodow/DataStore_DTM/FOREST2020/PotentialBiomassRFR/output/'
 
+"""
+#===============================================================================
+PART A: LOAD IN DATA, PROCESS AS REQUIRED AND SUBSET THE TRAINING DATA
+#-------------------------------------------------------------------------------
+"""
+print('Loading data')
 #pca = joblib.load('%s/%s_%s_pca_pipeline.pkl' % (path2alg,country_code,version))
 pca = make_pipeline(StandardScaler(),PCA(n_components=0.999))
 
@@ -36,18 +50,11 @@ pca = make_pipeline(StandardScaler(),PCA(n_components=0.999))
 predictors_full,landmask = useful.get_predictors(country_code, training_subset=False)
 #get the agb data
 agb = xr.open_rasterio('%sAvitabile_AGB_%s_1km.tif' % (path2agb,country_code))[0]
+yall = agb.values[landmask]
 
-# Get additional data masks
-initial_training_mask = useful.get_mask(country_code,mask_def=8)
-other_stable_forest_mask = useful.get_mask(country_code,mask_def=7)
-
-# Run PCA transformation on predictor variables
-# fit PCA
+# Fit PCA transformation on predictor variables
 pca.fit(predictors_full)
 joblib.dump(pca,'%s/%s_%s_pca_pipeline.pkl' % (path2alg,country_code,version))
-Xall = pca.transform(predictors_full)
-
-yall = agb.values[landmask]
 
 # First run of random forest regression model, with inital training set.
 # Create the random forest object with predefined parameters
@@ -58,74 +65,101 @@ rf = RandomForestRegressor(bootstrap=True, criterion='mse', max_depth=None,
            min_weight_fraction_leaf=0.0, n_estimators=500, n_jobs=-1,
            oob_score=True, random_state=None, verbose=0, warm_start=False)
 
+# Get additional data masks
+initial_training_mask = useful.get_mask(country_code,mask_def=5)
+
 # get subset of predictors for initial training set
-X = Xall[initial_training_mask[landmask]]
+X = predictors_full[initial_training_mask[landmask]]
 y = yall[initial_training_mask[landmask]]
 
-# fit the model
-rf.fit(X,y)
+"""
+#===============================================================================
+PART B: BAYESIAN HYPERPARAMETER OPTIMISATION
+#-------------------------------------------------------------------------------
+"""
+print('Hyperparameter optimisation')
+#split train and test subset, specifying random seed for reproducability
+# due to processing limitations, we use only <500000 in the initial
+# hyperparameter optimisation. Random seed used so that same split can be
+# applied later for independent validations set
+sss = StratifiedShuffleSplit(n_splits=1,train_size=0.75,test_size=0.25,random_state=2345)
+idx_train, idx_test = sss.split(X,lc)
+X_train, X_test = X[idx_train], X[idx_test]
+y_train, y_test = y[idx_train], y[idx_test]
+lc_train, lc_test = lc[idx_train], lc[idx_test]
+# create pca transform for testing against RF performance
+Xpca_train = pca.transform(X_train)
 
-# Iterative augmentation of training dataset (getting variance is memory & processor intensive)
-# - get additional stable forest areas
-Xtest = Xall[other_stable_forest_mask[landmask]]
-ytest = yall[other_stable_forest_mask[landmask]]
+n_predictors = X_train.shape[1]
+n_pca_predictors = Xpca_train.shape[1]
 
-# now iterate, filtering out other stable forest pixels for which the observed biomass
-# is not within error of the predicted potential biomass
-AGBpot, training_set, rf = useful.iterative_augmentation_of_training_set_obs_vs_pot(ytest, y, Xtest, X, Xall, iterations,
-                                            landmask, initial_training_mask,
-                                            other_stable_forest_mask, rf,stopping_condition=0.01)
-iterations = AGBpot.shape[0]
+# set up hyperparameterspace for optimisation
+rf = RandomForestRegressor(criterion="mse",bootstrap=True,n_jobs=-1)
+space = hp.choice([
+            {'preprocessing':'none',
+             'params': { "max_depth":scope.int(hp.quniform("max_depth",20,500,1)),              # ***maximum number of branching levels within each tree
+                    "max_features":scope.int(hp.quniform("max_features",int(n_predictors/5),n_predictors+1,1)),      # ***the maximum number of variables used in a given tree
+                    "min_samples_leaf":scope.int(hp.quniform("min_samples_leaf",1,50,1)),    # ***The minimum number of samples required to be at a leaf node
+                    "min_samples_split":scope.int(hp.quniform("min_samples_split",2,200,1)),  # ***The minimum number of samples required to split an internal node
+                    "n_estimators":scope.int(hp.quniform("n_estimators",80,120,1)),          # ***Number of trees in the random forest
+                    "min_impurity_decrease":hp.uniform("min_impurity_decrease",0.0,0.2),
+                    "n_jobs":hp.choice("n_jobs",[40,40]) }
+            },
+            {'preprocessing':'pca',
+             'params': { "max_depth":scope.int(hp.quniform("max_depth",20,500,1)),              # ***maximum number of branching levels within each tree
+                    "max_features":scope.int(hp.quniform("max_features",int(n_pca_predictors/5),n_pca_predictors+1,1)),      # ***the maximum number of variables used in a given tree
+                    "min_samples_leaf":scope.int(hp.quniform("min_samples_leaf",1,50,1)),    # ***The minimum number of samples required to be at a leaf node
+                    "min_samples_split":scope.int(hp.quniform("min_samples_split",2,200,1)),  # ***The minimum number of samples required to split an internal node
+                    "n_estimators":scope.int(hp.quniform("n_estimators",80,120,1)),          # ***Number of trees in the random forest
+                    "min_impurity_decrease":hp.uniform("min_impurity_decrease",0.0,0.2),
+                    "n_jobs":hp.choice("n_jobs",[40,40]) }
+            }
+        ])
 
-# Save rf model for future reference
-joblib.dump(rf,'%s/%s_%s_rf_iterative.pkl' % (path2alg,country_code,
-                                                version))
+# define a function to quantify the objective function
+best = -np.inf
+seed=0
+def f(params):
+    global best
+    # print starting point
+    if np.isfinite(best)==False:
+        print('starting point:', params)
 
-# convert training set and AGBpot to xdarray for easy plotting and export to
-# netcdf
-# first deal with metadata and coordinates
-tr = agb.attrs['transform']#Affine.from_gdal(*agb.attrs['transform'])
-transform = Affine(tr[0],tr[1],tr[2],tr[3],tr[4],tr[5])
-nx, ny = agb.sizes['x'], agb.sizes['y']
-col,row = np.meshgrid(np.arange(nx)+0.5, np.arange(ny)+0.5)
-lon, lat = transform * (col,row)
+    # otherwise run the cross validation for this parameter set
+    # - subsample from training set for this iteration
+    sss_iter = StratifiedShuffleSplit(n_splits=1,train_size=training_sample_size,
+                                            test_size=0,random_state=seed)
+    seed+=1
+    idx_iter, idx_temp = sss_iter.split(X_train,lc_train)
+    y_iter = y[idx_iter]
+    if space['preprocessing']=='pca':
+        X_iter = Xpca_train[idx_iter]
+    else:
+        X_iter = X_train[idx_iter]
 
-coords = {'lat': (['lat'],lat[:,0],{'units':'degrees_north','long_name':'latitude'}),
-          'lon': (['lon'],lon[0,:],{'units':'degrees_east','long_name':'longitude'})}
+    # - set up random forest regressor
 
-attrs_1={'_FillValue':-9999.,'units':'Mg ha-1'}
-attrs_2={'_FillValue':-9999.,'units':'None'}
-data_vars = {}
+    rf_params=space['params']
+    rf = RandomForestRegressor(**rf_params)
+    # - apply cross validation procedure
+    score = cross_val_score(rf, X_iter, y_iter, cv=5).mean()
+    # - if error reduced, then update best model accordingly
+    if score > best:
+        best = score
+        print('new best r^2: ', -best, params)
+    return {'loss': -score, 'status': STATUS_OK}
 
-data_vars['AGBobs'] = (['lat','lon'],np.zeros([ny,nx])*np.nan,attrs_1)
-for ii in range(0,iterations):
-    key = 'AGBpot%i' % (ii+1)
-    data_vars[key] = (['lat','lon'],np.zeros([ny,nx])*np.nan,attrs_1)
-    key = 'trainset%i' % (ii+1)
-    data_vars[key] = (['lat','lon'],np.zeros([ny,nx])*np.nan,attrs_2)
+# Set algoritm parameters
+# - TPE
+# - randomised search used to initialise (n_startup_jobs iterations)
+# - percentage of hyperparameter combos identified as "good" (gamma)
+# - number of sampled candidates to calculate expected improvement (n_EI_candidates)
+trials=Trials()
+algorithm = partial(tpe.suggest, n_startup_jobs=30, gamma=0.25, n_EI_candidates=24)
+best = fmin(f, param_space, algo=algorithm, max_evals=130, trials=trials)
+print('best:')
+print(best)
 
-agb_rf = xr.Dataset(data_vars=data_vars,coords=coords)
-agb_rf.AGBobs.values[landmask]  = agb.values[landmask]
-for ii in range(0,iterations):
-    key = 'AGBpot%i' % (ii+1)
-    agb_rf[key].values[landmask]= AGBpot[ii][landmask]
-    key = 'trainset%i' % (ii+1)
-    agb_rf[key].values[landmask] = training_set[ii][landmask]
-
-#save to a nc file
-comp = dict(zlib=True, complevel=1)
-encoding = {var: comp for var in agb_rf.data_vars}
-nc_file = '%s%s_%s_AGB_potential_RFR_worldclim_soilgrids.nc' % (path2output,
-                                country_code,version)
-agb_rf.to_netcdf(path=nc_file)#,encoding=encoding)
-
-# plot stuff
-# Initial cal-val plot
-mf.plot_AGBpot_iterations(agb_rf,iterations,country_code,version,path2output = path2output)
-mf.plot_training_residuals(agb_rf,iterations,country_code,version,path2output=path2output,vmin=[0,0,-50],vmax=[200,200,50])
-mf.plot_training_areas_iterative(agb_rf,iterations,country_code,version,path2output = path2output)
-mf.plot_AGB_AGBpot_training(agb_rf,iterations,country_code,version,path2output = path2output)
-
-training_mask_final = (training_set[-1]>0)*landmask
-cal_r2,val_r2 = cv.cal_val_train_test(Xall[training_mask_final[landmask]],agb.values[training_mask_final],
-                                rf,path2calval, country_code, version)
+# save trials for future reference
+print('saving trials to file for future reference')
+pickle.dump(trials, open('%s%s_%s_rf_sentinel_lidar_agb_trials.p' % (path2alg,site_id,version), "wb"))
