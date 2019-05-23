@@ -103,7 +103,7 @@ space = hp.choice([
                     "min_samples_split":scope.int(hp.quniform("min_samples_split",2,200,1)),  # ***The minimum number of samples required to split an internal node
                     "n_estimators":scope.int(hp.quniform("n_estimators",80,120,1)),          # ***Number of trees in the random forest
                     "min_impurity_decrease":hp.uniform("min_impurity_decrease",0.0,0.2),
-                    "n_jobs":hp.choice("n_jobs",[40,40]) }
+                    "n_jobs":hp.choice("n_jobs",[20,20]) }
             },
             {'preprocessing':'pca',
              'params': { "max_depth":scope.int(hp.quniform("max_depth",20,500,1)),              # ***maximum number of branching levels within each tree
@@ -112,7 +112,7 @@ space = hp.choice([
                     "min_samples_split":scope.int(hp.quniform("min_samples_split",2,200,1)),  # ***The minimum number of samples required to split an internal node
                     "n_estimators":scope.int(hp.quniform("n_estimators",80,120,1)),          # ***Number of trees in the random forest
                     "min_impurity_decrease":hp.uniform("min_impurity_decrease",0.0,0.2),
-                    "n_jobs":hp.choice("n_jobs",[40,40]) }
+                    "n_jobs":hp.choice("n_jobs",[20,20]) }
             }
         ])
 
