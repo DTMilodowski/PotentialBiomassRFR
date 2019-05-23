@@ -444,3 +444,17 @@ def iterative_augmentation_of_training_set_obs_vs_pot(ytest, y, Xtest, X, Xall, 
     np.save('AGBpot_test.npy',AGBpot)
     np.save('training_test.npy',training_set)
     return AGBpot, training_set, rf
+
+
+"""
+#===============================================================================
+# FUNCTIONS FOR QUICKLY LOADING DATASET IF NEEDED
+#-------------------------------------------------------------------------------
+"""
+# load in mapbiomas for a given timestep
+def load_mapbiomas(country_code,timestep=-1):
+    path = '/disk/scratch/local.2/dmilodow/PotentialBiomass/processed/%s/' % country_code
+    mbfiles = sorted(glob.glob('%s/mapbiomas/*tif' % path))
+    mb = xr.open_rasterio(mbfiles[0]).values
+    lc = mb[timestep]
+    return lc
