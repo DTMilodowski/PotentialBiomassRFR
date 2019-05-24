@@ -87,7 +87,7 @@ rf = RandomForestRegressor(bootstrap=True,
             min_samples_leaf=trace['min_samples_leaf'][idx],       # ***The minimum number of samples required to be at a leaf node
             min_samples_split=trace['min_samples_split'][idx],       # ***The minimum number of samples required to split an internal node
             n_estimators=200,#trace['n_estimators'],          # ***Number of trees in the random forest
-            n_jobs=20,                 # The number of jobs to run in parallel for both fit and predict
+            n_jobs=10,                 # The number of jobs to run in parallel for both fit and predict
             oob_score=True,            # use out-of-bag samples to estimate the R^2 on unseen data
             random_state=112358,         # seed used by the random number generator
             )
@@ -96,6 +96,12 @@ rf = RandomForestRegressor(bootstrap=True,
 # Create the random forest object with predefined parameters
 rf.fit(X,y)
 
+"""
+#===============================================================================
+PART B: ITERATIVE AUGMENTATION OF TRAINING SET USED TO CALIBRATE RANDOM FOREST
+MODEL
+#-------------------------------------------------------------------------------
+"""
 # now iterate, filtering out other stable forest pixels for which the observed biomass
 # is not within error of the predicted potential biomass
 AGBpot, training_set, rf = useful.iterative_augmentation_of_training_set_obs_vs_pot(ytest, y, Xtest, X, Xall, iterations,
