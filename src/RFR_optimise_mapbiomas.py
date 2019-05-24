@@ -120,22 +120,13 @@ def f(params):
     if np.isfinite(best)==False:
         print('starting point:', params)
 
-    # otherwise run the cross validation for this parameter set
+    # run the cross validation for this parameter set
     # - subsample from training set for this iteration
     sss_iter = StratifiedShuffleSplit(n_splits=1,train_size=training_sample_size,
                                             test_size=training_sample_size,random_state=seed)
     for idx_iter, idx_test in sss_iter.split(X_train,lc_train):
         y_iter = y[idx_iter]
         X_iter = Xpca_train[idx_iter]
-    #if space['version']['preprocessing']=='pca':
-    #    print('\tusing PCA')
-    #    X_iter = Xpca_train[idx_iter]
-    #else:
-    #    print('\tno PCA')
-    #    X_iter = X_train[idx_iter]
-
-    # - set up random forest regressor
-
     #rf_params=space['preprocessing']['params']
     rf = RandomForestRegressor(**params)
     # - apply cross validation procedure
@@ -153,11 +144,60 @@ def f(params):
 # - percentage of hyperparameter combos identified as "good" (gamma)
 # - number of sampled candidates to calculate expected improvement (n_EI_candidates)
 trials=Trials()
-algorithm = partial(tpe.suggest, n_startup_jobs=30, gamma=0.25, n_EI_candidates=24)
-best = fmin(f, pca_params, algo=algorithm, max_evals=130, trials=trials)
+max_evals = 120
+algorithm = partial(tpe.suggest, n_startup_jobs=40, gamma=0.25, n_EI_candidates=24)
+best = fmin(f, pca_params, algo=algorithm, max_evals=120, trials=trials)
 print('best:')
 print(best)
 
 # save trials for future reference
 print('saving trials to file for future reference')
 pickle.dump(trials, open('%s%s_%s_rf_hyperopt_trials_with_pca.p' % (path2alg,country_code,version), "wb"))
+
+"""
+# plot summary of optimisation runs
+"""
+print('Basic plots summarising optimisation results')
+parameters = ['n_estimators','max_depth', 'max_features', 'min_impurity_decrease','min_samples_leaf', 'min_samples_split']
+
+trace = {}
+trace['scores'] = np.zeros(max_evals)
+trace['iteration'] = np.arange(max_evals)+1
+for pp in parameters:
+    trace[pp] = np.zeros(max_evals)
+
+for ii,tt in enumerate(trials.trials):
+     trace['scores'][ii] = -tt['result']['loss']
+     for pp in parameters:
+         trace[pp][ii] = tt['misc']['vals'][pp][0]
+
+df = pd.DataFrame(data=trace)
+
+fig2, axes = plt.subplots(nrows=3, ncols=2, figsize=(8,8))
+cmap = sns.dark_palette('seagreen',as_cmap=True)
+for i, val in enumerate(parameters):
+    sns.scatterplot(x=val,y='score',data=df,marker='.',hue='iteration',
+                palette=cmap,edgecolor='none',legend=False,ax=axes[i//3,i%3])
+    axes[i//3,i%3].set_xlabel(val)
+    axes[i//3,i%3].set_ylabel('5-fold C-V score')
+fig2.savefig('%s%s_%s_hyperpar_search_score.png' % (path2calval,country_code,version))
+
+# Plot traces to see progression of hyperparameter selection
+fig3, axes = plt.subplots(nrows=3, ncols=2, figsize=(8,8))
+for i, val in enumerate(parameters):
+    sns.scatterplot(x='iteration',y=val,data=df,marker='.',hue='score',
+                palette=cmap,edgecolor='none',legend=False,ax=axes[i//3,i%3])
+    axes[i//3,i%3].set_title(val)
+fig3.savefig('%s%s_%s_hyperpar_search_trace.png' % (path2calval,country_code,version))
+
+
+# Take best hyperparameter set and apply cal-val on full training set
+print('Applying cal-val to full training set and withheld validation set')
+idx = np.argsort(trace['scores'])[0]
+best_params = trials.trials[idx]['misc']['vals']
+
+max_depth_best = np.array(max_depth_range)[best_params["max_depth"][0]]
+max_features_best = np.array(max_features_range)[best_params["max_features"][0]]
+min_samples_leaf_best = np.array(min_samples_leaf_range)[best_params["min_samples_leaf"][0]]
+min_samples_split_best = np.array(min_samples_split_range)[best_params["min_samples_split"][0]]
+n_estimators_best = np.array(n_estimators_range)[best_params["n_estimators"][0]]
