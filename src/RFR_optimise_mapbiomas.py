@@ -63,6 +63,10 @@ X = predictors_full[initial_training_mask[landmask]]
 y = yall[initial_training_mask[landmask]]
 lc = mapbiomas[landmask][initial_training_mask[landmask]]
 
+predictors_full = None
+yall = None
+agb = None
+
 """
 #===============================================================================
 PART B: BAYESIAN HYPERPARAMETER OPTIMISATION
@@ -146,7 +150,7 @@ def f(params):
 # - number of sampled candidates to calculate expected improvement (n_EI_candidates)
 trials=Trials()
 max_evals = 120
-spin_up = 40
+spin_up = 60
 algorithm = partial(tpe.suggest, n_startup_jobs=spin_up, gamma=0.25, n_EI_candidates=24)
 best = fmin(f, pca_params, algo=algorithm, max_evals=120, trials=trials)
 print('best:')
