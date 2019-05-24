@@ -24,7 +24,7 @@ from functools import partial
 
 country_code = 'BRA'
 version = '007'
-training_sample_size = 250000
+training_sample_size = 500000
 #load = sys.argv[4]#'new'
 
 path2alg = '/home/dmilodow/DataStore_DTM/FOREST2020/PotentialBiomassRFR/saved_algorithms'
@@ -85,7 +85,7 @@ n_predictors = X_train.shape[1]
 n_pca_predictors = Xpca_train.shape[1]
 
 # set up hyperparameterspace for optimisation
-rf = RandomForestRegressor(criterion="mse",bootstrap=True,n_jobs=-1)
+rf = RandomForestRegressor(criterion="mse",bootstrap=True,n_jobs=-1,n_estimators=80)
 
 default_params = { "max_depth":scope.int(hp.quniform("max_depth",20,500,1)),              # ***maximum number of branching levels within each tree
                     "max_features":scope.int(hp.quniform("max_features",int(n_predictors/5),n_predictors,1)),      # ***the maximum number of variables used in a given tree
@@ -123,10 +123,11 @@ def f(params):
     # run the cross validation for this parameter set
     # - subsample from training set for this iteration
     sss_iter = StratifiedShuffleSplit(n_splits=1,train_size=training_sample_size,
-                                            test_size=training_sample_size,random_state=seed)
-    for idx_iter, idx_test in sss_iter.split(X_train,lc_train):
-        y_iter = y[idx_iter]
-        X_iter = Xpca_train[idx_iter]
+                                    test_size=y_train.size-training_sample_size,
+                                    random_state=seed)
+    for idx_iter, idx_ignore in sss_iter.split(X_train,lc_train):
+        y_iter = y_train[idx_iter]
+        X_iter = X_train[idx_iter]
     #rf_params=space['preprocessing']['params']
     rf = RandomForestRegressor(**params)
     # - apply cross validation procedure
@@ -145,14 +146,15 @@ def f(params):
 # - number of sampled candidates to calculate expected improvement (n_EI_candidates)
 trials=Trials()
 max_evals = 120
-algorithm = partial(tpe.suggest, n_startup_jobs=40, gamma=0.25, n_EI_candidates=24)
+spin_up = 40
+algorithm = partial(tpe.suggest, n_startup_jobs=spin_up, gamma=0.25, n_EI_candidates=24)
 best = fmin(f, pca_params, algo=algorithm, max_evals=120, trials=trials)
 print('best:')
 print(best)
 
 # save trials for future reference
 print('saving trials to file for future reference')
-pickle.dump(trials, open('%s%s_%s_rf_hyperopt_trials_with_pca.p' % (path2alg,country_code,version), "wb"))
+pickle.dump(trials, open('%s/%s_%s_rf_hyperopt_trials_with_pca.p' % (path2alg,country_code,version), "wb"))
 
 """
 # plot summary of optimisation runs
@@ -187,5 +189,6 @@ fig3, axes = plt.subplots(nrows=3, ncols=2, figsize=(8,8))
 for i, val in enumerate(parameters):
     sns.scatterplot(x='iteration',y=val,data=df,marker='.',hue='score',
                 palette=cmap,edgecolor='none',legend=False,ax=axes[i//3,i%3])
+    axes[i//3,i%3].axvline(spin_up,':',colour = '0.5')
     axes[i//3,i%3].set_title(val)
 fig3.savefig('%s%s_%s_hyperpar_search_trace.png' % (path2calval,country_code,version))
