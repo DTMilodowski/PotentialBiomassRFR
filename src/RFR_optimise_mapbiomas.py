@@ -189,15 +189,3 @@ for i, val in enumerate(parameters):
                 palette=cmap,edgecolor='none',legend=False,ax=axes[i//3,i%3])
     axes[i//3,i%3].set_title(val)
 fig3.savefig('%s%s_%s_hyperpar_search_trace.png' % (path2calval,country_code,version))
-
-
-# Take best hyperparameter set and apply cal-val on full training set
-print('Applying cal-val to full training set and withheld validation set')
-idx = np.argsort(trace['scores'])[0]
-best_params = trials.trials[idx]['misc']['vals']
-
-max_depth_best = np.array(max_depth_range)[best_params["max_depth"][0]]
-max_features_best = np.array(max_features_range)[best_params["max_features"][0]]
-min_samples_leaf_best = np.array(min_samples_leaf_range)[best_params["min_samples_leaf"][0]]
-min_samples_split_best = np.array(min_samples_split_range)[best_params["min_samples_split"][0]]
-n_estimators_best = np.array(n_estimators_range)[best_params["n_estimators"][0]]
