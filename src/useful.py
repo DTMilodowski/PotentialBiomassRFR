@@ -16,7 +16,7 @@ import numpy as np
 import sys
 import set_training_areas
 import rasterio
-import forestci as fci
+#import forestci as fci
 from copy import deepcopy
 
 # Load predictor variables
@@ -284,6 +284,7 @@ def get_areas(latorig = default_lat, lonorig = default_lon):
 # FUNCTIONS THAT ARE CALLED DURING THE ITERATIVE TRAINING DATA SELECTION PROCESS
 #-------------------------------------------------------------------------------
 """
+"""
 # This uses the confidence intervals from the random forest to trim the training
 # set
 def iterative_augmentation_of_training_set_rfci(ytest, y, Xtest, X, Xall, iterations,
@@ -349,7 +350,7 @@ def iterative_augmentation_of_training_set_rfci(ytest, y, Xtest, X, Xall, iterat
     np.save('AGBpot_test.npy',AGBpot)
     np.save('training_test.npy',training_set)
     return AGBpot, training_set, rf
-
+"""
 # This version is simpler - it simply filters out additional stable forest for
 # which the AGBobs < AGBpot in each iteration. It is also much faster! Unlike
 # the previous function, it does not need the data to be scaled, either
