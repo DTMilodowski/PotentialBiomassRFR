@@ -94,15 +94,15 @@ default_params = { "max_depth":scope.int(hp.quniform("max_depth",20,500,1)),    
                     "n_estimators":scope.int(hp.quniform("n_estimators",80,120,1)),          # ***Number of trees in the random forest
                     "min_impurity_decrease":hp.uniform("min_impurity_decrease",0.0,0.2),
                     "n_jobs":hp.choice("n_jobs",[20,20]) }
-"""
+
 pca_params =      { "max_depth":scope.int(hp.quniform("pca-max_depth",20,500,1)),              # ***maximum number of branching levels within each tree
                     "max_features":scope.int(hp.quniform("pca-max_features",int(n_pca_predictors/5),n_pca_predictors,1)),      # ***the maximum number of variables used in a given tree
                     "min_samples_leaf":scope.int(hp.quniform("pca-min_samples_leaf",1,50,1)),    # ***The minimum number of samples required to be at a leaf node
                     "min_samples_split":scope.int(hp.quniform("pca-min_samples_split",2,200,1)),  # ***The minimum number of samples required to split an internal node
-                    "n_estimators":scope.int(hp.quniform("pca-n_estimators",80,120,1)),          # ***Number of trees in the random forest
+                    "n_estimators":scope.int(hp.quniform("pca-n_estimators",60,80,1)),          # ***Number of trees in the random forest
                     "min_impurity_decrease":hp.uniform("pca-min_impurity_decrease",0.0,0.2),
                     "n_jobs":hp.choice("pca-n_jobs",[20,20]) }
-
+"""
 space = hp.choice('version',[{'preprocessing':'none',
                                     'params': default_params
                                     },
@@ -123,11 +123,10 @@ def f(params):
     # otherwise run the cross validation for this parameter set
     # - subsample from training set for this iteration
     sss_iter = StratifiedShuffleSplit(n_splits=1,train_size=training_sample_size,
-                                            random_state=seed)
-    seed+=1
+                                            test_size=training_sample_size,random_state=seed)
     for idx_iter, idx_test in sss_iter.split(X_train,lc_train):
         y_iter = y[idx_iter]
-        X_iter = X_train[idx_iter]
+        X_iter = Xpca_train[idx_iter]
     #if space['version']['preprocessing']=='pca':
     #    print('\tusing PCA')
     #    X_iter = Xpca_train[idx_iter]
@@ -145,6 +144,7 @@ def f(params):
     if score > best:
         best = score
         print('new best r^2: ', -best, params)
+    seed+=1
     return {'loss': -score, 'status': STATUS_OK}
 
 # Set algoritm parameters
@@ -154,10 +154,10 @@ def f(params):
 # - number of sampled candidates to calculate expected improvement (n_EI_candidates)
 trials=Trials()
 algorithm = partial(tpe.suggest, n_startup_jobs=30, gamma=0.25, n_EI_candidates=24)
-best = fmin(f, default_params, algo=algorithm, max_evals=130, trials=trials)
+best = fmin(f, pca_params, algo=algorithm, max_evals=130, trials=trials)
 print('best:')
 print(best)
 
 # save trials for future reference
 print('saving trials to file for future reference')
-pickle.dump(trials, open('%s%s_%s_rf_hyperopt_trials_no_pca.p' % (path2alg,country_code,version), "wb"))
+pickle.dump(trials, open('%s%s_%s_rf_hyperopt_trials_with_pca.p' % (path2alg,country_code,version), "wb"))
