@@ -152,7 +152,7 @@ trials=Trials()
 max_evals = 120
 spin_up = 60
 algorithm = partial(tpe.suggest, n_startup_jobs=spin_up, gamma=0.25, n_EI_candidates=24)
-best = fmin(f, pca_params, algo=algorithm, max_evals=120, trials=trials)
+best = fmin(f, default_params, algo=algorithm, max_evals=120, trials=trials)
 print('best:')
 print(best)
 
@@ -162,7 +162,7 @@ pickle.dump(trials, open('%s/%s_%s_rf_hyperopt_trials_with_pca.p' % (path2alg,co
 
 # plot summary of optimisation runs
 print('Basic plots summarising optimisation results')
-parameters = ['n_estimators','max_depth', 'max_features', 'min_impurity_decrease','min_samples_leaf', 'min_samples_split']
+parameters = ['pca-n_estimators','pca-max_depth', 'pca-max_features', 'pca-min_impurity_decrease','pca-min_samples_leaf', 'pca-min_samples_split']
 
 trace = {}
 trace['scores'] = np.zeros(max_evals)
@@ -181,19 +181,19 @@ df = pd.DataFrame(data=trace)
 fig2, axes = plt.subplots(nrows=3, ncols=2, figsize=(8,8))
 cmap = sns.dark_palette('seagreen',as_cmap=True)
 for i, val in enumerate(parameters):
-    sns.scatterplot(x=val,y='score',data=df,marker='.',hue='iteration',
-                palette=cmap,edgecolor='none',legend=False,ax=axes[i//3,i%3])
-    axes[i//3,i%3].set_xlabel(val)
-    axes[i//3,i%3].set_ylabel('5-fold C-V score')
+    sns.scatterplot(x=val,y='scores',data=df,marker='.',hue='iteration',
+                palette=cmap,edgecolor='none',legend=False,ax=axes[i//2,i%2])
+    axes[i//2,i%2].set_xlabel(val)
+    axes[i//2,i%2].set_ylabel('5-fold C-V score')
 fig2.savefig('%s%s_%s_hyperpar_search_score.png' % (path2calval,country_code,version))
 
 # Plot traces to see progression of hyperparameter selection
 fig3, axes = plt.subplots(nrows=3, ncols=2, figsize=(8,8))
 for i, val in enumerate(parameters):
-    sns.scatterplot(x='iteration',y=val,data=df,marker='.',hue='score',
-                palette=cmap,edgecolor='none',legend=False,ax=axes[i//3,i%3])
-    axes[i//3,i%3].axvline(spin_up,':',colour = '0.5')
-    axes[i//3,i%3].set_title(val)
+    sns.scatterplot(x='iteration',y=val,data=df,marker='.',hue='scores',
+                palette=cmap,edgecolor='none',legend=False,ax=axes[i//2,i%2])
+    #axes[i//2,i%2].axvline(spin_up,':',color = 0.5)
+    axes[i//2,i%2].set_title(val)
 fig3.savefig('%s%s_%s_hyperpar_search_trace.png' % (path2calval,country_code,version))
 
 """
