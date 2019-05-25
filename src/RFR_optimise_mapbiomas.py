@@ -185,6 +185,7 @@ for i, val in enumerate(parameters):
                 palette=cmap,edgecolor='none',legend=False,ax=axes[i//2,i%2])
     axes[i//2,i%2].set_xlabel(val)
     axes[i//2,i%2].set_ylabel('5-fold C-V score')
+plt.tight_layout()
 fig2.savefig('%s%s_%s_hyperpar_search_score.png' % (path2calval,country_code,version))
 
 # Plot traces to see progression of hyperparameter selection
@@ -194,6 +195,7 @@ for i, val in enumerate(parameters):
                 palette=cmap,edgecolor='none',legend=False,ax=axes[i//2,i%2])
     #axes[i//2,i%2].axvline(spin_up,':',color = 0.5)
     axes[i//2,i%2].set_title(val)
+plt.tight_layout()
 fig3.savefig('%s%s_%s_hyperpar_search_trace.png' % (path2calval,country_code,version))
 
 """
