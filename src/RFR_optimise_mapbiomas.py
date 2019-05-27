@@ -91,7 +91,7 @@ n_pca_predictors = Xpca_train.shape[1]
 # set up hyperparameterspace for optimisation
 rf = RandomForestRegressor(criterion="mse",bootstrap=True,n_jobs=-1,n_estimators=80)
 
-min_samples_split_iter = hp.quniform("min_samples_split",1,200,1)
+min_samples_split_iter = hp.quniform("min_samples_split",2,200,1)
 min_samples_leaf_iter = hp.quniform("min_samples_leaf",1,min_samples_split_iter,1)
 """
 default_params = { "max_depth":scope.int(hp.quniform("max_depth",20,500,1)),              # ***maximum number of branching levels within each tree
@@ -173,7 +173,7 @@ pickle.dump(trials, open('%s/%s_%s_rf_hyperopt_trials_with_pca.p' % (path2alg,co
 
 # plot summary of optimisation runs
 print('Basic plots summarising optimisation results')
-parameters = ['pca-n_estimators','pca-max_depth', 'pca-max_features', 'pca-min_impurity_decrease','pca-min_samples_leaf', 'pca-min_samples_split']
+parameters = ['n_estimators','max_depth', 'max_features', 'min_impurity_decrease','min_samples_leaf', 'min_samples_split']
 
 trace = {}
 trace['scores'] = np.zeros(max_evals)
