@@ -18,7 +18,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.metrics import mean_squared_error
 from sklearn.externals import joblib
 
-from hyperopt import tpe, Trials, fmin, hp, STATUS_OK,space_eval
+from hyperopt import tpe, rand, fmin, hp, Trials, STATUS_OK, STATUS_FAIL
 from hyperopt.pyll.base import scope
 from functools import partial
 
@@ -91,8 +91,8 @@ n_pca_predictors = Xpca_train.shape[1]
 # set up hyperparameterspace for optimisation
 rf = RandomForestRegressor(criterion="mse",bootstrap=True,n_jobs=-1,n_estimators=80)
 
-min_samples_split_iter = hp.quniform("min_samples_split",2,200,1)
-min_samples_leaf_iter = hp.quniform("min_samples_leaf",1,min_samples_split_iter,1)
+#min_samples_split_iter = hp.quniform("min_samples_split",2,200,1)
+#min_samples_leaf_iter = hp.quniform("min_samples_leaf",1,min_samples_split_iter,1)
 """
 default_params = { "max_depth":scope.int(hp.quniform("max_depth",20,500,1)),              # ***maximum number of branching levels within each tree
                     "max_features":scope.int(hp.quniform("max_features",int(n_predictors/5),n_predictors,1)),      # ***the maximum number of variables used in a given tree
@@ -104,8 +104,8 @@ default_params = { "max_depth":scope.int(hp.quniform("max_depth",20,500,1)),    
 """
 default_params = { "max_depth":scope.int(hp.quniform("max_depth",20,500,1)),              # ***maximum number of branching levels within each tree
                     "max_features":scope.int(hp.quniform("max_features",int(n_predictors/5),n_predictors,1)),      # ***the maximum number of variables used in a given tree
-                    "min_samples_leaf":scope.int(min_samples_leaf_iter),    # ***The minimum number of samples required to be at a leaf node
-                    "min_samples_split":scope.int(min_samples_split_iter),  # ***The minimum number of samples required to split an internal node
+                    "min_samples_leaf":scope.int(hp.quniform("min_samples_leaf",1,50,1)),    # ***The minimum number of samples required to be at a leaf node
+                    "min_samples_split":scope.int(hp.quniform("min_samples_split",2,200,1)),  # ***The minimum number of samples required to split an internal node
                     "n_estimators":scope.int(hp.quniform("n_estimators",80,120,1)),          # ***Number of trees in the random forest
                     "min_impurity_decrease":hp.uniform("min_impurity_decrease",0.0,0.2),
                     "n_jobs":hp.choice("n_jobs",[20,20]) }
@@ -126,14 +126,16 @@ space = hp.choice('version',[{'preprocessing':'none',
                                     }])
 """
 # define a function to quantify the objective function
-best = -np.inf
-seed=0
 def f(params):
     global best
     global seed
-    # print starting point
-    if np.isfinite(best)==False:
-        print('starting point:', params)
+    global fail_count
+    # check the hyperparameter set is sensible
+    # - check 1: min_samples_split > min_samples_leaf
+    if params['min_samples_split']<params['min_samples_leaf']:
+        fail_count+=1
+        print("INVALID HYPERPARAMETER SELECTION",params)
+        return {'loss': None, 'status': STATUS_FAIL}
 
     # run the cross validation for this parameter set
     # - subsample from training set for this iteration
@@ -160,16 +162,40 @@ def f(params):
 # - percentage of hyperparameter combos identified as "good" (gamma)
 # - number of sampled candidates to calculate expected improvement (n_EI_candidates)
 trials=Trials()
-max_evals = 120
-spin_up = 60
+#trials=pickle.load(open('%s/%s_%s_rf_hyperopt_trials' % (path2alg,country_code,version), "wb"))
+max_evals_target = 120
+spin_up_target = 60
+best = -np.inf
+seed=0
+fail_count=0
+
+# Start with randomised search - setting this explicitly to account for some
+# iterations not being accepted
+print("Starting randomised search (spin up)")
+spin_up = spin_up_target+fail_count
+best = fmin(f, default_params, algo=rand.suggest, max_evals=spin_up, trials=trials)
+while (len(trials.trials)-fail_count)<spin_up:
+    spin_up+=1
+    best = fmin(f, default_params, algo=rand.suggest, max_evals=spin_up, trials=trials)
+
+# Now do the TPE search
+print("Starting TPE search")
+max_evals = max_evals_target+fail_count
 algorithm = partial(tpe.suggest, n_startup_jobs=spin_up, gamma=0.25, n_EI_candidates=24)
-best = fmin(f, default_params, algo=algorithm, max_evals=120, trials=trials)
+best = fmin(f, default_params, algo=algorithm, max_evals=max_evals, trials=trials)
+# Not every hyperparameter set will be accepted, so need to conitnue searching
+# until the required number of evaluations is met
+while (len(trials.trials)-fail_count)<max_evals_target:
+    max_evals+=1
+    best = fmin(f, default_params, algo=algorithm, max_evals=max_evals, trials=trials)
+
+print('\n\n%i iterations, from which %i failed' % (max_evals,fail_count))
 print('best:')
 print(best)
 
 # save trials for future reference
 print('saving trials to file for future reference')
-pickle.dump(trials, open('%s/%s_%s_rf_hyperopt_trials_with_pca.p' % (path2alg,country_code,version), "wb"))
+pickle.dump(trials, open('%s/%s_%s_rf_hyperopt_trials.p' % (path2alg,country_code,version), "wb"))
 
 # plot summary of optimisation runs
 print('Basic plots summarising optimisation results')
