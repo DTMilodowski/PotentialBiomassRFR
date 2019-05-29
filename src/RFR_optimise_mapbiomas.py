@@ -134,7 +134,7 @@ def f(params):
     # - check 1: min_samples_split > min_samples_leaf
     if params['min_samples_split']<params['min_samples_leaf']:
         fail_count+=1
-        print("INVALID HYPERPARAMETER SELECTION",params)
+        #print("INVALID HYPERPARAMETER SELECTION",params)
         return {'loss': None, 'status': STATUS_FAIL}
 
     # run the cross validation for this parameter set
@@ -172,23 +172,23 @@ fail_count=0
 # Start with randomised search - setting this explicitly to account for some
 # iterations not being accepted
 print("Starting randomised search (spin up)")
-spin_up = spin_up_target+fail_count
 best = fmin(f, default_params, algo=rand.suggest, max_evals=spin_up, trials=trials)
+spin_up = spin_up_target+fail_count
 while (len(trials.trials)-fail_count)<spin_up_target:
-    print('\tTarget: %i; iterations: %i; failures: %i', % (spin_up_target,len(trials.trials),fail_count))
+    print('\tTarget: %i; iterations: %i; failures: %i' % (spin_up_target,len(trials.trials),fail_count))
     spin_up+=1
     best = fmin(f, default_params, algo=rand.suggest, max_evals=spin_up, trials=trials)
 
 # Now do the TPE search
 print("Starting TPE search")
-max_evals = max_evals_target
+max_evals = max_evals_target+fail_count
 algorithm = partial(tpe.suggest, n_startup_jobs=spin_up, gamma=0.25, n_EI_candidates=24)
 best = fmin(f, default_params, algo=algorithm, max_evals=max_evals, trials=trials)
 # Not every hyperparameter set will be accepted, so need to conitnue searching
 # until the required number of evaluations is met
 max_evals = max_evals_target+fail_count
 while (len(trials.trials)-fail_count)<max_evals_target:
-    print('\tTarget: %i; iterations: %i; failures: %i', % (max_evals_target,len(trials.trials),fail_count))
+    print('\tTarget: %i; iterations: %i; failures: %i' % (max_evals_target,len(trials.trials),fail_count))
     max_evals+=1
     best = fmin(f, default_params, algo=algorithm, max_evals=max_evals, trials=trials)
 
