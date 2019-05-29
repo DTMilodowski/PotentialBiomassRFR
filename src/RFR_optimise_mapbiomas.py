@@ -127,7 +127,7 @@ space = hp.choice('version',[{'preprocessing':'none',
 """
 # define a function to quantify the objective function
 def f(params):
-    global best
+    global best_score
     global seed
     global fail_count
     # check the hyperparameter set is sensible
@@ -150,9 +150,9 @@ def f(params):
     # - apply cross validation procedure
     score = cross_val_score(rf, X_iter, y_iter, cv=5).mean()
     # - if error reduced, then update best model accordingly
-    if score > best:
-        best = score
-        print('new best r^2: ', -best, params)
+    if score > best_score:
+        best_score = score
+        print('new best r^2: ', -best_score, params)
     seed+=1
     return {'loss': -score, 'status': STATUS_OK}
 
@@ -165,7 +165,7 @@ trials=Trials()
 #trials=pickle.load(open('%s/%s_%s_rf_hyperopt_trials' % (path2alg,country_code,version), "wb"))
 max_evals_target = 120
 spin_up_target = 60
-best = -np.inf
+best_score = -np.inf
 seed=0
 fail_count=0
 
@@ -180,11 +180,12 @@ while (len(trials.trials)-fail_count)<spin_up:
 
 # Now do the TPE search
 print("Starting TPE search")
-max_evals = max_evals_target+fail_count
+max_evals = max_evals_target
 algorithm = partial(tpe.suggest, n_startup_jobs=spin_up, gamma=0.25, n_EI_candidates=24)
 best = fmin(f, default_params, algo=algorithm, max_evals=max_evals, trials=trials)
 # Not every hyperparameter set will be accepted, so need to conitnue searching
 # until the required number of evaluations is met
+max_evals = max_evals_target+fail_count
 while (len(trials.trials)-fail_count)<max_evals_target:
     max_evals+=1
     best = fmin(f, default_params, algo=algorithm, max_evals=max_evals, trials=trials)
