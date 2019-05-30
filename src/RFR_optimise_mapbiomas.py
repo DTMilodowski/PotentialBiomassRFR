@@ -1,6 +1,7 @@
 import numpy as np
 import sys
 import xarray as xr #xarray to read all types of formats
+import pandas as pd
 import pickle
 
 from matplotlib import pyplot as plt
@@ -205,24 +206,26 @@ print('Basic plots summarising optimisation results')
 parameters = ['n_estimators','max_depth', 'max_features', 'min_impurity_decrease','min_samples_leaf', 'min_samples_split']
 
 trace = {}
-trace['scores'] = np.zeros(max_evals)
-trace['iteration'] = np.arange(max_evals)+1
+trace['scores'] = np.zeros(max_evals_target)
+trace['iteration'] = np.arange(max_evals_target)+1
 for pp in parameters:
-    trace[pp] = np.zeros(max_evals)
-
-for ii,tt in enumerate(trials.trials):
-     trace['scores'][ii] = -tt['result']['loss']
-     for pp in parameters:
-         trace[pp][ii] = tt['misc']['vals'][pp][0]
+    trace[pp] = np.zeros(max_evals_target)
+ii=0
+for tt in trials.trials:
+    if tt['result']['status']=='ok':
+        trace['scores'][ii] = -tt['result']['loss']
+        for pp in parameters:
+            trace[pp][ii] = tt['misc']['vals'][pp][0]
+        ii+=1
 
 df = pd.DataFrame(data=trace)
 
 # plot score for each hyperparameter value tested
 fig2, axes = plt.subplots(nrows=3, ncols=2, figsize=(8,8))
-cmap = sns.dark_palette('seagreen',as_cmap=True)
+cmap = sns.light_palette('seagreen',as_cmap=True)
 for i, val in enumerate(parameters):
-    sns.scatterplot(x=val,y='scores',data=df,marker='.',hue='iteration',
-                palette=cmap,edgecolor='none',legend=False,ax=axes[i//2,i%2])
+    sns.scatterplot(x=val,y='scores',data=df,marker='o',hue='iteration',
+                palette=cmap,legend=False,ax=axes[i//2,i%2])
     axes[i//2,i%2].set_xlabel(val)
     axes[i//2,i%2].set_ylabel('5-fold C-V score')
 plt.tight_layout()
@@ -231,8 +234,8 @@ fig2.savefig('%s%s_%s_hyperpar_search_score.png' % (path2calval,country_code,ver
 # Plot traces to see progression of hyperparameter selection
 fig3, axes = plt.subplots(nrows=3, ncols=2, figsize=(8,8))
 for i, val in enumerate(parameters):
-    sns.scatterplot(x='iteration',y=val,data=df,marker='.',hue='scores',
-                palette=cmap,edgecolor='none',legend=False,ax=axes[i//2,i%2])
+    sns.scatterplot(x='iteration',y=val,data=df,marker='o',hue='scores',
+                palette=cmap,legend=False,ax=axes[i//2,i%2])
     #axes[i//2,i%2].axvline(spin_up,':',color = 0.5)
     axes[i//2,i%2].set_title(val)
 plt.tight_layout()
@@ -245,15 +248,16 @@ USING THE FULL TRAINING SET AND VALIDATE AGAINST THE EXCLUDED TEST DATASET
 Boost number of trees in the forest for this analysis, as only running once
 #-------------------------------------------------------------------------------
 """
+idx = np.argsort(trace['scores'])[-1]
 rf = RandomForestRegressor(bootstrap=True,
             criterion='mse',           # criteria used to choose split point at each node
-            max_depth= trace['max_depth'][idx],            # ***maximum number of branching levels within each tree
-            max_features=trace['max_features'][idx],       # ***the maximum number of variables used in a given tree
+            max_depth= int(trace['max_depth'][idx]),            # ***maximum number of branching levels within each tree
+            max_features=int(trace['max_features'][idx]),       # ***the maximum number of variables used in a given tree
             max_leaf_nodes=None,       # the maximum number of leaf nodes per tree
             min_impurity_decrease=trace['min_impurity_decrease'][idx], # the miminum drop in the impurity of the clusters to justify splitting further
             min_impurity_split=None,   # threshold impurity within an internal node before it will be split
-            min_samples_leaf=trace['min_samples_leaf'][idx],       # ***The minimum number of samples required to be at a leaf node
-            min_samples_split=trace['min_samples_split'][idx],       # ***The minimum number of samples required to split an internal node
+            min_samples_leaf=int(trace['min_samples_leaf'][idx]),       # ***The minimum number of samples required to be at a leaf node
+            min_samples_split=int(trace['min_samples_split'][idx]),       # ***The minimum number of samples required to split an internal node
             n_estimators=200,#trace['n_estimators'],          # ***Number of trees in the random forest
             n_jobs=30,                 # The number of jobs to run in parallel for both fit and predict
             oob_score=True,            # use out-of-bag samples to estimate the R^2 on unseen data
