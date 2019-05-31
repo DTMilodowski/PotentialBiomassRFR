@@ -103,10 +103,10 @@ default_params = { "max_depth":scope.int(hp.quniform("max_depth",20,500,1)),    
                     "min_impurity_decrease":hp.uniform("min_impurity_decrease",0.0,0.2),
                     "n_jobs":hp.choice("n_jobs",[20,20]) }
 """
-default_params = { "max_depth":scope.int(hp.quniform("max_depth",20,500,1)),              # ***maximum number of branching levels within each tree
+default_params = { "max_depth":scope.int(hp.quniform("max_depth",10,500,1)),              # ***maximum number of branching levels within each tree
                     "max_features":scope.int(hp.quniform("max_features",int(n_predictors/5),n_predictors,1)),      # ***the maximum number of variables used in a given tree
-                    "min_samples_leaf":scope.int(hp.quniform("min_samples_leaf",1,50,1)),    # ***The minimum number of samples required to be at a leaf node
-                    "min_samples_split":scope.int(hp.quniform("min_samples_split",2,200,1)),  # ***The minimum number of samples required to split an internal node
+                    "min_samples_leaf":scope.int(hp.quniform("min_samples_leaf",1,25,1)),    # ***The minimum number of samples required to be at a leaf node
+                    "min_samples_split":scope.int(hp.quniform("min_samples_split",2,120,1)),  # ***The minimum number of samples required to split an internal node
                     "n_estimators":scope.int(hp.quniform("n_estimators",80,120,1)),          # ***Number of trees in the random forest
                     "min_impurity_decrease":hp.uniform("min_impurity_decrease",0.0,0.2),
                     "n_jobs":hp.choice("n_jobs",[20,20]) }
@@ -173,7 +173,7 @@ fail_count=0
 # Start with randomised search - setting this explicitly to account for some
 # iterations not being accepted
 print("Starting randomised search (spin up)")
-best = fmin(f, default_params, algo=rand.suggest, max_evals=spin_up, trials=trials)
+best = fmin(f, default_params, algo=rand.suggest, max_evals=spin_up_target, trials=trials)
 spin_up = spin_up_target+fail_count
 while (len(trials.trials)-fail_count)<spin_up_target:
     print('\tTarget: %i; iterations: %i; failures: %i' % (spin_up_target,len(trials.trials),fail_count))

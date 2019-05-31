@@ -87,7 +87,10 @@ os.system("gdalwarp -overwrite -te %f %f %f %f -dstnodata -9999  %s %s%s/agb/%s_
 # Note that the ESA CCI landcover data are originally in netcdf format.
 lcdir = '/home/dmilodow/DataStore_GCEL/ESA_CCI_landcover/'
 lcfiles = glob.glob('%s*.nc' % lcdir);lcfiles.sort()
+outfiles = glob.glob('%s*1km*.tif' % lcdir);lcfiles.sort()
 for ff,fname in enumerate(lcfiles):
+    outfname = outfiles[ff].replace('1km','500m')
+    os.system("gdalwarp -overwrite -te %f %f %f %f  -tr 0.004166666666667 -0.004166666666667 -r mode -of GTIFF NETCDF:%s:lccs_class %s/esacci/%s" % (W,S,E,N,lcfiles[ff],outdir,outfname))
     outfname = fname.split('/')[-1][:22]+fname.split('/')[-1][27:42]+"-1km-mode-lccs-class"
     os.system("gdalwarp -overwrite -te %f %f %f %f  -tr 0.008333333333333 -0.008333333333333 -r mode -of GTIFF NETCDF:%s:lccs_class %s%s/esacci/%s-%s.tif" % (W,S,E,N,lcfiles[ff],outdir,prefix,outfname,prefix))
     outfname = fname.split('/')[-1][:22]+fname.split('/')[-1][27:42]+"-1km-mode-change-count"
