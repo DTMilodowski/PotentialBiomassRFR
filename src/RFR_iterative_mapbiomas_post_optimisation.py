@@ -20,7 +20,7 @@ import seaborn as sns
 sns.set()
 
 country_code = 'BRA'
-version = '007'
+version = '008'
 iterations = 5
 
 path2alg = '/home/dmilodow/DataStore_DTM/FOREST2020/PotentialBiomassRFR/saved_algorithms'
@@ -69,13 +69,25 @@ PART B: FIT FIRST RANDOM FOREST MODEL
 # Load trials data from optimisation and retrieve best hyperparameter combination
 # but boost number of trees in forest as not running as many times, so can
 # afford computational expense
-trials = pickle.load(open('%s/%s_%s_rf_hyperopt_trials_with_pca.p' % (path2alg,country_code,version), "rb"))
+trials = pickle.load(open('%s/%s_%s_rf_hyperopt_trials.p' % (path2alg,country_code,version), "rb"))
+parameters = ['n_estimators','max_depth', 'max_features', 'min_impurity_decrease','min_samples_leaf', 'min_samples_split']
 trace = {}
+n_trials = len(trials)
+trace['scores'] = np.zeros(n_trials)
 for pp in parameters:
-    trace[pp] = np.zeros(max_evals)
+    trace[pp] = np.zeros(n_trials)
 for ii,tt in enumerate(trials.trials):
-     for pp in parameters:
-         trace[pp][ii] = tt['misc']['vals'][pp][0]
+    if tt['result']['status']=='ok':
+        trace['scores'][ii] = -tt['result']['loss']
+        for pp in parameters:
+            trace[pp][ii] = tt['misc']['vals'][pp][0]
+    else:
+        trace['scores'][ii] = np.nan
+        for pp in parameters:
+            trace[pp][ii] = np.nan
+mask = np.isfinite(trace['scores'])
+for key in trace.keys():
+    trace[key]=trace[key][mask]
 
 rf = RandomForestRegressor(bootstrap=True,
             criterion='mse',           # criteria used to choose split point at each node
