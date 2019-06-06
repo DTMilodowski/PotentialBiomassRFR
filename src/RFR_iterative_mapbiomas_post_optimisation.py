@@ -89,6 +89,7 @@ mask = np.isfinite(trace['scores'])
 for key in trace.keys():
     trace[key]=trace[key][mask]
 
+idx = np.argsort(trace['scores'])[-1]
 rf = RandomForestRegressor(bootstrap=True,
             criterion='mse',           # criteria used to choose split point at each node
             max_depth= trace['max_depth'][idx],            # ***maximum number of branching levels within each tree
