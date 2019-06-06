@@ -24,7 +24,7 @@ from hyperopt.pyll.base import scope
 from functools import partial
 
 country_code = 'BRA'
-version = '007'
+version = '008'
 training_sample_size = 500000
 #load = sys.argv[4]#'new'
 
@@ -103,12 +103,12 @@ default_params = { "max_depth":scope.int(hp.quniform("max_depth",20,500,1)),    
                     "min_impurity_decrease":hp.uniform("min_impurity_decrease",0.0,0.2),
                     "n_jobs":hp.choice("n_jobs",[20,20]) }
 """
-default_params = { "max_depth":scope.int(hp.quniform("max_depth",10,500,1)),              # ***maximum number of branching levels within each tree
-                    "max_features":scope.int(hp.quniform("max_features",int(n_predictors/5),n_predictors,1)),      # ***the maximum number of variables used in a given tree
-                    "min_samples_leaf":scope.int(hp.quniform("min_samples_leaf",1,25,1)),    # ***The minimum number of samples required to be at a leaf node
-                    "min_samples_split":scope.int(hp.quniform("min_samples_split",2,120,1)),  # ***The minimum number of samples required to split an internal node
+default_params = { "max_depth":scope.int(hp.quniform("max_depth",20,500,1)),              # ***maximum number of branching levels within each tree
+                    "max_features":scope.int(hp.quniform("max_features",int(n_predictors/4),n_predictors,1)),      # ***the maximum number of variables used in a given tree
+                    "min_samples_leaf":scope.int(hp.quniform("min_samples_leaf",1,15,1)),    # ***The minimum number of samples required to be at a leaf node
+                    "min_samples_split":scope.int(hp.quniform("min_samples_split",2,50,1)),  # ***The minimum number of samples required to split an internal node
                     "n_estimators":scope.int(hp.quniform("n_estimators",80,120,1)),          # ***Number of trees in the random forest
-                    "min_impurity_decrease":hp.uniform("min_impurity_decrease",0.0,0.2),
+                    "min_impurity_decrease":hp.uniform("min_impurity_decrease",0.0,0.05),
                     "n_jobs":hp.choice("n_jobs",[20,20]) }
 
 pca_params =      { "max_depth":scope.int(hp.quniform("pca-max_depth",20,500,1)),              # ***maximum number of branching levels within each tree
@@ -163,8 +163,8 @@ def f(params):
 # - percentage of hyperparameter combos identified as "good" (gamma)
 # - number of sampled candidates to calculate expected improvement (n_EI_candidates)
 trials=Trials()
-#trials=pickle.load(open('%s/%s_%s_rf_hyperopt_trials' % (path2alg,country_code,version), "wb"))
-max_evals_target = 120
+#trials=pickle.load(open('%s/%s_%s_rf_hyperopt_trials' % (path2alg,country_code,version), "rb"))
+max_evals_target = 180
 spin_up_target = 60
 best_score = -np.inf
 seed=0
@@ -212,11 +212,12 @@ for pp in parameters:
     trace[pp] = np.zeros(max_evals_target)
 ii=0
 for tt in trials.trials:
-    if tt['result']['status']=='ok':
-        trace['scores'][ii] = -tt['result']['loss']
-        for pp in parameters:
-            trace[pp][ii] = tt['misc']['vals'][pp][0]
-        ii+=1
+    if ii < max_evals_target:
+        if tt['result']['status']=='ok':
+            trace['scores'][ii] = -tt['result']['loss']
+            for pp in parameters:
+                trace[pp][ii] = tt['misc']['vals'][pp][0]
+            ii+=1
 
 df = pd.DataFrame(data=trace)
 
