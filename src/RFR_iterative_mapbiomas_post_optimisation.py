@@ -92,13 +92,13 @@ for key in trace.keys():
 idx = np.argsort(trace['scores'])[-1]
 rf = RandomForestRegressor(bootstrap=True,
             criterion='mse',           # criteria used to choose split point at each node
-            max_depth= trace['max_depth'][idx],            # ***maximum number of branching levels within each tree
-            max_features=trace['max_features'][idx],       # ***the maximum number of variables used in a given tree
+            max_depth= int(trace['max_depth'][idx]),            # ***maximum number of branching levels within each tree
+            max_features=int(trace['max_features'][idx]),       # ***the maximum number of variables used in a given tree
             max_leaf_nodes=None,       # the maximum number of leaf nodes per tree
             min_impurity_decrease=trace['min_impurity_decrease'][idx], # the miminum drop in the impurity of the clusters to justify splitting further
             min_impurity_split=None,   # threshold impurity within an internal node before it will be split
-            min_samples_leaf=trace['min_samples_leaf'][idx],       # ***The minimum number of samples required to be at a leaf node
-            min_samples_split=trace['min_samples_split'][idx],       # ***The minimum number of samples required to split an internal node
+            min_samples_leaf=int(trace['min_samples_leaf'][idx]),       # ***The minimum number of samples required to be at a leaf node
+            min_samples_split=int(trace['min_samples_split'][idx]),       # ***The minimum number of samples required to split an internal node
             n_estimators=200,#trace['n_estimators'],          # ***Number of trees in the random forest
             n_jobs=10,                 # The number of jobs to run in parallel for both fit and predict
             oob_score=True,            # use out-of-bag samples to estimate the R^2 on unseen data
