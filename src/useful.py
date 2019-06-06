@@ -494,7 +494,7 @@ def iterative_augmentation_of_training_set_obs_vs_pot_v2(ytest, y, Xtest, X, Xal
     # calculate RMSE of subset
     ytest_predict = rf.predict(Xtest)
     rmse = np.sqrt(np.mean((ytest_predict-ytest)**2))
-    n_additional = y_test.size
+    n_additional = ytest.size
 
     # now iterate, stopping after specified number of iterations, or if
     # training set stabilises sooner
