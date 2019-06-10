@@ -41,11 +41,11 @@ def cal_val_train_test(X,y,rf,path2calval,country_code,version):
 
     #create some pandas df
     df_train = pd.DataFrame({'obs':y_train[idx_train],'sim':y_train_predict[idx_train],
-                            'density':z_train[idx_train]})
+                            'density':z_train[idx_train],'logdensity':np.log(z_train[idx_train])})
     df_train.sim[df_train.sim<0] = 0.
 
     df_test =  pd.DataFrame({'obs':y_test[idx_test],'sim':y_test_predict[idx_test],
-                            'density':z_test[idx_test]})
+                            'density':z_test[idx_test],'logdensity':np.log(z_train[idx_train])})
     df_test.sim[df_test.sim<0] = 0.
 
     #plot
@@ -62,7 +62,7 @@ def cal_val_train_test(X,y,rf,path2calval,country_code,version):
     #for dd, df in enumerate([df_train.sample(1000),df_test.sample(1000)]):
     for dd, df in enumerate([df_train,df_test]):
         ax = fig.add_subplot(1,2,dd+1,aspect='equal')
-        sns.scatterplot(x='obs',y='sim', data=df, marker='.', hue='density',
+        sns.scatterplot(x='obs',y='sim', data=df, marker='.', hue='logdensity',
                     palette=cmap, edgecolor='none', legend=False, ax=ax)
         x_range = np.array([np.min(df['obs']),np.max(df['obs'])])
         ax.plot(x_range,cal_reg.predict(x_range.reshape(-1, 1)),'-',color='black')
