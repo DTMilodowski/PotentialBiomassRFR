@@ -562,6 +562,121 @@ def iterative_augmentation_of_training_set_obs_vs_pot_v2(ytest, y, Xtest, X, Xal
     np.save('training_test.npy',training_set)
     return AGBpot, training_set, rf
 
+# as above, but using a slightly different protocol
+# The iterative scheme works as follows:
+# 1) calculate residuals from naive initial model
+# 2) add possible additional training pixels to the training dataset with
+#    predicted AGB < observed AGB.
+# 2) fit new model including augmented training set
+# 3) check updated residuals for added training data; filter the added pixels
+#    to remove the lowest X percent (normalised by observed AGB), AGBpred<AGBobs
+# 4) repeat 2 & 3 for specified number of iterations (no cutoff applied - this
+#    can be specified later once algorithm behaviour has been assessed)
+def iterative_augmentation_of_training_set_obs_vs_pot_v3(ytest, y, Xtest, X, Xall, iterations,
+                                            landmask, initial_training_mask,
+                                            other_stable_forest_mask, rf,
+                                            percentile_cutoff=10):
+    """
+    # start with reference run using initial training data only
+    """
+    # define host array for potential biomass estimates at each iteration
+    AGBpot = np.zeros((iterations+1,landmask.shape[0],landmask.shape[1]))*np.nan
+    AGBpot[0][landmask] = rf.predict(Xall)
+
+    # Also track which pixels are included in the additional training set
+    # pixels marked 1 are in the initial training set
+    # pixels marked 2 are in the additional training set
+    training_set = np.zeros((iterations+1,landmask.shape[0],landmask.shape[1]))
+    training_set[0] = initial_training_mask.copy()
+
+    # keep track of row and column indices for updating training set maps
+    cols,rows = np.meshgrid(np.arange(landmask.shape[1]),np.arange(landmask.shape[0]))
+    col_idx = cols[other_stable_forest_mask]
+    row_idx = rows[other_stable_forest_mask]
+
+    """
+    # Iteration 1 - add candidate pixels (stable forest with potential AGB<=AGBobs)
+    """
+    # Filter out pixels with biomass below potential in naive model
+    Xadditional_forest = Xtest.copy()
+    subset = (ytest >= ytest_pr)
+    ytest = ytest[subset]
+    Xtest = Xtest[subset,:]
+
+    # fit new random forest with new training subset
+    Xiter=np.concatenate((X,Xtest),axis=0)
+    yiter=np.concatenate((y,ytest),axis=0)
+    rf.fit(Xiter,yiter)
+
+    # record AGBpot & training set for this next iteration
+    AGBpot[1][landmask] = rf.predict(Xall)
+    training_set[1] = initial_training_mask.copy()
+    training_set[1,row_idx,col_idx] = 2
+
+    # calculate RMSE of subset
+    ytest_predict = rf.predict(Xtest)
+    rmse = np.sqrt(np.mean((ytest_predict-ytest)**2))
+    n_additional = ytest.size
+    y_added_stable_forest_pr = np.mean(rf.predict(Xadditional_forest))
+
+    # now iterate, stopping after specified number of iterations, or if
+    # training set stabilises sooner
+    print("starting iterative training selection")
+
+    ii=1
+    while(ii<iterations):
+
+        # update rmse_pr with presemt rmse for comparison later in the loop
+        rmse_previous=rmse
+        y_added_stable_forest_pr_previous = y_added_stable_forest_pr
+        n_additional_previous = n_additional
+
+        # Filter out pixels with sufficiently negative residuals
+        residual = ytest - ytest_predict
+        residual_as_fraction = residual/ytest
+        threshold = np.percentile(residual_as_fraction,percentile_cutoff)
+
+        #subset = (ytest >= ytest_pr)
+        #subset = np.all((residual_as_fraction >= threshold,ytest >= ytest_pr),axis=0)
+        subset = residual_as_fraction >= threshold
+
+        # refine subset
+        ytest = ytest[subset]
+        Xtest = Xtest[subset,:]
+        col_idx = col_idx[subset]
+        row_idx = row_idx[subset]
+
+        # fit new random forest with new training subset
+        Xiter=np.concatenate((X,Xtest),axis=0)
+        yiter=np.concatenate((y,ytest),axis=0)
+        rf.fit(Xiter,yiter)
+
+        # record AGBpot & training set for this next iteration
+        AGBpot[ii+1][landmask] = rf.predict(Xall)
+        training_set[ii+1] = initial_training_mask.copy()
+        training_set[ii+1,row_idx,col_idx] = 2
+
+        # predict potential biomass for additional training subset
+        ytest_pr = rf.predict(Xtest)
+        # calculate RMSE of subset
+        rmse = np.sqrt(np.mean((ytest_pr-ytest)**2))
+        # predict potential biomass for the full added stable forest class
+        y_added_stable_forest_pr = np.mean(rf.predict(Xadditional_forest))
+
+        # Check how many pixels were removed from the additional training set
+        n_removed = n_additional-subset.sum()
+        print("Iteration %i complete, removed %i out of %i pixels from training, %.1f" %
+                (ii+1,n_removed, n_additional,float(n_removed)/float(n_additional)*100.))
+        print("RMSE previous: %.02f; RMSE updated: %.02f; percentage change: %.02f" %
+                (rmse_previous, rmse,(rmse-rmse_previous)/(rmse_previous)*100.))
+        print("AGBpot of added pixels previous: %.02f; updated: %.02f" %
+                (y_added_stable_forest_pr_previous,y_added_stable_forest_pr))
+
+        ii+=1
+    np.save('AGBpot_test.npy',AGBpot)
+    np.save('training_test.npy',training_set)
+    return AGBpot, training_set, rf
+
 """
 #===============================================================================
 # FUNCTIONS FOR QUICKLY LOADING DATASET IF NEEDED

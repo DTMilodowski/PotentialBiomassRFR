@@ -117,9 +117,9 @@ MODEL
 """
 # now iterate, filtering out other stable forest pixels for which the observed biomass
 # is not within error of the predicted potential biomass
-AGBpot, training_set, rf = useful.iterative_augmentation_of_training_set_obs_vs_pot_v2(ytest, y, Xtest, X, Xall, iterations,
+AGBpot, training_set, rf = useful.iterative_augmentation_of_training_set_obs_vs_pot_v3(ytest, y, Xtest, X, Xall, iterations,
                                             landmask, initial_training_mask,
-                                            other_stable_forest_mask, rf,stopping_condition=0.01, percentile_cutoff = 20)
+                                            other_stable_forest_mask, rf, percentile_cutoff = 10)
 iterations = AGBpot.shape[0]
 
 # Save rf model for future reference
