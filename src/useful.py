@@ -603,6 +603,8 @@ def iterative_augmentation_of_training_set_obs_vs_pot_v3(ytest, y, Xtest, X, Xal
     subset = (ytest >= ytest_pr)
     ytest = ytest[subset]
     Xtest = Xtest[subset,:]
+    col_idx = col_idx[subset]
+    row_idx = row_idx[subset]
 
     # fit new random forest with new training subset
     Xiter=np.concatenate((X,Xtest),axis=0)
@@ -637,10 +639,8 @@ def iterative_augmentation_of_training_set_obs_vs_pot_v3(ytest, y, Xtest, X, Xal
         residual_as_fraction = residual/ytest
         threshold = np.percentile(residual_as_fraction,percentile_cutoff)
 
-        #subset = (ytest >= ytest_pr)
-        #subset = np.all((residual_as_fraction >= threshold,ytest >= ytest_pr),axis=0)
         subset = residual_as_fraction >= threshold
-        subset = np.any((residual_as_fraction >= threshold,ytest >= ytest_pr),axis=0)
+        subset = np.any((residual_as_fraction >= threshold,ytest >= ytest_predict),axis=0)
 
         # refine subset
         ytest = ytest[subset]
