@@ -599,6 +599,7 @@ def iterative_augmentation_of_training_set_obs_vs_pot_v3(ytest, y, Xtest, X, Xal
     """
     # Filter out pixels with biomass below potential in naive model
     Xadditional_forest = Xtest.copy()
+    ytest_pr = rf.predict(Xtest)
     subset = (ytest >= ytest_pr)
     ytest = ytest[subset]
     Xtest = Xtest[subset,:]
@@ -639,6 +640,7 @@ def iterative_augmentation_of_training_set_obs_vs_pot_v3(ytest, y, Xtest, X, Xal
         #subset = (ytest >= ytest_pr)
         #subset = np.all((residual_as_fraction >= threshold,ytest >= ytest_pr),axis=0)
         subset = residual_as_fraction >= threshold
+        subset = np.any((residual_as_fraction >= threshold,ytest >= ytest_pr),axis=0)
 
         # refine subset
         ytest = ytest[subset]
