@@ -599,12 +599,15 @@ def iterative_augmentation_of_training_set_obs_vs_pot_v3(ytest, y, Xtest, X, Xal
     """
     # Filter out pixels with biomass below potential in naive model
     Xadditional_forest = Xtest.copy()
-    ytest_pr = rf.predict(Xtest)
-    subset = (ytest >= ytest_pr)
+    ytest_predict = rf.predict(Xtest)
+    subset = (ytest >= ytest_predict)
     ytest = ytest[subset]
     Xtest = Xtest[subset,:]
     col_idx = col_idx[subset]
     row_idx = row_idx[subset]
+
+
+    y_added_stable_forest_predict_previous = np.mean(rf.predict(Xadditional_forest))
 
     # fit new random forest with new training subset
     Xiter=np.concatenate((X,Xtest),axis=0)
@@ -620,18 +623,23 @@ def iterative_augmentation_of_training_set_obs_vs_pot_v3(ytest, y, Xtest, X, Xal
     ytest_predict = rf.predict(Xtest)
     rmse = np.sqrt(np.mean((ytest_predict-ytest)**2))
     n_additional = ytest.size
-    y_added_stable_forest_pr = np.mean(rf.predict(Xadditional_forest))
+    y_added_stable_forest_predict = np.mean(rf.predict(Xadditional_forest))
+
+    print("Iteration 1 complete")
+    print("RMSE: %.02f" % rmse)
+    print("AGBpot of added pixels previous: %.02f; updated: %.02f" %
+            (y_added_stable_forest_predict_previous,y_added_stable_forest_predict))
 
     # now iterate, stopping after specified number of iterations, or if
     # training set stabilises sooner
-    print("starting iterative training selection")
+    print("starting iterative training refinement")
 
     ii=1
     while(ii<iterations):
 
         # update rmse_pr with presemt rmse for comparison later in the loop
         rmse_previous=rmse
-        y_added_stable_forest_pr_previous = y_added_stable_forest_pr
+        y_added_stable_forest_predict_previous = y_added_stable_forest_predict
         n_additional_previous = n_additional
 
         # Filter out pixels with sufficiently negative residuals
@@ -639,8 +647,9 @@ def iterative_augmentation_of_training_set_obs_vs_pot_v3(ytest, y, Xtest, X, Xal
         residual_as_fraction = residual/ytest
         threshold = np.percentile(residual_as_fraction,percentile_cutoff)
 
-        subset = residual_as_fraction >= threshold
-        subset = np.any((residual_as_fraction >= threshold,ytest >= ytest_predict),axis=0)
+        #subset = residual_as_fraction >= threshold
+        #subset = np.any((residual_as_fraction >= threshold,ytest >= ytest_predict),axis=0)
+        subset = np.all((residual_as_fraction >= threshold,residual>0),axis=0)
 
         # refine subset
         ytest = ytest[subset]
@@ -659,11 +668,11 @@ def iterative_augmentation_of_training_set_obs_vs_pot_v3(ytest, y, Xtest, X, Xal
         training_set[ii+1,row_idx,col_idx] = 2
 
         # predict potential biomass for additional training subset
-        ytest_pr = rf.predict(Xtest)
+        ytest_predict = rf.predict(Xtest)
         # calculate RMSE of subset
-        rmse = np.sqrt(np.mean((ytest_pr-ytest)**2))
+        rmse = np.sqrt(np.mean((ytest_predict-ytest)**2))
         # predict potential biomass for the full added stable forest class
-        y_added_stable_forest_pr = np.mean(rf.predict(Xadditional_forest))
+        y_added_stable_forest_predict = np.mean(rf.predict(Xadditional_forest))
 
         # Check how many pixels were removed from the additional training set
         n_removed = n_additional-subset.sum()
@@ -672,7 +681,7 @@ def iterative_augmentation_of_training_set_obs_vs_pot_v3(ytest, y, Xtest, X, Xal
         print("RMSE previous: %.02f; RMSE updated: %.02f; percentage change: %.02f" %
                 (rmse_previous, rmse,(rmse-rmse_previous)/(rmse_previous)*100.))
         print("AGBpot of added pixels previous: %.02f; updated: %.02f" %
-                (y_added_stable_forest_pr_previous,y_added_stable_forest_pr))
+                (y_added_stable_forest_predict_previous,y_added_stable_forest_predict))
 
         ii+=1
     np.save('AGBpot_test.npy',AGBpot)
