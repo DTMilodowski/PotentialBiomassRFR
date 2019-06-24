@@ -45,7 +45,7 @@ def cal_val_train_test(X,y,rf,path2calval,country_code,version):
     df_train.sim[df_train.sim<0] = 0.
 
     df_test =  pd.DataFrame({'obs':y_test[idx_test],'sim':y_test_predict[idx_test],
-                            'density':z_test[idx_test],'logdensity':np.log(z_train[idx_train])})
+                            'density':z_test[idx_test],'logdensity':np.log(z_test[idx_test])})
     df_test.sim[df_test.sim<0] = 0.
 
     #plot
