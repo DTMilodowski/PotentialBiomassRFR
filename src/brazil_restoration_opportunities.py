@@ -10,6 +10,9 @@ import numpy as np
 import sys
 import xarray as xr #xarray to read all types of formats
 import glob as glob
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 country_code = 'BRA'
 version = '008'
@@ -18,18 +21,17 @@ version = '008'
 #===============================================================================
 PART A: DEFINE PATHS AND LOAD IN DATA
 - Potential biomass maps (from netcdf file)
-- Biome map (Mapbiomas)
+- Biome boundaries (Mapbiomas)
 - WRI opportunity map
 #-------------------------------------------------------------------------------
 """
-opportunities_file = '/home/dmilodow/DataStore_DTM/FOREST2020/WRI_restoration_opportunities/WRI_restoration/WRI_restoration_opportunities_regrid_tropics.tif'
 path2data = '/disk/scratch/local.2/dmilodow/PotentialBiomass/processed/%s/' % country_code
 path2output = '/home/dmilodow/DataStore_DTM/FOREST2020/PotentialBiomassRFR/output/'
 path2mapbiomas = '/scratch/local.2/MAPBIOMAS/'
 
 # load potential biomass models from netdf file
-AGBpot_ds = xr.open_dataset(%s%s_%s_AGB_potential_RFR_worldclim_soilgrids.nc' % (path2output,
-                                country_code,version)
+AGBpot_ds = xr.open_dataset('%s%s_%s_AGB_potential_RFR_worldclim_soilgrids.nc' %
+                                (path2output, country_code,version))
 AGBpot = AGBpot_ds['AGBpot8'].values
 AGBobs = AGBpot_ds['AGBobs'].values
 AGBseq = AGBpot-AGBobs
@@ -48,7 +50,7 @@ for ii, file in enumerate(biome_files):
     masks[biome_label[ii]] = mb.values>0
 
 # load opportunity map
-opportunity = xr.open_rasterio('%sWRIopportunities/WRI_restoration_opportunities_%s.tif' % (path2data, country_code))[0]
+opportunity = xr.open_rasterio('%sWRI_restoration/WRI_restoration_opportunities_%s.tif' % (path2data, country_code))[0]
 opp_class = ['wide-scale','mosaic','remote','agriculture']
 for cc,opp in enumerate(opp_class):
     masks[opp] = opportunity.values==cc+1
@@ -59,17 +61,26 @@ PART B: National summaries
 #-------------------------------------------------------------------------------
 """
 
-# Get Brazil national boundaries
-# - Summarise each of the opportunity classes
+# Summarise each of the opportunity classes for Brazil
 opp_class = ['wide-scale','mosaic','remote','agriculture']
 areas_ha = np.zeros(4)
 potC_Mg = np.zeros(4)
 seqC_Mg = np.zeros(4)
-defC_Mg = np.zeros(4)
 obsC_Mg = np.zeros(4)
 
+"""
+# Arrays for upper and lower limits of uncertainty
+potC_Mg_max = np.zeros(4)
+seqC_Mg_max = np.zeros(4)
+obsC_Mg_max = np.zeros(4)
+
+potC_Mg_min = np.zeros(4)
+seqC_Mg_min = np.zeros(4)
+obsC_Mg_min = np.zeros(4)
+"""
+
 for cc,opp in enumerate(opp_class):
-    mask = masks[opp]
+    mask = masks[opp]*masks['Brazil']
     areas_ha[cc] = np.sum(cell_areas[mask])*1.
     potC_Mg[cc] = np.sum(AGBpot[mask]*cell_areas[mask])
     seqC_Mg[cc] = np.sum(AGBseq[mask]*cell_areas[mask])
