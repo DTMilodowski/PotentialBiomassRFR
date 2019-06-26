@@ -37,11 +37,15 @@ path2mapbiomas = '/scratch/local.2/MAPBIOMAS/'
 # - for each biome, load in the 1km regridded mapbiomas dataset for that biome
 #   and create a mask based on the pixels for which there is data
 biome_files = glob.glob('%s*1km.tif' % path2mapbiomas)
-biome_masks = {}
+masks = {}
 biome_labels = ['Amazonia','Cerrado','Pampa','Mataatlantica','Caatinga','Pantanal']
 for ii, file in enumerate(biome_files):
-    print(biome_labels[ii],file)
-    biome_masks[biome_label[ii]] = xr.open_rasterio(file)[0].values>0
+    mb = xr.open_rasterio(file)[0]
+    if ii == 0:
+        masks['Brazil'] = mb.values>0
+    else:
+        masks['Brazil'] += mb.values>0
+    masks[biome_label[ii]] = mb.values>0
 
 # load opportunity map
 opportunity_ds = xr.open_rasterio('%sWRIopportunities/WRI_restoration_opportunities_%s.tif' % (path2data, country_code))[0]
