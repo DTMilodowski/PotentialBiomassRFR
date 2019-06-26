@@ -9,6 +9,7 @@ Combine restoration potential maps with:
 import numpy as np
 import sys
 import xarray as xr #xarray to read all types of formats
+import glob as glob
 
 country_code = 'BRA'
 version = '008'
@@ -25,8 +26,7 @@ PART A: DEFINE PATHS AND LOAD IN DATA
 opportunities_file = '/home/dmilodow/DataStore_DTM/FOREST2020/WRI_restoration_opportunities/WRI_restoration/WRI_restoration_opportunities_regrid_tropics.tif'
 path2data = '/disk/scratch/local.2/dmilodow/PotentialBiomass/processed/%s/' % country_code
 path2output = '/home/dmilodow/DataStore_DTM/FOREST2020/PotentialBiomassRFR/output/'
-path2opp =
-
+path2mapbiomas = '/scratch/local.2/MAPBIOMAS/'
 # load potential biomass models from netdf file
 
 
@@ -36,6 +36,12 @@ path2opp =
 # load biome boundaries
 # - for each biome, load in the 1km regridded mapbiomas dataset for that biome
 #   and create a mask based on the pixels for which there is data
+biome_files = glob.glob('%s*1km.tif' % path2mapbiomas)
+biome_masks = {}
+biome_labels = ['Amazonia','Cerrado','Pampa','Mataatlantica','Caatinga','Pantanal']
+for ii, file in enumerate(biome_files):
+    print(biome_labels[ii],file)
+    biome_masks[biome_label[ii]] = xr.open_rasterio(file)[0].values>0
 
 # load opportunity map
 opportunity_ds = xr.open_rasterio('%sWRIopportunities/WRI_restoration_opportunities_%s.tif' % (path2data, country_code))[0]
