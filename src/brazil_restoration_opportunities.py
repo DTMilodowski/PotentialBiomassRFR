@@ -1,4 +1,4 @@
-mask"""
+"""
 BRAZIL RESTORATION OPPORTUNITIES
 --------------------------------------------------------------------------------
 Combine restoration potential maps with:
@@ -37,7 +37,7 @@ AGBpot = AGBpot_ds['AGBpot8'].values
 AGBobs = AGBpot_ds['AGBobs'].values
 AGBseq = AGBpot-AGBobs
 
-areas =  useful.get_areas(latorig=AGBpot_ds.coords['lat'].values,
+cell_areas =  useful.get_areas(latorig=AGBpot_ds.coords['lat'].values,
                             lonorig=AGBpot_ds.coords['lon'].values)
 
 # load biome boundaries
@@ -52,20 +52,19 @@ for ii, file in enumerate(biome_files):
         masks['Brazil'] = mb.values>0
     else:
         masks['Brazil'] += mb.values>0
-    masks[biome_label[ii]] = mb.values>0
-
+    masks[biome_labels[ii]] = mb.values>0*np.isfinite(AGBpot)
+masks['Brazil'] *=np.isfinite(AGBpot)
 # load opportunity map
 opportunity = xr.open_rasterio('%sWRI_restoration/WRI_restoration_opportunities_%s.tif' % (path2data, country_code))[0]
-opp_class = ['forest','wide-scale','mosaic','remote','agriculture']
+opp_class = ['forest','wide-scale','mosaic','remote','urban-agriculture']
 for cc,opp in enumerate(opp_class):
-    masks[opp] = (opportunity.values==cc+1)*masks['Brazil']
+    masks[opp] = (opportunity.values==cc)*masks['Brazil']
 
 """
 #===============================================================================
 PART B: National summaries
 #-------------------------------------------------------------------------------
 """
-
 # Summarise each of the opportunity classes for Brazil
 areas_ha = np.zeros(5)
 potC_Mg = np.zeros(5)
@@ -99,48 +98,48 @@ obsC_Mg_ha = obsC_Mg/areas_ha
 # 1   - Wide-scale restoration
 # 2   - Mosaic restoration
 # 3   - Remote restoration
-# 4   - Agricultural lands
-print '====================================================================='
-print '\trestoration opportunity areas in ha'
-print '---------------------------------------------------------------------'
-print '\twide-scale,\t\tmosaic,\t\tremote,\t\tagriculture'
-print '\t%.0f,\t\t%.0f,\t\t%.0f,\t\t%.0f' % (areas_ha[0],areas_ha[1],areas_ha[2],areas_ha[3])
-print '====================================================================='
+# 4   - Agricultural lands and urban areas
+print('=====================================================================')
+print('\trestoration opportunity areas in ha')
+print('---------------------------------------------------------------------')
+print('\tforest\twide-scale,\t\tmosaic,\t\tremote,\t\tagriculture')
+print('\t%.0f,\t\t%.0f,\t\t%.0f,\t\t%.0f' % (areas_ha[0],areas_ha[1],areas_ha[2],areas_ha[3],areas_ha[4]))
+print('=====================================================================')
 
-print '====================================================================='
-print '\tobserved biomass within each class, in 10^6 Mg C'
-print '---------------------------------------------------------------------'
-print '\twide-scale,\t\tmosaic,\t\tremote,\t\tagriculture'
-print '\t%.0f,\t\t%.0f,\t\t%.0f,\t\t%.0f' % (obsC_Mg[0],obsC_Mg[1],obsC_Mg[2],obsC_Mg[3])
-print '---------------------------------------------------------------------'
-print '\observed biomass density within each class, in 10^6 Mg C / ha'
-print '---------------------------------------------------------------------'
-print '\twide-scale,\t\tmosaic,\t\tremote,\t\tagriculture'
-print '\t%.0f,\t\t%.0f,\t\t%.0f,\t\t%.0f' % (obsC_Mg_ha[0],obsC_Mg_ha[1],obsC_Mg_ha[2],obsC_Mg_ha[3])
-print '====================================================================='
+print('=====================================================================')
+print( '\tobserved biomass within each class, in 10^6 Mg C')
+print( '---------------------------------------------------------------------')
+print( '\tforest\twide-scale,\t\tmosaic,\t\tremote,\t\tagriculture')
+print( '\t%.0f,\t\t%.0f,\t\t%.0f,\t\t%.0f' % (obsC_Mg[0],obsC_Mg[1],obsC_Mg[2],obsC_Mg[3],obsC_Mg[4]))
+print( '---------------------------------------------------------------------')
+print( '\observed biomass density within each class, in 10^6 Mg C / ha')
+print( '---------------------------------------------------------------------')
+print( '\tforest\twide-scale,\t\tmosaic,\t\tremote,\t\tagriculture')
+print( '\t%.0f,\t\t%.0f,\t\t%.0f,\t\t%.0f' % (obsC_Mg_ha[0],obsC_Mg_ha[1],obsC_Mg_ha[2],obsC_Mg_ha[3],obsC_Mg_ha[4]))
+print( '=====================================================================')
 
-print '====================================================================='
-print '\tpotential biomass within each class, in 10^6 Mg C'
-print '---------------------------------------------------------------------'
-print '\twide-scale,\t\tmosaic,\t\tremote,\t\tagriculture'
-print '\t%.0f,\t\t%.0f,\t\t%.0f,\t\t%.0f' % (potC_Mg[0],potC_Mg[1],potC_Mg[2],potC_Mg[3])
-print '---------------------------------------------------------------------'
-print '\tpotential biomass density within each class, in 10^6 Mg C / ha'
-print '---------------------------------------------------------------------'
-print '\twide-scale,\t\tmosaic,\t\tremote,\t\tagriculture'
-print '\t%.0f,\t\t%.0f,\t\t%.0f,\t\t%.0f' % (potC_Mg_ha[0],potC_Mg_ha[1],potC_Mg_ha[2],potC_Mg_ha[3])
-print '====================================================================='
+print( '=====================================================================')
+print( '\tpotential biomass within each class, in 10^6 Mg C')
+print( '---------------------------------------------------------------------')
+print( '\tforest\twide-scale,\t\tmosaic,\t\tremote,\t\tagriculture')
+print( '\t%.0f,\t\t%.0f,\t\t%.0f,\t\t%.0f' % (potC_Mg[0],potC_Mg[1],potC_Mg[2],potC_Mg[3],potC_Mg[4]))
+print( '---------------------------------------------------------------------')
+print( '\tforest\tpotential biomass density within each class, in 10^6 Mg C / ha')
+print( '---------------------------------------------------------------------')
+print( '\twide-scale,\t\tmosaic,\t\tremote,\t\tagriculture')
+print( '\t%.0f,\t\t%.0f,\t\t%.0f,\t\t%.0f' % (potC_Mg_ha[0],potC_Mg_ha[1],potC_Mg_ha[2],potC_Mg_ha[3],potC_Mg_ha[4]))
+print( '=====================================================================')
 
-print '====================================================================='
-print ' AGB sequestration potential within each class, in 10^6 Mg C'
-print '---------------------------------------------------------------------'
-print '\twide-scale,\t\tmosaic,\t\tremote,\t\tagriculture'
-print '\t%.0f,\t\t%.0f,\t\t%.0f,\t\t%.0f' % (seqC_Mg[0],seqC_Mg[1],seqC_Mg[2],seqC_Mg[3])
-print '---------------------------------------------------------------------'
-print ' AGB deficit within each class, in 10^6 Mg C / ha'
-print '---------------------------------------------------------------------'
-print '\twide-scale,\t\tmosaic,\t\tremote,\t\tagriculture'
-print '\t%.0f,\t\t%.0f,\t\t%.0f,\t\t%.0f' % (seqC_Mg_ha[0],seqC_Mg_ha[1],seqC_Mg_ha[2],seqC_Mg_ha[3])
+print( '=====================================================================')
+print( ' AGB sequestration potential within each class, in 10^6 Mg C')
+print( '---------------------------------------------------------------------')
+print( '\tforest\twide-scale,\t\tmosaic,\t\tremote,\t\tagriculture')
+print( '\t%.0f,\t\t%.0f,\t\t%.0f,\t\t%.0f' % (seqC_Mg[0],seqC_Mg[1],seqC_Mg[2],seqC_Mg[3],seqC_Mg[4]))
+print( '---------------------------------------------------------------------')
+print( ' AGB deficit within each class, in 10^6 Mg C / ha')
+print( '---------------------------------------------------------------------')
+print( '\tforest\twide-scale,\t\tmosaic,\t\tremote,\t\tagriculture')
+print( '\t%.0f,\t\t%.0f,\t\t%.0f,\t\t%.0f' % (seqC_Mg_ha[0],seqC_Mg_ha[1],seqC_Mg_ha[2],seqC_Mg_ha[3],seqC_Mg_ha[4]))
 
 """
 #===============================================================================
@@ -169,7 +168,7 @@ for bb, bio in enumerate(biome_labels):
 
 df = pd.DataFrame({'biome':biome,'opportunity class':opportunity_class,
                     'area_ha':area,'AGBobs':agbobs,'AGBpot':agbpot,
-                    'AGBseq':AGBseq})
+                    'AGBseq':agbseq})
 
 
 """
