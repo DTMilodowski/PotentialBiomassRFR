@@ -13,6 +13,7 @@ import glob as glob
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+import useful as useful
 
 country_code = 'BRA'
 version = '008'
@@ -35,6 +36,10 @@ AGBpot_ds = xr.open_dataset('%s%s_%s_AGB_potential_RFR_worldclim_soilgrids.nc' %
 AGBpot = AGBpot_ds['AGBpot8'].values
 AGBobs = AGBpot_ds['AGBobs'].values
 AGBseq = AGBpot-AGBobs
+
+areas =  useful.get_areas(latorig=AGBpot_ds.coords['lat'].values,
+                            lonorig=AGBpot_ds.coords['lon'].values)
+
 # load biome boundaries
 # - for each biome, load in the 1km regridded mapbiomas dataset for that biome
 #   and create a mask based on the pixels for which there is data
@@ -51,9 +56,9 @@ for ii, file in enumerate(biome_files):
 
 # load opportunity map
 opportunity = xr.open_rasterio('%sWRI_restoration/WRI_restoration_opportunities_%s.tif' % (path2data, country_code))[0]
-opp_class = ['wide-scale','mosaic','remote','agriculture']
+opp_class = ['forest','wide-scale','mosaic','remote','agriculture']
 for cc,opp in enumerate(opp_class):
-    masks[opp] = opportunity.values==cc+1
+    masks[opp] = (opportunity.values==cc+1)*masks['Brazil']
 
 """
 #===============================================================================
@@ -62,25 +67,24 @@ PART B: National summaries
 """
 
 # Summarise each of the opportunity classes for Brazil
-opp_class = ['wide-scale','mosaic','remote','agriculture']
-areas_ha = np.zeros(4)
-potC_Mg = np.zeros(4)
-seqC_Mg = np.zeros(4)
-obsC_Mg = np.zeros(4)
+areas_ha = np.zeros(5)
+potC_Mg = np.zeros(5)
+seqC_Mg = np.zeros(5)
+obsC_Mg = np.zeros(5)
 
 """
 # Arrays for upper and lower limits of uncertainty
-potC_Mg_max = np.zeros(4)
-seqC_Mg_max = np.zeros(4)
-obsC_Mg_max = np.zeros(4)
+potC_Mg_max = np.zeros(5)
+seqC_Mg_max = np.zeros(5)
+obsC_Mg_max = np.zeros(5)
 
-potC_Mg_min = np.zeros(4)
-seqC_Mg_min = np.zeros(4)
-obsC_Mg_min = np.zeros(4)
+potC_Mg_min = np.zeros(5)
+seqC_Mg_min = np.zeros(5)
+obsC_Mg_min = np.zeros(5)
 """
 
 for cc,opp in enumerate(opp_class):
-    mask = masks[opp]*masks['Brazil']
+    mask = masks[opp]
     areas_ha[cc] = np.sum(cell_areas[mask])*1.
     potC_Mg[cc] = np.sum(AGBpot[mask]*cell_areas[mask])
     seqC_Mg[cc] = np.sum(AGBseq[mask]*cell_areas[mask])
@@ -143,11 +147,34 @@ print '\t%.0f,\t\t%.0f,\t\t%.0f,\t\t%.0f' % (seqC_Mg_ha[0],seqC_Mg_ha[1],seqC_Mg
 PART C: Biome level summaries
 #-------------------------------------------------------------------------------
 """
+# Create pandas data frame for ease of plotting with seaborn
+# - column variables
+#   biome, opportunity_class, area_ha, AGBobs, AGBpot, AGBseq
+biome = []
+opportunity_class = []
+area = []
+agbobs = []
+agbpot = []
+agbseq = []
+
+for bb, bio in enumerate(biome_labels):
+    for cc,opp in enumerate(opp_class):
+        mask = masks[opp]*masks[bio]
+        biome.append(bio)
+        opportunity_class.append(opp)
+        area.append(np.sum(cell_areas[mask])*1.)
+        agbpot.append(np.sum(AGBpot[mask]*cell_areas[mask]))
+        agbseq.append(np.sum(AGBseq[mask]*cell_areas[mask]))
+        agbobs.append(np.sum(AGBobs[mask]*cell_areas[mask]))
+
+df = pd.DataFrame({'biome':biome,'opportunity class':opportunity_class,
+                    'area_ha':area,'AGBobs':agbobs,'AGBpot':agbpot,
+                    'AGBseq':AGBseq})
 
 
 """
 #===============================================================================
 PART D: Breakdown of potential biomass by landcover type for feasible
-restoration areas
+restoration areas - not implemented at present
 #-------------------------------------------------------------------------------
 """
