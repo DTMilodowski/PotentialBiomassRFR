@@ -48,7 +48,10 @@ for ii, file in enumerate(biome_files):
     masks[biome_label[ii]] = mb.values>0
 
 # load opportunity map
-opportunity_ds = xr.open_rasterio('%sWRIopportunities/WRI_restoration_opportunities_%s.tif' % (path2data, country_code))[0]
+opportunity = xr.open_rasterio('%sWRIopportunities/WRI_restoration_opportunities_%s.tif' % (path2data, country_code))[0]
+opp_class = ['wide-scale','mosaic','remote','agriculture']
+for cc,opp in enumerate(opp_class):
+    masks[opp] = opportunity.values==cc+1
 
 """
 #===============================================================================
@@ -65,8 +68,8 @@ seqC_Mg = np.zeros(4)
 defC_Mg = np.zeros(4)
 obsC_Mg = np.zeros(4)
 
-for cc in range(0,4):
-    mask = [opportunity.values==cc+1]
+for cc,opp in enumerate(opp_class):
+    mask = masks[opp]
     areas_ha[cc] = np.sum(cell_areas[mask])*1.
     potC_Mg[cc] = np.sum(AGBpot[mask]*cell_areas[mask])
     seqC_Mg[cc] = np.sum(AGBseq[mask]*cell_areas[mask])
