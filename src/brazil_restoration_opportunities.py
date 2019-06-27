@@ -39,7 +39,7 @@ AGBseq = AGBpot-AGBobs
 
 cell_areas =  useful.get_areas(latorig=AGBpot_ds.coords['lat'].values,
                             lonorig=AGBpot_ds.coords['lon'].values)
-
+cell_areas/=10**4 # m^2 -> ha
 # load biome boundaries
 # - for each biome, load in the 1km regridded mapbiomas dataset for that biome
 #   and create a mask based on the pixels for which there is data
@@ -103,43 +103,43 @@ print('=====================================================================')
 print('\trestoration opportunity areas in ha')
 print('---------------------------------------------------------------------')
 print('\tforest\twide-scale,\t\tmosaic,\t\tremote,\t\tagriculture')
-print('\t%.0f,\t\t%.0f,\t\t%.0f,\t\t%.0f' % (areas_ha[0],areas_ha[1],areas_ha[2],areas_ha[3],areas_ha[4]))
+print('\t%.0f,\t\t%.0f,\t\t%.0f,\t\t%.0f,\t\t%.0f' % (areas_ha[0],areas_ha[1],areas_ha[2],areas_ha[3],areas_ha[4]))
 print('=====================================================================')
 
 print('=====================================================================')
 print( '\tobserved biomass within each class, in 10^6 Mg C')
 print( '---------------------------------------------------------------------')
 print( '\tforest\twide-scale,\t\tmosaic,\t\tremote,\t\tagriculture')
-print( '\t%.0f,\t\t%.0f,\t\t%.0f,\t\t%.0f' % (obsC_Mg[0],obsC_Mg[1],obsC_Mg[2],obsC_Mg[3],obsC_Mg[4]))
+print( '\t%.0f,\t\t%.0f,\t\t%.0f,\t\t%.0f,\t\t%.0f' % (obsC_Mg[0],obsC_Mg[1],obsC_Mg[2],obsC_Mg[3],obsC_Mg[4]))
 print( '---------------------------------------------------------------------')
 print( '\observed biomass density within each class, in 10^6 Mg C / ha')
 print( '---------------------------------------------------------------------')
 print( '\tforest\twide-scale,\t\tmosaic,\t\tremote,\t\tagriculture')
-print( '\t%.0f,\t\t%.0f,\t\t%.0f,\t\t%.0f' % (obsC_Mg_ha[0],obsC_Mg_ha[1],obsC_Mg_ha[2],obsC_Mg_ha[3],obsC_Mg_ha[4]))
+print( '\t%.0f,\t\t%.0f,\t\t%.0f,\t\t%.0f,\t\t%.0f' % (obsC_Mg_ha[0],obsC_Mg_ha[1],obsC_Mg_ha[2],obsC_Mg_ha[3],obsC_Mg_ha[4]))
 print( '=====================================================================')
 
 print( '=====================================================================')
 print( '\tpotential biomass within each class, in 10^6 Mg C')
 print( '---------------------------------------------------------------------')
 print( '\tforest\twide-scale,\t\tmosaic,\t\tremote,\t\tagriculture')
-print( '\t%.0f,\t\t%.0f,\t\t%.0f,\t\t%.0f' % (potC_Mg[0],potC_Mg[1],potC_Mg[2],potC_Mg[3],potC_Mg[4]))
+print( '\t%.0f,\t\t%.0f,\t\t%.0f,\t\t%.0f,\t\t%.0f' % (potC_Mg[0],potC_Mg[1],potC_Mg[2],potC_Mg[3],potC_Mg[4]))
 print( '---------------------------------------------------------------------')
 print( '\tforest\tpotential biomass density within each class, in 10^6 Mg C / ha')
 print( '---------------------------------------------------------------------')
 print( '\twide-scale,\t\tmosaic,\t\tremote,\t\tagriculture')
-print( '\t%.0f,\t\t%.0f,\t\t%.0f,\t\t%.0f' % (potC_Mg_ha[0],potC_Mg_ha[1],potC_Mg_ha[2],potC_Mg_ha[3],potC_Mg_ha[4]))
+print( '\t%.0f,\t\t%.0f,\t\t%.0f,\t\t%.0f,\t\t%.0f' % (potC_Mg_ha[0],potC_Mg_ha[1],potC_Mg_ha[2],potC_Mg_ha[3],potC_Mg_ha[4]))
 print( '=====================================================================')
 
 print( '=====================================================================')
 print( ' AGB sequestration potential within each class, in 10^6 Mg C')
 print( '---------------------------------------------------------------------')
 print( '\tforest\twide-scale,\t\tmosaic,\t\tremote,\t\tagriculture')
-print( '\t%.0f,\t\t%.0f,\t\t%.0f,\t\t%.0f' % (seqC_Mg[0],seqC_Mg[1],seqC_Mg[2],seqC_Mg[3],seqC_Mg[4]))
+print( '\t%.0f,\t\t%.0f,\t\t%.0f,\t\t%.0f,\t\t%.0f' % (seqC_Mg[0],seqC_Mg[1],seqC_Mg[2],seqC_Mg[3],seqC_Mg[4]))
 print( '---------------------------------------------------------------------')
 print( ' AGB deficit within each class, in 10^6 Mg C / ha')
 print( '---------------------------------------------------------------------')
 print( '\tforest\twide-scale,\t\tmosaic,\t\tremote,\t\tagriculture')
-print( '\t%.0f,\t\t%.0f,\t\t%.0f,\t\t%.0f' % (seqC_Mg_ha[0],seqC_Mg_ha[1],seqC_Mg_ha[2],seqC_Mg_ha[3],seqC_Mg_ha[4]))
+print( '\t%.0f,\t\t%.0f,\t\t%.0f,\t\t%.0f,\t\t%.0f' % (seqC_Mg_ha[0],seqC_Mg_ha[1],seqC_Mg_ha[2],seqC_Mg_ha[3],seqC_Mg_ha[4]))
 
 """
 #===============================================================================
