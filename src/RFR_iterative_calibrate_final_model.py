@@ -47,6 +47,7 @@ path2output = '/home/dmilodow/DataStore_DTM/FOREST2020/PotentialBiomassRFR/outpu
 PART A: LOAD IN DATA, PROCESS AS REQUIRED AND SUBSET THE TRAINING DATA
 #-------------------------------------------------------------------------------
 """
+print("PART A: LOADING AND PREPROCESSING DATA")
 # training set from intermediate netcdf file
 AGBpot_ds = xr.open_dataset('%s%s_%s_AGB_potential_RFR_worldclim_soilgrids.nc' %
                                 (path2output, country_code,version))
@@ -73,6 +74,7 @@ ymax = (yall+y_unc)[training_mask[landmask]]
 PART B: FIT RANDOM FOREST MODELS
 #-------------------------------------------------------------------------------
 """
+print("PART B: Fitting random forest models")
 # Load trials data from optimisation and retrieve best hyperparameter combination
 # but boost number of trees in forest as not running as many times, so can
 # afford computational expense
@@ -158,6 +160,7 @@ joblib.dump(rf_max,'%s/%s_%s_rf_iterative_max.pkl' % (path2alg,country_code,
 PART C: PRODUCE FULL POTENTIAL BIOMASS MAPS AND SAVE TO NETCDF
 #-------------------------------------------------------------------------------
 """
+print("PART C: Produce full maps and uncertainty bounds")
 # convert training set and AGBpot to xdarray for easy plotting and export to
 # netcdf
 # first deal with metadata and coordinates
@@ -206,10 +209,9 @@ agb_rf.to_netcdf(path=nc_file)#,encoding=encoding)
 PART D: PLOTTING
 #-------------------------------------------------------------------------------
 """
+print("PART D: Plot figures")
 # plot stuff
 # Initial cal-val plot
-mf.plot_training_residuals(agb_rf,iterations,country_code,version,
-                        path2output=path2output,vmin=[0,0,-50],vmax=[200,200,50])
 mf.plot_AGB_AGBpot_training_final(agb_rf,country_code,version,
                         path2output = path2output)
 mf.plot_AGBpot_uncertainty(agb_rf,country_code,version,
