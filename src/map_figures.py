@@ -223,6 +223,51 @@ def plot_AGB_AGBpot_training_final(nc,country_code,version,path2output='./',vmin
     #fig.show()
     fig.savefig('%s/%s_%s_AGB_AGBpot_training_final.png' % (path2output,country_code,version),bbox_inches='tight',dpi=300)
 
+"""
+Plot uncertainty
+"""
+def plot_AGBpot_uncertainty(nc,country_code,version,path2output='./'):
+    #create a figure using the axesgrid to make the colorbar fit on the axis
+    projection = ccrs.PlateCarree()
+    axes_class = (GeoAxes,dict(map_projection=projection))
+
+    #create figure
+    fig = plt.figure('AGBunc_final',figsize=(10,5))
+    fig.clf()
+
+    #create axes grid
+    axgr = AxesGrid(fig,111,nrows_ncols=(1,2),axes_class=axes_class,label_mode='',
+                    cbar_mode='each',cbar_pad = 0.25,cbar_size="3%",axes_pad=.5)
+
+    #plot setup
+    xlim = (np.min(nc.lon.values),np.max(nc.lon.values))
+    ylim = (np.min(nc.lat.values),np.max(nc.lat.values))
+    cmap = 'viridis'
+    titles = ['a) uncertainty range','b) uncertainty range\nas fraction']
+    unc = nc.AGBpot_max-nc.AGBpot_min
+    unc_frac = unc/nc.AGBpot
+    maps2plot = [unc,unc_frac]
+
+    (unc*.48).plot.imshow(ax=axgr[0],cbar_ax=axgr.cbar_axes[0],
+                            extend='max',interpolation='nearest',
+                            cbar_kwargs={'label':'Mg C ha$^{-1}$'},cmap=cmap,
+                            xticks=np.arange(-120,161,40),yticks=np.arange(-60,41,20),
+                            add_labels=False,ylim=ylim,xlim=xlim)
+    (unc_frac*.48).plot.imshow(ax=axgr[0],cbar_ax=axgr.cbar_axes[0],
+                            extend='max',interpolation='nearest',
+                            cbar_kwargs={'label':'Mg C ha$^{-1}$'},cmap=cmap,
+                            xticks=np.arange(-120,161,40),yticks=np.arange(-60,41,20),
+                            add_labels=False,ylim=ylim,xlim=xlim)
+    for mm,map2plot in enumerate(maps2plot):
+        #set labels
+        axgr[mm].yaxis.set_major_formatter(LatitudeFormatter())
+        axgr[mm].xaxis.set_major_formatter(LongitudeFormatter())
+        axgr[mm].text(0.98,0.02,titles[mm],transform=axgr[mm].transAxes,
+                        ha='right',va='bottom',weight='bold')
+
+    #fig.show()
+    fig.savefig('%s/%s_%s_AGBpot_uncertainty.png' % (path2output,country_code,version),bbox_inches='tight',dpi=300)
+
 
 """
 Plot residuals from training data spatially
