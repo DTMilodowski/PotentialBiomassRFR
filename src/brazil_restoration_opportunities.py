@@ -62,7 +62,7 @@ for ii, file in enumerate(biome_files):
 masks['Brazil'] *=np.isfinite(AGBpot)
 # load opportunity map
 opportunity = xr.open_rasterio('%sWRI_restoration/WRI_restoration_opportunities_%s.tif' % (path2data, country_code))[0]
-opp_class = ['forest','wide-scale','mosaic','remote','urban-agriculture']
+opp_class = ['existing forest','wide-scale','mosaic','remote','urban-agriculture']
 for cc,opp in enumerate(opp_class):
     masks[opp] = (opportunity.values==cc)*masks['Brazil']
 
@@ -193,6 +193,17 @@ print( '\t%.2f,\t\t%.2f,\t\t%.2f,\t\t%.2f,\t\t%.2f' % (seqC_Mg_ha_max[0],
 # - Area
 # - AGBobs & AGBpot
 # - AGBseq
+
+"""
+A quick function to plot error bars onto bar plot
+"""
+def plot_bar_CIs(lc,uc,ax,jitter=0):
+    positions = np.arange(uc.size)+jitter
+    for ii,pos in enumerate(positions):
+        ax.plot([pos,pos],[lc[ii],uc[ii]],'-',lw=3.8,color='white')
+        ax.plot([pos,pos],[lc[ii],uc[ii]],'-',lw=2,color='0.5')
+    return 0
+
 sns.set(style="whitegrid")
 fig,axes = plt.subplots(nrows=1,ncols=3,sharex='all',figsize=[8,3.4])
 sns.barplot(x=opp_class,y=areas_ha,hue=opp_class,palette='Greens_d',dodge=False,
@@ -201,8 +212,11 @@ sns.barplot(x=opp_class,y=potC_Mg,hue=opp_class,palette='Greens_d',dodge=False,
             ax=axes[1],facecolor='white')
 sns.barplot(x=opp_class,y=obsC_Mg,hue=opp_class,palette='Greens_d',dodge=False,
             ax=axes[1])
+plot_bar_CIs(potC_Mg_min,potC_Mg_max,axes[1],jitter=0.1)
+plot_bar_CIs(obsC_Mg_min,obsC_Mg_max,axes[1],jitter=-0.1)
 sns.barplot(x=opp_class,y=seqC_Mg,hue=opp_class,palette='Greens_d',dodge=False,
             ax=axes[2])
+plot_bar_CIs(seqC_Mg_min,seqC_Mg_max,axes[2])
 colours=[]
 for patch in axes[0].patches:
     colours.append(patch.get_facecolor())
@@ -247,6 +261,14 @@ area = []
 agbobs = []
 agbpot = []
 agbseq = []
+agbobs_min = []
+agbpot_min = []
+agbseq_min = []
+agbobs_max = []
+agbpot_max = []
+agbseq_max = []
+
+
 
 for bb, bio in enumerate(biome_labels):
     for cc,opp in enumerate(opp_class):
@@ -257,10 +279,18 @@ for bb, bio in enumerate(biome_labels):
         agbpot.append(np.sum(AGBpot[mask]*cell_areas[mask]))
         agbseq.append(np.sum(AGBseq[mask]*cell_areas[mask]))
         agbobs.append(np.sum(AGBobs[mask]*cell_areas[mask]))
+        agbpot_min.append(np.sum(AGBpot_min[mask]*cell_areas[mask]))
+        agbseq_min.append(np.sum(AGBseq_min[mask]*cell_areas[mask]))
+        agbobs_min.append(np.sum(AGBobs_min[mask]*cell_areas[mask]))
+        agbpot_max.append(np.sum(AGBpot_max[mask]*cell_areas[mask]))
+        agbseq_max.append(np.sum(AGBseq_max[mask]*cell_areas[mask]))
+        agbobs_max.append(np.sum(AGBobs_max[mask]*cell_areas[mask]))
 
 df = pd.DataFrame({'biome':biome,'opportunity class':opportunity_class,
-                    'area_ha':area,'AGBobs':agbobs,'AGBpot':agbpot,
-                    'AGBseq':agbseq})
+                    'area_ha':area,'AGBobs':agbobs,
+                    'AGBobs_min':agbobs_min,'AGBobs_max':agbobs_max,
+                    'AGBpot':agbpot,'AGBpot_min':agbpot_min,'AGBpot_max':agbpot_max,
+                    'AGBseq':agbseq,'AGBseq_min':agbseq_min,'AGBseq_max':agbseq_max})
 
 
 """
@@ -289,6 +319,10 @@ for ii,biome in enumerate(biome_labels):
     sns.barplot(x='opportunity class',y='AGBseq',hue='opportunity class',
                 palette='Greens_d',dodge=False,ax=axes[ii][2],
                 data=df_biome)
+    plot_bar_CIs(np.asarray(df_biome['AGBpot_min']),np.asarray(df_biome['AGBpot_max']),axes[ii][1],jitter=0.1)
+    plot_bar_CIs(np.asarray(df_biome['AGBobs_min']),np.asarray(df_biome['AGBobs_max']),axes[ii][1],jitter=-0.1)
+    plot_bar_CIs(np.asarray(df_biome['AGBseq_min']),np.asarray(df_biome['AGBseq_max']),axes[ii][2])
+
 colours=[]
 for patch in axes[0][0].patches:
     colours.append(patch.get_facecolor())
@@ -299,7 +333,7 @@ for ii,row in enumerate(axes):
         ax.set_xlabel(None)
         for ii,patch in enumerate(ax.patches):
             patch.set_edgecolor(colours[jj%len(colours)])
-
+        ax.set_ylim(bottom=0)
 #if ii//n_biomes>0:
 #    ax.set_ylim(axes[1].get_ylim())
 
@@ -329,6 +363,7 @@ for ii,ax in enumerate(axes[:,1]):
         ax.set_ylabel(None)
     else:
         ax.set_ylabel(None)
+        
 for ii,ax in enumerate(axes[:,2]):
     y_ticks = ax.get_yticks()
     ax.set_yticklabels(['{:3.0f}'.format(i/(10**9)) for i in y_ticks],fontsize=10)
