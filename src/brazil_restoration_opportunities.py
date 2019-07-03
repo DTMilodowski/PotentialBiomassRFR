@@ -31,11 +31,17 @@ path2output = '/home/dmilodow/DataStore_DTM/FOREST2020/PotentialBiomassRFR/outpu
 path2mapbiomas = '/scratch/local.2/MAPBIOMAS/'
 
 # load potential biomass models from netdf file
-AGBpot_ds = xr.open_dataset('%s%s_%s_AGB_potential_RFR_worldclim_soilgrids.nc' %
+AGBpot_ds = xr.open_dataset('%s%s_%s_AGB_potential_RFR_worldclim_soilgrids_final.nc' %
                                 (path2output, country_code,version))
-AGBpot = AGBpot_ds['AGBpot8'].values
-AGBobs = AGBpot_ds['AGBobs'].values
-AGBseq = AGBpot-AGBobs
+AGBpot     = AGBpot_ds['AGBpot'].values
+AGBobs     = AGBpot_ds['AGBobs'].values
+AGBseq     = AGBpot-AGBobs
+AGBpot_min = AGBpot_ds['AGBpot_min'].values
+AGBobs_min = AGBpot_ds['AGBobs_min'].values
+AGBseq_min = AGBpot_min-AGBobs_min
+AGBpot_max = AGBpot_ds['AGBpot_max'].values
+AGBobs_max = AGBpot_ds['AGBobs_max'].values
+AGBseq_max = AGBpot_max-AGBobs_max
 
 cell_areas =  useful.get_areas(latorig=AGBpot_ds.coords['lat'].values,
                             lonorig=AGBpot_ds.coords['lon'].values)
@@ -71,7 +77,6 @@ potC_Mg = np.zeros(5)
 seqC_Mg = np.zeros(5)
 obsC_Mg = np.zeros(5)
 
-"""
 # Arrays for upper and lower limits of uncertainty
 potC_Mg_max = np.zeros(5)
 seqC_Mg_max = np.zeros(5)
@@ -80,18 +85,29 @@ obsC_Mg_max = np.zeros(5)
 potC_Mg_min = np.zeros(5)
 seqC_Mg_min = np.zeros(5)
 obsC_Mg_min = np.zeros(5)
-"""
 
 for cc,opp in enumerate(opp_class):
     mask = masks[opp]
     areas_ha[cc] = np.sum(cell_areas[mask])*1.
     potC_Mg[cc] = np.sum(AGBpot[mask]*cell_areas[mask])
+    potC_Mg_min[cc] = np.sum(AGBpot_min[mask]*cell_areas[mask])
+    potC_Mg_max[cc] = np.sum(AGBpot_max[mask]*cell_areas[mask])
     seqC_Mg[cc] = np.sum(AGBseq[mask]*cell_areas[mask])
+    seqC_Mg_min[cc] = np.sum(AGBseq_min[mask]*cell_areas[mask])
+    seqC_Mg_max[cc] = np.sum(AGBseq_max[mask]*cell_areas[mask])
     obsC_Mg[cc] = np.sum(AGBobs[mask]*cell_areas[mask])
+    obsC_Mg_min[cc] = np.sum(AGBobs_min[mask]*cell_areas[mask])
+    obsC_Mg_max[cc] = np.sum(AGBobs_max[mask]*cell_areas[mask])
 
-potC_Mg_ha = potC_Mg/areas_ha
-seqC_Mg_ha = seqC_Mg/areas_ha
-obsC_Mg_ha = obsC_Mg/areas_ha
+potC_Mg_ha     = potC_Mg/areas_ha
+potC_Mg_ha_min = potC_Mg_min/areas_ha
+potC_Mg_ha_max = potC_Mg_max/areas_ha
+seqC_Mg_ha     = seqC_Mg/areas_ha
+seqC_Mg_ha_min = seqC_Mg_min/areas_ha
+seqC_Mg_ha_max = seqC_Mg_max/areas_ha
+obsC_Mg_ha     = obsC_Mg/areas_ha
+obsC_Mg_ha_min = obsC_Mg_min/areas_ha
+obsC_Mg_ha_max = obsC_Mg_max/areas_ha
 
 # opportunity Classes:
 # 0   - No opportunity
@@ -113,11 +129,20 @@ print( '---------------------------------------------------------------------')
 print( '\tforest\t\twide-scale,\t\tmosaic,\t\tremote,\t\tagriculture')
 print( '\t%.2f,\t\t%.2f,\t\t%.2f,\t\t%.2f,\t\t%.2f' % (obsC_Mg[0]/10.**6,
         obsC_Mg[1]/10.**6,obsC_Mg[2]/10.**6,obsC_Mg[3]/10.**6,obsC_Mg[4]/10.**6))
+print( '\t%.2f,\t\t%.2f,\t\t%.2f,\t\t%.2f,\t\t%.2f' % (obsC_Mg_min[0]/10.**6,
+        obsC_Mg_min[1]/10.**6,obsC_Mg_min[2]/10.**6,obsC_Mg_min[3]/10.**6,obsC_Mg_min[4]/10.**6))
+print( '\t%.2f,\t\t%.2f,\t\t%.2f,\t\t%.2f,\t\t%.2f' % (obsC_Mg_max[0]/10.**6,
+        obsC_Mg_max[1]/10.**6,obsC_Mg_max[2]/10.**6,obsC_Mg_max[3]/10.**6,obsC_Mg_max[4]/10.**6))
 print( '---------------------------------------------------------------------')
 print( '\observed biomass density within each class, in 10^6 Mg C / ha')
 print( '---------------------------------------------------------------------')
 print( '\tforest\t\twide-scale,\t\tmosaic,\t\tremote,\t\tagriculture')
-print( '\t%.2f,\t\t%.2f,\t\t%.2f,\t\t%.2f,\t\t%.2f' % (obsC_Mg_ha[0],obsC_Mg_ha[1],obsC_Mg_ha[2],obsC_Mg_ha[3],obsC_Mg_ha[4]))
+print( '\t%.2f,\t\t%.2f,\t\t%.2f,\t\t%.2f,\t\t%.2f' % (obsC_Mg_ha_min[0],
+        obsC_Mg_ha_min[1],obsC_Mg_ha_min[2],obsC_Mg_ha_min[3],obsC_Mg_ha_min[4]))
+print( '\t%.2f,\t\t%.2f,\t\t%.2f,\t\t%.2f,\t\t%.2f' % (obsC_Mg_ha[0],
+        obsC_Mg_ha[1],obsC_Mg_ha[2],obsC_Mg_ha[3],obsC_Mg_ha[4]))
+print( '\t%.2f,\t\t%.2f,\t\t%.2f,\t\t%.2f,\t\t%.2f' % (obsC_Mg_ha_max[0],
+        obsC_Mg_ha_max[1],obsC_Mg_ha_max[2],obsC_Mg_ha_max[3],obsC_Mg_ha_max[4]))
 print( '=====================================================================')
 
 print( '=====================================================================')
@@ -126,11 +151,20 @@ print( '---------------------------------------------------------------------')
 print( '\tforest\t\twide-scale,\t\tmosaic,\t\tremote,\t\tagriculture')
 print( '\t%.2f,\t\t%.2f,\t\t%.2f,\t\t%.2f,\t\t%.2f' % (potC_Mg[0]/10.**6,
     potC_Mg[1]/10.**6,potC_Mg[2]/10.**6,potC_Mg[3]/10.**6,potC_Mg[4]/10.**6))
+print( '\t%.2f,\t\t%.2f,\t\t%.2f,\t\t%.2f,\t\t%.2f' % (potC_Mg_min[0]/10.**6,
+    potC_Mg_min[1]/10.**6,potC_Mg_min[2]/10.**6,potC_Mg_min[3]/10.**6,potC_Mg_min[4]/10.**6))
+print( '\t%.2f,\t\t%.2f,\t\t%.2f,\t\t%.2f,\t\t%.2f' % (potC_Mg_max[0]/10.**6,
+    potC_Mg_max[1]/10.**6,potC_Mg_max[2]/10.**6,potC_Mg_max[3]/10.**6,potC_Mg_max[4]/10.**6))
 print( '---------------------------------------------------------------------')
 print( '\tforest\t\tpotential biomass density within each class, in 10^6 Mg C / ha')
 print( '---------------------------------------------------------------------')
 print( '\tforest\t\twide-scale,\t\tmosaic,\t\tremote,\t\tagriculture')
-print( '\t%.2f,\t\t%.2f,\t\t%.2f,\t\t%.2f,\t\t%.2f' % (potC_Mg_ha[0],potC_Mg_ha[1],potC_Mg_ha[2],potC_Mg_ha[3],potC_Mg_ha[4]))
+print( '\t%.2f,\t\t%.2f,\t\t%.2f,\t\t%.2f,\t\t%.2f' % (potC_Mg_ha[0],
+    potC_Mg_ha[1],potC_Mg_ha[2],potC_Mg_ha[3],potC_Mg_ha[4]))
+print( '\t%.2f,\t\t%.2f,\t\t%.2f,\t\t%.2f,\t\t%.2f' % (potC_Mg_ha_min[0],
+    potC_Mg_ha_min[1],potC_Mg_ha_min[2],potC_Mg_ha_min[3],potC_Mg_ha_min[4]))
+print( '\t%.2f,\t\t%.2f,\t\t%.2f,\t\t%.2f,\t\t%.2f' % (potC_Mg_ha[0],
+    potC_Mg_ha_max[1],potC_Mg_ha_max[2],potC_Mg_ha_max[3],potC_Mg_ha_max[4]))
 print( '=====================================================================')
 
 print( '=====================================================================')
@@ -139,11 +173,20 @@ print( '---------------------------------------------------------------------')
 print( '\tforest\t\twide-scale,\t\tmosaic,\t\tremote,\t\tagriculture')
 print( '\t%.2f,\t\t%.2f,\t\t%.2f,\t\t%.2f,\t\t%.2f' % (seqC_Mg[0]/10.**6,
     seqC_Mg[1]/10.**6,seqC_Mg[2]/10.**6,seqC_Mg[3]/10.**6,seqC_Mg[4]/10.**6))
+print( '\t%.2f,\t\t%.2f,\t\t%.2f,\t\t%.2f,\t\t%.2f' % (seqC_Mg_min[0]/10.**6,
+    seqC_Mg_min[1]/10.**6,seqC_Mg_min[2]/10.**6,seqC_Mg_min[3]/10.**6,seqC_Mg_min[4]/10.**6))
+print( '\t%.2f,\t\t%.2f,\t\t%.2f,\t\t%.2f,\t\t%.2f' % (seqC_Mg_max[0]/10.**6,
+    seqC_Mg_max[1]/10.**6,seqC_Mg_max[2]/10.**6,seqC_Mg_max[3]/10.**6,seqC_Mg_max[4]/10.**6))
 print( '---------------------------------------------------------------------')
 print( ' AGB deficit within each class, in 10^6 Mg C / ha')
 print( '---------------------------------------------------------------------')
 print( '\tforest\t\twide-scale,\t\tmosaic,\t\tremote,\t\tagriculture')
-print( '\t%.2f,\t\t%.2f,\t\t%.2f,\t\t%.2f,\t\t%.2f' % (seqC_Mg_ha[0],seqC_Mg_ha[1],seqC_Mg_ha[2],seqC_Mg_ha[3],seqC_Mg_ha[4]))
+print( '\t%.2f,\t\t%.2f,\t\t%.2f,\t\t%.2f,\t\t%.2f' % (seqC_Mg_ha[0],
+    seqC_Mg_ha[1],seqC_Mg_ha[2],seqC_Mg_ha[3],seqC_Mg_ha[4]))
+print( '\t%.2f,\t\t%.2f,\t\t%.2f,\t\t%.2f,\t\t%.2f' % (seqC_Mg_ha_min[0],
+    seqC_Mg_ha_min[1],seqC_Mg_ha_min[2],seqC_Mg_ha_min[3],seqC_Mg_ha_min[4]))
+print( '\t%.2f,\t\t%.2f,\t\t%.2f,\t\t%.2f,\t\t%.2f' % (seqC_Mg_ha_max[0],
+    seqC_Mg_ha_max[1],seqC_Mg_ha_max[2],seqC_Mg_ha_max[3],seqC_Mg_ha_max[4]))
 
 # now plot this information up into some simple charts.
 # Three panels:
