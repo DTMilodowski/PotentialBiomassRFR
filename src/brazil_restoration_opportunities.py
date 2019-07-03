@@ -115,72 +115,72 @@ obsC_Mg_ha_max = obsC_Mg_max/areas_ha
 # 2   - Mosaic restoration
 # 3   - Remote restoration
 # 4   - Agricultural lands and urban areas
-print('=====================================================================')
+print('\t=====================================================================')
 print('\trestoration opportunity areas in 10^6 ha')
-print('---------------------------------------------------------------------')
-print('\tforest\t\twide-scale,\t\tmosaic,\t\tremote,\t\tagriculture')
+print('\t---------------------------------------------------------------------')
+print('\tforest\t\twide-scale,\tmosaic,\t\tremote,\t\tagriculture')
 print('\t%.2f,\t\t%.2f,\t\t%.2f,\t\t%.2f,\t\t%.2f' % (areas_ha[0]/10.**6,
     areas_ha[1]/10.**6,areas_ha[2]/10.**6,areas_ha[3]/10.**6,areas_ha[4]/10.**6))
-print('=====================================================================')
+print('\t=====================================================================')
 
-print('=====================================================================')
+print('\t=====================================================================')
 print( '\tobserved biomass within each class, in 10^6 Mg C')
-print( '---------------------------------------------------------------------')
-print( '\tforest\t\twide-scale,\t\tmosaic,\t\tremote,\t\tagriculture')
-print( '\t%.2f,\t\t%.2f,\t\t%.2f,\t\t%.2f,\t\t%.2f' % (obsC_Mg[0]/10.**6,
+print( '\t---------------------------------------------------------------------')
+print( '\tforest\t\twide-scale,\tmosaic,\t\tremote,\t\tagriculture')
+print( '\t%.2f,\t%.2f,\t%.2f,\t%.2f,\t\t%.2f' % (obsC_Mg[0]/10.**6,
         obsC_Mg[1]/10.**6,obsC_Mg[2]/10.**6,obsC_Mg[3]/10.**6,obsC_Mg[4]/10.**6))
-print( '\t%.2f,\t\t%.2f,\t\t%.2f,\t\t%.2f,\t\t%.2f' % (obsC_Mg_min[0]/10.**6,
+print( '\t%.2f,\t%.2f,\t%.2f,\t%.2f,\t\t%.2f' % (obsC_Mg_min[0]/10.**6,
         obsC_Mg_min[1]/10.**6,obsC_Mg_min[2]/10.**6,obsC_Mg_min[3]/10.**6,obsC_Mg_min[4]/10.**6))
-print( '\t%.2f,\t\t%.2f,\t\t%.2f,\t\t%.2f,\t\t%.2f' % (obsC_Mg_max[0]/10.**6,
+print( '\t%.2f,\t%.2f,\t%.2f,\t%.2f,\t\t%.2f' % (obsC_Mg_max[0]/10.**6,
         obsC_Mg_max[1]/10.**6,obsC_Mg_max[2]/10.**6,obsC_Mg_max[3]/10.**6,obsC_Mg_max[4]/10.**6))
-print( '---------------------------------------------------------------------')
-print( '\observed biomass density within each class, in 10^6 Mg C / ha')
-print( '---------------------------------------------------------------------')
-print( '\tforest\t\twide-scale,\t\tmosaic,\t\tremote,\t\tagriculture')
+print( '\t---------------------------------------------------------------------')
+print( '\tobserved biomass density within each class, in 10^6 Mg C / ha')
+print( '\t---------------------------------------------------------------------')
+print( '\tforest\t\twide-scale,\tmosaic,\t\tremote,\t\tagriculture')
 print( '\t%.2f,\t\t%.2f,\t\t%.2f,\t\t%.2f,\t\t%.2f' % (obsC_Mg_ha_min[0],
         obsC_Mg_ha_min[1],obsC_Mg_ha_min[2],obsC_Mg_ha_min[3],obsC_Mg_ha_min[4]))
 print( '\t%.2f,\t\t%.2f,\t\t%.2f,\t\t%.2f,\t\t%.2f' % (obsC_Mg_ha[0],
         obsC_Mg_ha[1],obsC_Mg_ha[2],obsC_Mg_ha[3],obsC_Mg_ha[4]))
 print( '\t%.2f,\t\t%.2f,\t\t%.2f,\t\t%.2f,\t\t%.2f' % (obsC_Mg_ha_max[0],
         obsC_Mg_ha_max[1],obsC_Mg_ha_max[2],obsC_Mg_ha_max[3],obsC_Mg_ha_max[4]))
-print( '=====================================================================')
+print( '\t=====================================================================')
 
-print( '=====================================================================')
+print( '\t=====================================================================')
 print( '\tpotential biomass within each class, in 10^6 Mg C')
-print( '---------------------------------------------------------------------')
-print( '\tforest\t\twide-scale,\t\tmosaic,\t\tremote,\t\tagriculture')
-print( '\t%.2f,\t\t%.2f,\t\t%.2f,\t\t%.2f,\t\t%.2f' % (potC_Mg[0]/10.**6,
+print( '\t---------------------------------------------------------------------')
+print( '\tforest\t\twide-scale,\tmosaic,\t\tremote,\t\tagriculture')
+print( '\t%.2f,\t%.2f,\t%.2f,\t%.2f,\t\t%.2f' % (potC_Mg[0]/10.**6,
     potC_Mg[1]/10.**6,potC_Mg[2]/10.**6,potC_Mg[3]/10.**6,potC_Mg[4]/10.**6))
-print( '\t%.2f,\t\t%.2f,\t\t%.2f,\t\t%.2f,\t\t%.2f' % (potC_Mg_min[0]/10.**6,
+print( '\t%.2f,\t%.2f,\t%.2f,\t%.2f,\t\t%.2f' % (potC_Mg_min[0]/10.**6,
     potC_Mg_min[1]/10.**6,potC_Mg_min[2]/10.**6,potC_Mg_min[3]/10.**6,potC_Mg_min[4]/10.**6))
-print( '\t%.2f,\t\t%.2f,\t\t%.2f,\t\t%.2f,\t\t%.2f' % (potC_Mg_max[0]/10.**6,
+print( '\t%.2f,\t%.2f,\t%.2f,\t%.2f,\t\t%.2f' % (potC_Mg_max[0]/10.**6,
     potC_Mg_max[1]/10.**6,potC_Mg_max[2]/10.**6,potC_Mg_max[3]/10.**6,potC_Mg_max[4]/10.**6))
-print( '---------------------------------------------------------------------')
-print( '\tforest\t\tpotential biomass density within each class, in 10^6 Mg C / ha')
-print( '---------------------------------------------------------------------')
-print( '\tforest\t\twide-scale,\t\tmosaic,\t\tremote,\t\tagriculture')
+print( '\t---------------------------------------------------------------------')
+print( '\tpotential biomass density within each class, in 10^6 Mg C / ha')
+print( '\t---------------------------------------------------------------------')
+print( '\tforest\t\twide-scale,\tmosaic,\t\tremote,\t\tagriculture')
 print( '\t%.2f,\t\t%.2f,\t\t%.2f,\t\t%.2f,\t\t%.2f' % (potC_Mg_ha[0],
     potC_Mg_ha[1],potC_Mg_ha[2],potC_Mg_ha[3],potC_Mg_ha[4]))
 print( '\t%.2f,\t\t%.2f,\t\t%.2f,\t\t%.2f,\t\t%.2f' % (potC_Mg_ha_min[0],
     potC_Mg_ha_min[1],potC_Mg_ha_min[2],potC_Mg_ha_min[3],potC_Mg_ha_min[4]))
 print( '\t%.2f,\t\t%.2f,\t\t%.2f,\t\t%.2f,\t\t%.2f' % (potC_Mg_ha[0],
     potC_Mg_ha_max[1],potC_Mg_ha_max[2],potC_Mg_ha_max[3],potC_Mg_ha_max[4]))
-print( '=====================================================================')
+print( '\t=====================================================================')
 
-print( '=====================================================================')
-print( ' AGB sequestration potential within each class, in 10^6 Mg C')
-print( '---------------------------------------------------------------------')
-print( '\tforest\t\twide-scale,\t\tmosaic,\t\tremote,\t\tagriculture')
-print( '\t%.2f,\t\t%.2f,\t\t%.2f,\t\t%.2f,\t\t%.2f' % (seqC_Mg[0]/10.**6,
+print( '\t=====================================================================')
+print( '\tAGB sequestration potential within each class, in 10^6 Mg C')
+print( '\t---------------------------------------------------------------------')
+print( '\tforest\t\twide-scale,\tmosaic,\t\tremote,\t\tagriculture')
+print( '\t%.2f,\t%.2f,\t%.2f,\t%.2f,\t\t%.2f' % (seqC_Mg[0]/10.**6,
     seqC_Mg[1]/10.**6,seqC_Mg[2]/10.**6,seqC_Mg[3]/10.**6,seqC_Mg[4]/10.**6))
-print( '\t%.2f,\t\t%.2f,\t\t%.2f,\t\t%.2f,\t\t%.2f' % (seqC_Mg_min[0]/10.**6,
+print( '\t%.2f,\t%.2f,\t%.2f,\t%.2f,\t\t%.2f' % (seqC_Mg_min[0]/10.**6,
     seqC_Mg_min[1]/10.**6,seqC_Mg_min[2]/10.**6,seqC_Mg_min[3]/10.**6,seqC_Mg_min[4]/10.**6))
-print( '\t%.2f,\t\t%.2f,\t\t%.2f,\t\t%.2f,\t\t%.2f' % (seqC_Mg_max[0]/10.**6,
+print( '\t%.2f,\t%.2f,\t%.2f,\t%.2f,\t\t%.2f' % (seqC_Mg_max[0]/10.**6,
     seqC_Mg_max[1]/10.**6,seqC_Mg_max[2]/10.**6,seqC_Mg_max[3]/10.**6,seqC_Mg_max[4]/10.**6))
-print( '---------------------------------------------------------------------')
-print( ' AGB deficit within each class, in 10^6 Mg C / ha')
-print( '---------------------------------------------------------------------')
-print( '\tforest\t\twide-scale,\t\tmosaic,\t\tremote,\t\tagriculture')
+print( '\t---------------------------------------------------------------------')
+print( '\tAGB deficit within each class, in 10^6 Mg C / ha')
+print( '\t---------------------------------------------------------------------')
+print( '\tforest\t\twide-scale,\tmosaic,\t\tremote,\t\tagriculture')
 print( '\t%.2f,\t\t%.2f,\t\t%.2f,\t\t%.2f,\t\t%.2f' % (seqC_Mg_ha[0],
     seqC_Mg_ha[1],seqC_Mg_ha[2],seqC_Mg_ha[3],seqC_Mg_ha[4]))
 print( '\t%.2f,\t\t%.2f,\t\t%.2f,\t\t%.2f,\t\t%.2f' % (seqC_Mg_ha_min[0],
@@ -363,7 +363,7 @@ for ii,ax in enumerate(axes[:,1]):
         ax.set_ylabel(None)
     else:
         ax.set_ylabel(None)
-        
+
 for ii,ax in enumerate(axes[:,2]):
     y_ticks = ax.get_yticks()
     ax.set_yticklabels(['{:3.0f}'.format(i/(10**9)) for i in y_ticks],fontsize=10)
