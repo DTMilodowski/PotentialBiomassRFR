@@ -48,26 +48,26 @@ PART A: LOAD IN DATA, PROCESS AS REQUIRED AND SUBSET THE TRAINING DATA
 #-------------------------------------------------------------------------------
 """
 print("PART A: LOADING AND PREPROCESSING DATA")
+# load all predictors to generate preprocessing minmax scaler transformation
+predictors_full,landmask = useful.get_predictors(country_code, training_subset=False)
 # training set from intermediate netcdf file
 AGBpot_ds = xr.open_dataset('%s%s_%s_AGB_potential_RFR_worldclim_soilgrids.nc' %
                                 (path2output, country_code,version))
 key = 'trainset%i' % iteration_to_use
 training_mask = AGBpot_ds[key].values>0*landmask
 
-# load all predictors to generate preprocessing minmax scaler transformation
-predictors_full,landmask = useful.get_predictors(country_code, training_subset=False)
-
 # load the AGB data and the uncertainty
 agb = xr.open_rasterio('%sAvitabile_AGB_%s_1km.tif' % (path2agb,country_code))[0]
 agb_unc = xr.open_rasterio('%sAvitabile_AGB_Uncertainty_%s_1km.tif' % (path2agb,country_code))[0]
-yall = agb[landmask]
-yunc = agb_unc[landmask]
+yall = agb.values[landmask]
+yunc = agb_unc.values[landmask]
 
 # get subset of predictors for initial training set
+Xall = predictors_full
 X = Xall[training_mask[landmask]]
 y = yall[training_mask[landmask]]
 ymin = (yall-yunc)[training_mask[landmask]]
-ymax = (yall+y_unc)[training_mask[landmask]]
+ymax = (yall+yunc)[training_mask[landmask]]
 
 """
 #===============================================================================
@@ -195,7 +195,7 @@ agb_rf.AGBpot.values[landmask]  = rf.predict(Xall)
 agb_rf.AGBpot_min.values[landmask]  = rf_min.predict(Xall)
 agb_rf.AGBpot_max.values[landmask]  = rf_max.predict(Xall)
 
-agb_rf.training.values[landmask]  = training_mask
+agb_rf.training.values[landmask]  = training_mask[landmask]
 
 #save to a nc file
 comp = dict(zlib=True, complevel=1)
@@ -216,6 +216,7 @@ mf.plot_AGB_AGBpot_training_final(agb_rf,country_code,version,
                         path2output = path2output)
 mf.plot_AGBpot_uncertainty(agb_rf,country_code,version,
                         path2output = path2output)
+mf.plot_AGBseq_final(agb_rf,country_code,version,path2output = path2output)
 
 training_mask_final = (training_set[-1]>0)*landmask
 cal_r2,val_r2 = cv.cal_val_train_test(Xall[training_mask[landmask]],
