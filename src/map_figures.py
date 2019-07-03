@@ -226,6 +226,87 @@ def plot_AGB_AGBpot_training_final(nc,country_code,version,path2output='./',
     fig.savefig('%s/%s_%s_AGB_AGBpot_training_final.png' % (path2output,country_code,version),bbox_inches='tight',dpi=300)
 
 """
+Plot defecit
+"""
+import seaborn as sns
+def plot_AGBdef_final(nc,country_code,version,path2output='./'):
+    #create a figure using the axesgrid to make the colorbar fit on the axis
+    projection = ccrs.PlateCarree()
+    axes_class = (GeoAxes,dict(map_projection=projection))
+
+    #create figure
+    fig = plt.figure('AGBpot_final',figsize=(5,5))
+    fig.clf()
+
+    #create axes grid
+    axgr = AxesGrid(fig,111,nrows_ncols=(1,1),axes_class=axes_class,label_mode='',
+                    cbar_mode='single',cbar_pad = 0.,cbar_size="3%",axes_pad=.6,
+                    cbar_location = 'bottom')
+    axgr[0].set_facecolor('0.5')
+    axgr.cbar_axes[0].set_facecolor('0.5')
+    #plot setup
+    xlim = (np.min(nc.lon.values),np.max(nc.lon.values))
+    ylim = (np.min(nc.lat.values),np.max(nc.lat.values))
+    cmap = 'viridis'
+    title = 'AGB$_{def}$'
+    map2plot = nc['AGBobs']-nc['AGBpot']
+    # now plot maps onto axes
+    (map2plot*.48).plot.imshow(ax=axgr[0],cbar_ax=axgr.cbar_axes[0],robust=True,
+                    interpolation='nearest',cbar_kwargs={'orientation':'horizontal',
+                    'label':'AGB$_{def}$ / Mg C ha$^{-1}$'},
+                    cmap=sns.diverging_palette(10,240,as_cmap=True),
+                    xticks=np.arange(-120,161,20),yticks=np.arange(-60,41,20),
+                    add_labels=False,ylim=ylim,xlim=xlim)
+    #set labels
+    axgr[0].yaxis.set_major_formatter(LatitudeFormatter())
+    axgr[0].xaxis.set_major_formatter(LongitudeFormatter())
+    axgr[0].text(0.98,0.98,title,transform=axgr[0].transAxes,ha='right',
+                        va='top',weight='bold')
+
+    #fig.show()
+    fig.savefig('%s/%s_%s_AGBdef_final.png' % (path2output,country_code,version),bbox_inches='tight',dpi=300)
+
+"""
+Plot sequestration potential
+"""
+def plot_AGBseq_final(nc,country_code,version,path2output='./'):
+    #create a figure using the axesgrid to make the colorbar fit on the axis
+    projection = ccrs.PlateCarree()
+    axes_class = (GeoAxes,dict(map_projection=projection))
+
+    #create figure
+    fig = plt.figure('AGBseq_final',figsize=(5,5))
+    fig.clf()
+
+    #create axes grid
+    axgr = AxesGrid(fig,111,nrows_ncols=(1,1),axes_class=axes_class,label_mode='',
+                    cbar_mode='single',cbar_pad = 0.,cbar_size="3%",axes_pad=.6,
+                    cbar_location = 'bottom')
+    axgr[0].set_facecolor('0.5')
+    axgr.cbar_axes[0].set_facecolor('0.5')
+    #plot setup
+    xlim = (np.min(nc.lon.values),np.max(nc.lon.values))
+    ylim = (np.min(nc.lat.values),np.max(nc.lat.values))
+    cmap = 'viridis'
+    title = 'Sequestration\n potential'
+    map2plot = nc['AGBpot']-nc['AGBobs']
+    # now plot maps onto axes
+    (map2plot*.48).plot.imshow(ax=axgr[0],cbar_ax=axgr.cbar_axes[0],robust=True,
+                    interpolation='nearest',cbar_kwargs={'orientation':'horizontal',
+                    'label':'Sequestration potential / Mg C ha$^{-1}$'},
+                    cmap=sns.diverging_palette(275,150,l=66,s=90,as_cmap=True),
+                    xticks=np.arange(-120,161,20),yticks=np.arange(-60,41,20),
+                    add_labels=False,ylim=ylim,xlim=xlim)
+    #set labels
+    axgr[0].yaxis.set_major_formatter(LatitudeFormatter())
+    axgr[0].xaxis.set_major_formatter(LongitudeFormatter())
+    axgr[0].text(0.98,0.98,title,transform=axgr[0].transAxes,ha='right',
+                        va='top',weight='bold')
+
+    #fig.show()
+    fig.savefig('%s/%s_%s_AGBseq_final.png' % (path2output,country_code,version),bbox_inches='tight',dpi=300)
+
+"""
 Plot uncertainty
 """
 def plot_AGBpot_uncertainty(nc,country_code,version,path2output='./'):
