@@ -179,46 +179,48 @@ def plot_AGB_AGBpot_training(nc,iterations,country_code,version,path2output='./'
     #fig.show()
     fig.savefig('%s/%s_%s_AGB_AGBpot_training.png' % (path2output,country_code,version),bbox_inches='tight',dpi=300)
 
-def plot_AGB_AGBpot_training_final(nc,country_code,version,path2output='./',vmin=0,vmax=200):
+def plot_AGB_AGBpot_training_final(nc,country_code,version,path2output='./',
+                                    vmin=0,vmax=200):
     #create a figure using the axesgrid to make the colorbar fit on the axis
     projection = ccrs.PlateCarree()
     axes_class = (GeoAxes,dict(map_projection=projection))
 
     #create figure
-    fig = plt.figure('AGBpot_final',figsize=(10,6))
+    fig = plt.figure('AGBpot_final',figsize=(10,5))
     fig.clf()
 
     #create axes grid
-    axgr = AxesGrid(fig,111,nrows_ncols=(3,1),axes_class=axes_class,label_mode='',
-                    cbar_mode='each',cbar_pad = 0.25,cbar_size="3%",axes_pad=.5)
+    axgr = AxesGrid(fig,111,nrows_ncols=(1,3),axes_class=axes_class,label_mode='',
+                    cbar_mode='single',cbar_pad = 0.,cbar_size="3%",axes_pad=.6,
+                    cbar_location = 'bottom')
 
     #plot setup
     xlim = (np.min(nc.lon.values),np.max(nc.lon.values))
     ylim = (np.min(nc.lat.values),np.max(nc.lat.values))
     cmap = 'viridis'
-    titles = ['a) AGB$_{obs}$','b) AGB$_{pot}$','c) training set']
+    titles = ['a) AGB$_{obs}$','b) AGB$_{pot}$','c) training\nset']
     maps2plot = [nc.AGBobs]
-    maps2plot.append(nc['AGBpot' % (iterations)])
-    maps2plot.append(nc['training' % (iterations)])
+    maps2plot.append(nc['AGBpot'])
+    maps2plot.append(nc['training'])
 
     # now plot maps onto axes
     for mm,map2plot in enumerate(maps2plot):
         if mm<2:
             (map2plot*.48).plot.imshow(ax=axgr[mm],cbar_ax=axgr.cbar_axes[mm],vmin=vmin,vmax=vmax,
-                            extend='max',interpolation='nearest',cbar_kwargs={'label':'Mg C ha$^{-1}$'},
-                            cmap=cmap,xticks=np.arange(-120,161,40),yticks=np.arange(-60,41,20),
+                            extend='max',interpolation='nearest',
+                            cbar_kwargs={'label':'AGB / Mg C ha$^{-1}$','orientation':'horizontal'},
+                            cmap=cmap,xticks=np.arange(-120,161,20),yticks=np.arange(-60,41,20),
                             add_labels=False,ylim=ylim,xlim=xlim)
         else:
-            (map2plot*.48).plot.imshow(ax=axgr[mm],cbar_ax=axgr.cbar_axes[mm],
-                            interpolation='nearest',cbar_kwargs={'label':'Mg C ha$^{-1}$'},
-                            cmap=cmap,xticks=np.arange(-120,161,40),yticks=np.arange(-60,41,20),
+            (map2plot*.48).plot.imshow(ax=axgr[mm],interpolation='nearest',add_colorbar=False,
+                            cmap=cmap,xticks=np.arange(-120,161,20),yticks=np.arange(-60,41,20),
                             add_labels=False,ylim=ylim,xlim=xlim)
 
         #set labels
         axgr[mm].yaxis.set_major_formatter(LatitudeFormatter())
         axgr[mm].xaxis.set_major_formatter(LongitudeFormatter())
-        axgr[mm].text(0.98,0.02,titles[mm],transform=axgr[mm].transAxes,ha='right',
-                        va='bottom',weight='bold')
+        axgr[mm].text(0.98,0.98,titles[mm],transform=axgr[mm].transAxes,ha='right',
+                        va='top',weight='bold')
 
     #fig.show()
     fig.savefig('%s/%s_%s_AGB_AGBpot_training_final.png' % (path2output,country_code,version),bbox_inches='tight',dpi=300)
@@ -232,38 +234,39 @@ def plot_AGBpot_uncertainty(nc,country_code,version,path2output='./'):
     axes_class = (GeoAxes,dict(map_projection=projection))
 
     #create figure
-    fig = plt.figure('AGBunc_final',figsize=(10,5))
+    fig = plt.figure('AGBunc_final',figsize=(7,5))
     fig.clf()
 
     #create axes grid
     axgr = AxesGrid(fig,111,nrows_ncols=(1,2),axes_class=axes_class,label_mode='',
-                    cbar_mode='each',cbar_pad = 0.25,cbar_size="3%",axes_pad=.5)
+                    cbar_mode='each',cbar_pad = 0.5,cbar_size="3%",axes_pad=.5,
+                    cbar_location = 'bottom')
 
     #plot setup
     xlim = (np.min(nc.lon.values),np.max(nc.lon.values))
     ylim = (np.min(nc.lat.values),np.max(nc.lat.values))
     cmap = 'viridis'
-    titles = ['a) uncertainty range','b) uncertainty range\nas fraction']
+    titles = ['a) uncertainty\nrange','b) relative\nuncertainty\nrange']
     unc = nc.AGBpot_max-nc.AGBpot_min
     unc_frac = unc/nc.AGBpot
     maps2plot = [unc,unc_frac]
 
     (unc*.48).plot.imshow(ax=axgr[0],cbar_ax=axgr.cbar_axes[0],
-                            extend='max',interpolation='nearest',
-                            cbar_kwargs={'label':'Mg C ha$^{-1}$'},cmap=cmap,
-                            xticks=np.arange(-120,161,40),yticks=np.arange(-60,41,20),
+                            vmin=0,extend='max',interpolation='nearest',cmap=cmap,
+                            cbar_kwargs={'label':'Uncertainty range / Mg C ha$^{-1}$','orientation':'horizontal'},
+                            xticks=np.arange(-120,161,20),yticks=np.arange(-60,41,20),
                             add_labels=False,ylim=ylim,xlim=xlim)
-    (unc_frac*.48).plot.imshow(ax=axgr[0],cbar_ax=axgr.cbar_axes[0],
-                            extend='max',interpolation='nearest',
-                            cbar_kwargs={'label':'Mg C ha$^{-1}$'},cmap=cmap,
-                            xticks=np.arange(-120,161,40),yticks=np.arange(-60,41,20),
+    (unc_frac).plot.imshow(ax=axgr[1],cbar_ax=axgr.cbar_axes[1],vmin=0,vmax=2,
+                            extend='max',interpolation='nearest',cmap=cmap,
+                            cbar_kwargs={'label':'Uncertainty / AGB$_{pot}$','orientation':'horizontal'},
+                            xticks=np.arange(-120,161,20),yticks=np.arange(-60,41,20),
                             add_labels=False,ylim=ylim,xlim=xlim)
     for mm,map2plot in enumerate(maps2plot):
         #set labels
         axgr[mm].yaxis.set_major_formatter(LatitudeFormatter())
         axgr[mm].xaxis.set_major_formatter(LongitudeFormatter())
-        axgr[mm].text(0.98,0.02,titles[mm],transform=axgr[mm].transAxes,
-                        ha='right',va='bottom',weight='bold')
+        axgr[mm].text(0.98,0.98,titles[mm],transform=axgr[mm].transAxes,
+                        ha='right',va='top',weight='bold')
 
     #fig.show()
     fig.savefig('%s/%s_%s_AGBpot_uncertainty.png' % (path2output,country_code,version),bbox_inches='tight',dpi=300)
