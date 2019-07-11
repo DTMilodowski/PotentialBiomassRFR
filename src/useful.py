@@ -694,9 +694,25 @@ def iterative_augmentation_of_training_set_obs_vs_pot_v3(ytest, y, Xtest, X, Xal
 #-------------------------------------------------------------------------------
 """
 # load in mapbiomas for a given timestep
-def load_mapbiomas(country_code,timestep=-1):
+def load_mapbiomas(country_code,timestep=-1,aggregate=0):
     path = '/disk/scratch/local.2/dmilodow/PotentialBiomass/processed/%s/' % country_code
     mbfiles = sorted(glob.glob('%s/mapbiomas/*tif' % path))
-    mb = xr.open_rasterio(mbfiles[0]).values
-    lc = mb[timestep]
+    mb = xr.open_rasterio(mbfiles[0]).values[timestep]
+    # option 0 -> no aggregation
+    if aggregate == 0:
+        lc = mb.copy()
+    # option 1 -> aggregate to 8 classes
+    elif aggregate == 1:
+        lc = np.zeros(mb.shape)*np.nan
+        lc[np.all((mb>=1,mb<=5),axis=0)] = 1                # Natural forest
+        lc[np.all((mb>=11,mb<=13),axis=0)] = 2              # Natural non-forest
+        lc[mb==9]=1 = 3                                     # Plantation forest
+        lc[mb==15] = 4                                      # Pasture
+        lc[np.all((mb>=18,mb<=20),axis=0)] = 5              # Agriculture
+        lc[mb==21] = 6                                      # Mosaic agro-pastoral
+        lc[mb==24] = 7                                      # Urban
+        lc[np.any((mb==23,mb==29,mb==30,mb==25),axis=0)]    # other
+    # otherwise go with no aggregation as default
+    else:
+        lc = mb.copy()
     return lc
