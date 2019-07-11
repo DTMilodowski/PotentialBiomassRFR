@@ -225,6 +225,7 @@ for ax in axes:
     ax.set_xticklabels(ax.get_xticklabels(),rotation=45, ha='right')
     for ii,patch in enumerate(ax.patches):
         patch.set_edgecolor(colours[ii%len(colours)])
+axes[1].set_ylim(bottom=0)
 axes[2].set_ylim(axes[1].get_ylim())
 # convert areas to 10^6 km
 axes[0].set_title('Area of opportunity class')
