@@ -14,6 +14,18 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import useful as useful
+sns.set(style="whitegrid")
+
+"""
+A quick function to plot error bars onto bar plot
+"""
+def plot_bar_CIs(lc,uc,ax,jitter=0):
+    positions = np.arange(uc.size)+jitter
+    for ii,pos in enumerate(positions):
+        ax.plot([pos,pos],[lc[ii],uc[ii]],'-',lw=3.8,color='white')
+        ax.plot([pos,pos],[lc[ii],uc[ii]],'-',lw=2,color='0.5')
+    return 0
+
 
 country_code = 'BRA'
 version = '008'
@@ -193,18 +205,6 @@ print( '\t%.2f,\t\t%.2f,\t\t%.2f,\t\t%.2f,\t\t%.2f' % (seqC_Mg_ha_max[0],
 # - Area
 # - AGBobs & AGBpot
 # - AGBseq
-
-"""
-A quick function to plot error bars onto bar plot
-"""
-def plot_bar_CIs(lc,uc,ax,jitter=0):
-    positions = np.arange(uc.size)+jitter
-    for ii,pos in enumerate(positions):
-        ax.plot([pos,pos],[lc[ii],uc[ii]],'-',lw=3.8,color='white')
-        ax.plot([pos,pos],[lc[ii],uc[ii]],'-',lw=2,color='0.5')
-    return 0
-
-sns.set(style="whitegrid")
 fig,axes = plt.subplots(nrows=1,ncols=3,sharex='all',figsize=[8,3.4])
 sns.barplot(x=opp_class,y=areas_ha,hue=opp_class,palette='Greens_d',dodge=False,
             ax=axes[0])
@@ -269,8 +269,6 @@ agbobs_max = []
 agbpot_max = []
 agbseq_max = []
 
-
-
 for bb, bio in enumerate(biome_labels):
     for cc,opp in enumerate(opp_class):
         mask = masks[opp]*masks[bio]
@@ -293,17 +291,11 @@ df = pd.DataFrame({'biome':biome,'opportunity class':opportunity_class,
                     'AGBpot':agbpot,'AGBpot_min':agbpot_min,'AGBpot_max':agbpot_max,
                     'AGBseq':agbseq,'AGBseq_min':agbseq_min,'AGBseq_max':agbseq_max})
 
-
-"""
-#===============================================================================
-PART D: Breakdown of potential biomass by landcover type for feasible
-restoration areas - not implemented at present
-#-------------------------------------------------------------------------------
-"""
 n_biomes = len(biome_labels)
 biome_display_labels = biome_labels.copy()
 biome_display_labels[3] = 'Mata\nAtlantica'
 
+# Create bar plot with restoration potential split by biome
 fig,axes = plt.subplots(nrows=n_biomes,ncols=3,sharex='all',sharey='col',
             figsize=[8,12])
 for ii,biome in enumerate(biome_labels):
@@ -335,8 +327,6 @@ for ii,row in enumerate(axes):
         for ii,patch in enumerate(ax.patches):
             patch.set_edgecolor(colours[jj%len(colours)])
         ax.set_ylim(bottom=0)
-#if ii//n_biomes>0:
-#    ax.set_ylim(axes[1].get_ylim())
 
 axes[0][0].set_title('Area of opportunity\nclass / 10$^6$ km$^2$')
 axes[0][1].set_title('Aboveground carbon\nstock / 10$^9$ Mg')
@@ -383,3 +373,10 @@ for ii,ax in enumerate(axes[:,0]):
 
 fig.savefig('%s%s_%s_biome_summary.png' % (path2output,country_code,version))
 fig.show()
+
+"""
+#===============================================================================
+PART D: Breakdown of potential biomass by landcover type for feasible
+restoration areas - not implemented at present
+#-------------------------------------------------------------------------------
+"""
