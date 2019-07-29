@@ -44,6 +44,7 @@ agb = xr.open_rasterio('%sAvitabile_AGB_%s_1km.tif' % (path2agb,country_code))[0
 
 # Get additional data masks
 initial_training_mask = useful.get_mask(country_code,mask_def=8)
+#initial_training_mask = useful.get_mask(country_code,mask_def=9) # this one refines non-forest ares based on protected areas
 other_stable_forest_mask = useful.get_mask(country_code,mask_def=7)
 
 # Run PCA transformation on predictor variables
