@@ -185,6 +185,8 @@ def get_predictors_for_defined_mask(country_code,mask):
 # --- 6           -> other stable forest areas from mapbiomas
 # --- 7           -> other stable forest areas from mapbiomas & ESACCI
 # --- 8           -> mapbiomas and hinterland forest landscapes & ESACCI natural non-forest
+# --- 9           -> mapbiomas and hinterland forest landscapes and ESACCI natural non-forest
+#                    with non-forest classes filtered according to protected areas
 def get_mask(country_code, mask_def=0):
 
     path = '/disk/scratch/local.2/dmilodow/PotentialBiomass/processed/%s/' % country_code
@@ -252,6 +254,9 @@ def get_mask(country_code, mask_def=0):
     elif(mask_def == 8):
         landmask = (wc2_mask & soil_mask & agb_mask)
         mask = set_training_areas.set(path,subset=5)
+    elif(mask_def == 9):
+        landmask = (wc2_mask & soil_mask & agb_mask)
+        mask = set_training_areas.set(path,subset=6)
     else:
         mask = (training_mask & wc2_mask & soil_mask & agb_mask)
     # check the mask dimensions
@@ -697,22 +702,38 @@ def iterative_augmentation_of_training_set_obs_vs_pot_v3(ytest, y, Xtest, X, Xal
 def load_mapbiomas(country_code,timestep=-1,aggregate=0):
     path = '/disk/scratch/local.2/dmilodow/PotentialBiomass/processed/%s/' % country_code
     mbfiles = sorted(glob.glob('%s/mapbiomas/*tif' % path))
-    mb = xr.open_rasterio(mbfiles[0]).values[timestep]
     # option 0 -> no aggregation
     if aggregate == 0:
+        mb = xr.open_rasterio(mbfiles[0]).values[timestep]
         lc = mb.copy()
     # option 1 -> aggregate to 8 classes
     elif aggregate == 1:
+        mb = xr.open_rasterio(mbfiles[0]).values[timestep]
         lc = np.zeros(mb.shape)*np.nan
         lc[np.all((mb>=1,mb<=5),axis=0)] = 1                # Natural forest
         lc[np.all((mb>=11,mb<=13),axis=0)] = 2              # Natural non-forest
-        lc[mb==9]=1 = 3                                     # Plantation forest
+        lc[mb==9]= 3                                     # Plantation forest
         lc[mb==15] = 4                                      # Pasture
         lc[np.all((mb>=18,mb<=20),axis=0)] = 5              # Agriculture
         lc[mb==21] = 6                                      # Mosaic agro-pastoral
         lc[mb==24] = 7                                      # Urban
         lc[np.any((mb==23,mb==29,mb==30,mb==25),axis=0)]    # other
-    # otherwise go with no aggregation as default
+    # option 2 -> aggregation to 8 classes above, but filtering this so that
+    # only keep pixels that have consistent land cover from 2000-2008
+    elif aggregate == 2:
+        mb = xr.open_rasterio(mbfiles[0]).values[15:24] # 2000-2008 inclusive
+        lc = np.zeros(mb.shape)*np.nan
+        lc[np.all((mb[0]>=1,mb[0]<=5),axis=0)] = 1                      # Natural forest
+        lc[np.all((mb[0]>=11,mb[0]<=13),axis=0)] = 2                    # Natural non-forest
+        lc[mb[0]==9] = 3                                              # Plantation forest
+        lc[mb[0]==15] = 4                                               # Pasture
+        lc[np.all((mb[0]>=18,mb[0]<=20),axis=0)] = 5                    # Agriculture
+        lc[mb[0]==21] = 6                                               # Mosaic agro-pastoral
+        lc[mb[0]==24] = 7                                               # Urban
+        lc[np.any((mb[0]==23,mb[0]==29,mb[0]==30,mb[0]==25),axis=0)]    # other
+        for ii in range(1,mb.shape[0]):
+            lc[lc!=mb[ii]] = np.nan
     else:
+        mb = xr.open_rasterio(mbfiles[0]).values[timestep]
         lc = mb.copy()
     return lc
