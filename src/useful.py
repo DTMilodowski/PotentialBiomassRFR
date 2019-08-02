@@ -20,7 +20,8 @@ import rasterio
 from copy import deepcopy
 
 # Load predictor variables
-def get_predictors(country_code,return_landmask = True, training_subset=False, subset_def=1):
+def get_predictors(country_code,return_landmask = True, training_subset=False,
+                    subset_def=1):
 
     path = '/disk/scratch/local.2/dmilodow/PotentialBiomass/processed/%s/' % country_code
     path2wc = path+'wc2/'
@@ -184,9 +185,13 @@ def get_predictors_for_defined_mask(country_code,mask):
 # --- 5           -> mapbiomas and hinterland forest landscapes
 # --- 6           -> other stable forest areas from mapbiomas
 # --- 7           -> other stable forest areas from mapbiomas & ESACCI
-# --- 8           -> mapbiomas and hinterland forest landscapes & ESACCI natural non-forest
-# --- 9           -> mapbiomas and hinterland forest landscapes and ESACCI natural non-forest
-#                    with non-forest classes filtered according to protected areas
+# --- 8           -> mapbiomas and hinterland forest landscapes & ESACCI natural
+#                    non-forest
+# --- 9           -> mapbiomas and hinterland forest landscapes and ESACCI natural
+#                    non-forest with non-forest classes filtered according to
+#                    protected areas
+# --- 10          -> mapbiomas and hinterland forest landscapes within mapbiomas
+#                    extent only
 def get_mask(country_code, mask_def=0):
 
     path = '/disk/scratch/local.2/dmilodow/PotentialBiomass/processed/%s/' % country_code
@@ -257,6 +262,9 @@ def get_mask(country_code, mask_def=0):
     elif(mask_def == 9):
         landmask = (wc2_mask & soil_mask & agb_mask)
         mask = set_training_areas.set(path,subset=6)
+    elif(mask_def == 10):
+        landmask = (wc2_mask & soil_mask & agb_mask)
+        mask = set_training_areas.set(path,subset=7)
     else:
         mask = (training_mask & wc2_mask & soil_mask & agb_mask)
     # check the mask dimensions
@@ -712,12 +720,12 @@ def load_mapbiomas(country_code,timestep=-1,aggregate=0):
         lc = np.zeros(mb.shape)*np.nan
         lc[np.all((mb>=1,mb<=5),axis=0)] = 1                # Natural forest
         lc[np.all((mb>=11,mb<=13),axis=0)] = 2              # Natural non-forest
-        lc[mb==9]= 3                                     # Plantation forest
+        lc[mb==9]= 3                                        # Plantation forest
         lc[mb==15] = 4                                      # Pasture
-        lc[np.all((mb>=18,mb<=20),axis=0)] = 5              # Agriculture
-        lc[mb==21] = 6                                      # Mosaic agro-pastoral
-        lc[mb==24] = 7                                      # Urban
-        lc[np.any((mb==23,mb==29,mb==30,mb==25),axis=0)]    # other
+        lc[np.all((mb>=18,mb<=21),axis=0)] = 5              # Agriculture
+        #lc[mb==21] = 6                                     # Mosaic agro-pastoral
+        lc[mb==24] = 6                                      # Urban
+        lc[np.any((mb==23,mb==29,mb==30,mb==25),axis=0)] = 7# other
     # option 2 -> aggregation to 8 classes above, but filtering this so that
     # only keep pixels that have consistent land cover from 2000-2008
     elif aggregate == 2:

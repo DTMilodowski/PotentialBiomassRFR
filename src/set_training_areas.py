@@ -230,7 +230,38 @@ def set(path,subset=1):
         training_mask = forest*hfl_mask + nonforest + bare*pa_mask + hfl_outside_biomas_extent + esacci_nf_outside_biomas_extent*pa_mask
         training_mask*=buffermask
 
+    # MAPBIOMAS & HFL (Brazil only)
+    elif subset == 7:
+        mbfiles = sorted(glob.glob('%s/mapbiomas/*tif' % path))
+        mb = xr.open_rasterio(mbfiles[0]).values
 
+        lc = mb[0]
+        forest = np.all((lc>=2,lc<=5),axis=0)
+        nonforest = np.any((lc==10,lc==11,lc==12),axis=0)
+        bare = np.any((lc==23,lc==29,lc==32),axis=0)
+        nodata = lc==0
+
+        for yy in range(mb.shape[0]):
+            lc_p = lc.copy()
+            lc = mb[yy]
+            update = (lc==lc_p)
+            forest *= update
+            nonforest *= update
+            bare *= update
+            nodata *= update
+
+        humanmask = np.any((np.all((lc>=13,lc<=21),axis=0),lc==9,lc==24,lc==30),axis=0)
+
+        # load hinterland forests
+        hfl = xr.open_rasterio(glob.glob('%s/forestcover/HFL*tif' % path)[0]).values[0]
+        hfl_mask=(hfl==1)
+
+        struct = ndimage.generate_binary_structure(2, 2)
+        buffermask = ndimage.binary_dilation(humanmask, structure=struct,iterations=2)
+        buffermask = buffermask == False
+
+        training_mask = forest*hfl_mask + nonforest + bare
+        training_mask*=buffermask
 
     return training_mask
 
