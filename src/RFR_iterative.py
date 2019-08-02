@@ -51,12 +51,24 @@ yall = agb.values[landmask]
 
 # First run of random forest regression model, with inital training set.
 # Create the random forest object with predefined parameters
+"""
 rf = RandomForestRegressor(bootstrap=True, criterion='mse', max_depth=None,
            max_features='auto', max_leaf_nodes=None,
            min_impurity_decrease=0.0, min_impurity_split=None,
            min_samples_leaf=20, min_samples_split=2,
            min_weight_fraction_leaf=0.0, n_estimators=500, n_jobs=-1,
            oob_score=True, random_state=None, verbose=0, warm_start=False)
+"""
+rf = RandomForestRegressor(bootstrap=True,
+            criterion='mse',
+            max_depth=250,
+            max_features=18,
+            min_impurity_decrease=0.002,
+            min_samples_leaf=3,
+            min_samples_split=15,
+            n_estimators=250,
+            n_jobs=-1,
+            random_state=2909)
 
 # get subset of predictors for initial training set
 X = Xall[initial_training_mask[landmask]]
@@ -72,9 +84,18 @@ ytest = yall[other_stable_forest_mask[landmask]]
 
 # now iterate, filtering out other stable forest pixels for which the observed biomass
 # is not within error of the predicted potential biomass
-AGBpot, training_set, rf = useful.iterative_augmentation_of_training_set_obs_vs_pot(ytest, y, Xtest, X, Xall, iterations,
+"""
+AGBpot, training_set, rf = useful.iterative_augmentation_of_training_set_obs_vs_pot(ytest,
+                                            y, Xtest, X, Xall, iterations,
                                             landmask, initial_training_mask,
-                                            other_stable_forest_mask, rf,stopping_condition=0.01)
+                                            other_stable_forest_mask, rf,
+                                            stopping_condition=0.01)
+"""
+AGBpot, training_set, rf = useful.iterative_augmentation_of_training_set_obs_vs_pot_v3(ytest,
+                                            y, Xtest, X, Xall, iterations,
+                                            landmask, initial_training_mask,
+                                            other_stable_forest_mask, rf,
+                                            percentile_cutoff = 10)
 iterations = AGBpot.shape[0]
 
 # Save rf model for future reference
