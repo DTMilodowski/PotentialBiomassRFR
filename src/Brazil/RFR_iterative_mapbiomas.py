@@ -18,10 +18,9 @@ from matplotlib import pyplot as plt
 import seaborn as sns
 sns.set()
 
-country_code = sys.argv[1]#'WAFR'
-version = sys.argv[2]#'002'
-iterations = int(sys.argv[3])#5
-#load = sys.argv[4]#'new'
+country_code = 'BRA'#sys.argv[1]
+version = '010'#sys.argv[2]
+iterations = 6#int(sys.argv[3])
 
 path2alg = '/home/dmilodow/DataStore_DTM/FOREST2020/PotentialBiomassRFR/saved_algorithms'
 path2data = '/disk/scratch/local.2/dmilodow/PotentialBiomass/processed/%s/' % country_code
@@ -72,9 +71,11 @@ ytest = yall[other_stable_forest_mask[landmask]]
 
 # now iterate, filtering out other stable forest pixels for which the observed biomass
 # is not within error of the predicted potential biomass
-AGBpot, training_set, rf = useful.iterative_augmentation_of_training_set_obs_vs_pot(ytest, y, Xtest, X, Xall, iterations,
+AGBpot, training_set, rf = useful.iterative_augmentation_of_training_set_obs_vs_pot(ytest,
+                                            y, Xtest, X, Xall,iterations,
                                             landmask, initial_training_mask,
-                                            other_stable_forest_mask, rf,stopping_condition=0.01)
+                                            other_stable_forest_mask, rf,
+                                            stopping_condition=0.01)
 iterations = AGBpot.shape[0]
 
 # Save rf model for future reference
