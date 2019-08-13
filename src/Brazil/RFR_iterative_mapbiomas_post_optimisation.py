@@ -20,7 +20,7 @@ import seaborn as sns
 sns.set()
 
 country_code = 'BRA'
-version = '008'
+version = '010'
 iterations = 5
 
 path2alg = '/home/dmilodow/DataStore_DTM/FOREST2020/PotentialBiomassRFR/saved_algorithms'
@@ -29,7 +29,7 @@ path2agb = path2data+'agb/'
 path2calval = '/home/dmilodow/DataStore_DTM/FOREST2020/PotentialBiomassRFR/calval/'
 path2output = '/home/dmilodow/DataStore_DTM/FOREST2020/PotentialBiomassRFR/output/'
 
-#pca = joblib.load('%s/%s_%s_pca_pipeline.pkl' % (path2alg,country_code,version))
+pca = joblib.load('%s/%s_%s_pca_pipeline.pkl' % (path2alg,country_code,version))
 #pca = make_pipeline(StandardScaler(),PCA(n_components=0.999))
 
 """
@@ -49,9 +49,10 @@ other_stable_forest_mask = useful.get_mask(country_code,mask_def=7)
 
 # Run PCA transformation on predictor variables
 # fit PCA
-#pca.fit(predictors_full)
+pca.fit(predictors_full)
 #joblib.dump(pca,'%s/%s_%s_pca_pipeline.pkl' % (path2alg,country_code,version))
-Xall = predictors_full#pca.transform(predictors_full)
+#Xall = predictors_full
+Xall = pca.transform(predictors_full)
 yall = agb.values[landmask]
 
 # get subset of predictors for initial training set
@@ -118,9 +119,11 @@ MODEL
 """
 # now iterate, filtering out other stable forest pixels for which the observed biomass
 # is not within error of the predicted potential biomass
-AGBpot, training_set, rf = useful.iterative_augmentation_of_training_set_obs_vs_pot_v3(ytest, y, Xtest, X, Xall, iterations,
+AGBpot, training_set, rf = useful.iterative_augmentation_of_training_set_obs_vs_pot_v3(ytest,
+                                            y, Xtest, X, Xall, iterations,
                                             landmask, initial_training_mask,
-                                            other_stable_forest_mask, rf, percentile_cutoff = 10)
+                                            other_stable_forest_mask, rf,
+                                            percentile_cutoff = 10)
 iterations = AGBpot.shape[0]
 
 # Save rf model for future reference
