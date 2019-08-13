@@ -24,8 +24,7 @@ def set(path,subset=1):
             forestmask *= (lc==lc_p)
             sparsemask *= (lc==lc_p)
 
-
-        humanmask += np.any((lc==190,np.all((lc>=10,lc<=40),axis=0)),axis=0)
+        humanmask = np.any((lc==190,np.all((lc>=10,lc<=40),axis=0)),axis=0)
         struct = ndimage.generate_binary_structure(2, 2)
         buffermask = ndimage.binary_dilation(humanmask, structure=struct,iterations=2)
         buffermask = buffermask == False
