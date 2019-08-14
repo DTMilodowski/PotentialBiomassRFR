@@ -745,3 +745,87 @@ def load_mapbiomas(country_code,timestep=-1,aggregate=0):
         mb = xr.open_rasterio(mbfiles[0]).values[timestep]
         lc = mb.copy()
     return lc
+
+
+#-------------------------------------------------------------------------------
+# Script to load in ESA-CCI landcover data for a given timestep
+# Note that the legend for landcover types is:
+#  1. Agriculture
+#    10, 11, 12 Rainfed cropland
+#    20 Irrigated cropland
+#    30 Mosaic cropland (>50%) / natural vegetation (tree, shrub, herbaceous cover) (<50%)
+#    40 Mosaic natural vegetation (tree, shrub, herbaceous cover) (>50%) / cropland (< 50%)
+#  -----------------------
+#  2. Forest
+#    50 Tree cover, broadleaved, evergreen, closed to open (>15%)
+#    60, 61, 62 Tree cover, broadleaved, deciduous, closed to open (> 15%)
+#    70, 71, 72 Tree cover, needleleaved, evergreen, closed to open (> 15%)
+#    80, 81, 82 Tree cover, needleleaved, deciduous, closed to open (> 15%)
+#    90 Tree cover, mixed leaf type (broadleaved and needleleaved)
+#   100 Mosaic tree and shrub (>50%) / herbaceous cover (< 50%)
+#   160 Tree cover, flooded, fresh or brakish water
+#   170 Tree cover, flooded, saline water
+#  -----------------------
+#  3. Grassland
+#   110 Mosaic herbaceous cover (>50%) / tree and shrub (<50%)
+#   130 Grassland
+#  -----------------------
+# 4. Wetland
+#   180 Shrub or herbaceous cover, flooded, fresh-saline or brakishwater
+#  -----------------------
+# 5. Settlement
+#   190 Urban
+#  -----------------------
+# 6. Shrub
+#   120, 121, 122 Shrubland
+#  -----------------------
+# 7. Lichens/Mosses
+#   140 Lichens and mosses
+#  -----------------------
+# 8. Sparse
+#   150, 151, 152, 153 Sparse vegetation (tree, shrub, herbaceous cover)
+#  -----------------------
+# 9. Bare
+#   200, 201, 202 Bare areas
+#  -----------------------
+# 10. Water
+#   210 Water
+#  -----------------------
+# 11. Ice
+#   220 Permanent snow and ice
+#  -----------------------
+def load_esacci(country_code,timestep=-1,aggregate=0):
+    path = '/disk/scratch/local.2/dmilodow/PotentialBiomass/processed/%s/' % country_code
+    files = sorted(glob.glob('%s/esacci/*lccs-class*tif' % path))
+    # option 0 -> no aggregation
+    if aggregate == 0:
+        landcover = xr.open_rasterio(files[0]).values[timestep]
+    # option 1 -> aggregate to 8 classes
+    elif aggregate == 1:
+        landcover = xr.open_rasterio(files[0]).values[timestep]
+        # Agri
+        landcover[np.all((landcover>=10,landcover<50),axis=0)]=1
+        # Forest
+        landcover[np.all((landcover>=50,landcover<110),axis=0)]=2
+        landcover[np.any((landcover==160,landcover==170),axis=0)]=2
+        # Grass
+        landcover[np.any((landcover==110,landcover==130),axis=0)]=3
+        # Wetland
+        landcover[landcover==180]=4
+        # Settlement
+        landcover[landcover==190]=5
+        # Shrub
+        landcover[np.all((landcover>=120,landcover<130),axis=0)]=6
+        # Lichens
+        landcover[landcover==140]=7
+        # Sparse
+        landcover[np.all((landcover>=150,landcover<160),axis=0)]=8
+        # Bare
+        landcover[np.all((landcover>=200,landcover<210),axis=0)]=9
+        # Water
+        landcover[landcover==210]=10
+        # Ice
+        landcover[landcover==220]=11
+    else:
+        landcover = xr.open_rasterio(files[0]).values[timestep]
+    return landcover
