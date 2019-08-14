@@ -11,6 +11,9 @@
 import numpy as np
 import sys
 import xarray as xr
+import fiona
+import rasterio
+import rasterio.mask
 from affine import Affine
 import useful
 import set_training_areas
@@ -29,9 +32,11 @@ from matplotlib import pyplot as plt
 import seaborn as sns
 sns.set()
 
-country_code = 'BRA'
-version = '008'
+country_code = 'EAFR'
+version = '001'
 iteration_to_use = 3
+clip_to_boundary = True
+country = 'Kenya'
 
 path2alg = '/home/dmilodow/DataStore_DTM/FOREST2020/PotentialBiomassRFR/saved_algorithms'
 path2data = '/disk/scratch/local.2/dmilodow/PotentialBiomass/processed/%s/' % country_code
@@ -39,8 +44,10 @@ path2agb = path2data+'agb/'
 path2calval = '/home/dmilodow/DataStore_DTM/FOREST2020/PotentialBiomassRFR/calval/'
 path2output = '/home/dmilodow/DataStore_DTM/FOREST2020/PotentialBiomassRFR/output/'
 
-#pca = joblib.load('%s/%s_%s_pca_pipeline.pkl' % (path2alg,country_code,version))
-#pca = make_pipeline(StandardScaler(),PCA(n_components=0.999))
+hyperopt_trials = '%s/%s_%s_rf_hyperopt_trials.p' % (path2alg,'BRA','010')
+boundaries_shp = '/home/dmilodow/DataStore_DTM/EOlaboratory/Areas/ne_50m_admin_0_tropical_countries_small_islands_removed.shp'
+
+pca = joblib.load('%s/%s_%s_pca_pipeline.pkl' % (path2alg,country_code,version))
 
 """
 #===============================================================================
@@ -63,7 +70,7 @@ yall = agb.values[landmask]
 yunc = agb_unc.values[landmask]
 
 # get subset of predictors for initial training set
-Xall = predictors_full
+Xall = pca.transform(predictors_full)
 X = Xall[training_mask[landmask]]
 y = yall[training_mask[landmask]]
 ymin = (yall-yunc)[training_mask[landmask]]
@@ -78,7 +85,7 @@ print("PART B: Fitting random forest models")
 # Load trials data from optimisation and retrieve best hyperparameter combination
 # but boost number of trees in forest as not running as many times, so can
 # afford computational expense
-trials = pickle.load(open('%s/%s_%s_rf_hyperopt_trials.p' % (path2alg,country_code,version), "rb"))
+trials = pickle.load(open(hyperopt_trials, "rb"))
 parameters = ['n_estimators','max_depth', 'max_features', 'min_impurity_decrease','min_samples_leaf', 'min_samples_split']
 trace = {}
 n_trials = len(trials)
@@ -108,7 +115,7 @@ rf = RandomForestRegressor(bootstrap=True,
             min_impurity_split=None,   # threshold impurity within an internal node before it will be split
             min_samples_leaf=int(trace['min_samples_leaf'][idx]),       # ***The minimum number of samples required to be at a leaf node
             min_samples_split=int(trace['min_samples_split'][idx]),       # ***The minimum number of samples required to split an internal node
-            n_estimators=200,#trace['n_estimators'],          # ***Number of trees in the random forest
+            n_estimators=int(trace['n_estimators'][idx],#trace['n_estimators'],          # ***Number of trees in the random forest
             n_jobs=10,                 # The number of jobs to run in parallel for both fit and predict
             oob_score=True,            # use out-of-bag samples to estimate the R^2 on unseen data
             random_state=112358,         # seed used by the random number generator
@@ -122,7 +129,7 @@ rf_max = RandomForestRegressor(bootstrap=True,
             min_impurity_split=None,   # threshold impurity within an internal node before it will be split
             min_samples_leaf=int(trace['min_samples_leaf'][idx]),       # ***The minimum number of samples required to be at a leaf node
             min_samples_split=int(trace['min_samples_split'][idx]),       # ***The minimum number of samples required to split an internal node
-            n_estimators=200,#trace['n_estimators'],          # ***Number of trees in the random forest
+            n_estimators=int(trace['n_estimators'][idx],#trace['n_estimators'],          # ***Number of trees in the random forest
             n_jobs=10,                 # The number of jobs to run in parallel for both fit and predict
             oob_score=True,            # use out-of-bag samples to estimate the R^2 on unseen data
             random_state=112358,         # seed used by the random number generator
@@ -136,7 +143,7 @@ rf_min = RandomForestRegressor(bootstrap=True,
             min_impurity_split=None,   # threshold impurity within an internal node before it will be split
             min_samples_leaf=int(trace['min_samples_leaf'][idx]),       # ***The minimum number of samples required to be at a leaf node
             min_samples_split=int(trace['min_samples_split'][idx]),       # ***The minimum number of samples required to split an internal node
-            n_estimators=200,#trace['n_estimators'],          # ***Number of trees in the random forest
+            n_estimators=int(trace['n_estimators'][idx],#trace['n_estimators'],          # ***Number of trees in the random forest
             n_jobs=10,                 # The number of jobs to run in parallel for both fit and predict
             oob_score=True,            # use out-of-bag samples to estimate the R^2 on unseen data
             random_state=112358,         # seed used by the random number generator
@@ -212,11 +219,39 @@ PART D: PLOTTING
 print("PART D: Plot figures")
 # plot stuff
 # Initial cal-val plot
-mf.plot_AGB_AGBpot_training_final(agb_rf,country_code,version,
-                        path2output = path2output)
-mf.plot_AGBpot_uncertainty(agb_rf,country_code,version,
-                        path2output = path2output)
-mf.plot_AGBseq_final(agb_rf,country_code,version,path2output = path2output)
+if clip_to_boundary:
+    # load template raster
+    template = rasterio.open('%s/Avitabile_AGB_%s_1km.tif' % (path2agb,country_code))
+    mask = np.zeros(template.shape)
+    # - load shapefile
+    boundaries = fiona.open(boundaries_shp)
+    # - for country of interest, make mask
+    for feat in boundaries:
+        name = feat['properties']['admin']
+        if name==country:
+            image,transform = rasterio.mask.mask(template,[feat['geometry']],crop=False)
+            mask[image[0]>=0]=1
+
+    agb_rf.AGBobs.values[mask==0]  = np.nan
+    agb_rf.AGBobs_min.values[mask==0]  = np.nan
+    agb_rf.AGBobs_max.values[mask==0]  = np.nan
+
+    agb_rf.AGBpot.values[mask==0]  = np.nan
+    agb_rf.AGBpot_min.values[mask==0]  = np.nan
+    agb_rf.AGBpot_max.values[mask==0]  = np.nan
+
+    mf.plot_AGB_AGBpot_training_final(agb_rf,country,version,
+                            path2output = path2output)
+    mf.plot_AGBpot_uncertainty(agb_rf,country,version,
+                            path2output = path2output)
+    mf.plot_AGBseq_final(agb_rf,country,version,path2output = path2output)
+
+else:
+    mf.plot_AGB_AGBpot_training_final(agb_rf,country_code,version,
+                            path2output = path2output)
+    mf.plot_AGBpot_uncertainty(agb_rf,country_code,version,
+                            path2output = path2output)
+    mf.plot_AGBseq_final(agb_rf,country_code,version,path2output = path2output)
 
 training_mask_final = (training_set[-1]>0)*landmask
 cal_r2,val_r2 = cv.cal_val_train_test(Xall[training_mask[landmask]],
