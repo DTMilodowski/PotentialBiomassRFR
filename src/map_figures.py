@@ -236,7 +236,7 @@ def plot_AGB_AGBpot_training_final(nc,country_code,version,path2output='./',
 Plot defecit
 """
 import seaborn as sns
-def plot_AGBdef_final(nc,country_code,version,path2output='./'):
+def plot_AGBdef_final(nc,country_code,version,path2output='./',clip=False,mask=np.array([])):
     #create a figure using the axesgrid to make the colorbar fit on the axis
     projection = ccrs.PlateCarree()
     axes_class = (GeoAxes,dict(map_projection=projection))
@@ -252,8 +252,14 @@ def plot_AGBdef_final(nc,country_code,version,path2output='./'):
     axgr[0].set_facecolor('0.5')
     axgr.cbar_axes[0].set_facecolor('0.5')
     #plot setup
-    xlim = (np.min(nc.lon.values),np.max(nc.lon.values))
-    ylim = (np.min(nc.lat.values),np.max(nc.lat.values))
+    if clip: # use mask to limit plot extent
+        lonmask = np.any(mask==1,axis=0)
+        latmask = np.any(mask==1,axis=1)
+        xlim = (np.min(nc.lon.values[lonmask]),np.max(nc.lon.values[lonmask]))
+        ylim = (np.min(nc.lat.values[latmask]),np.max(nc.lat.values[latmask]))
+    else:
+        xlim = (np.min(nc.lon.values),np.max(nc.lon.values))
+        ylim = (np.min(nc.lat.values),np.max(nc.lat.values))
     cmap = 'viridis'
     title = 'AGB$_{def}$'
     map2plot = nc['AGBobs']-nc['AGBpot']
@@ -276,7 +282,7 @@ def plot_AGBdef_final(nc,country_code,version,path2output='./'):
 """
 Plot sequestration potential
 """
-def plot_AGBseq_final(nc,country_code,version,path2output='./'):
+def plot_AGBseq_final(nc,country_code,version,path2output='./',clip=False,mask=np.array([])):
     #create a figure using the axesgrid to make the colorbar fit on the axis
     projection = ccrs.PlateCarree()
     axes_class = (GeoAxes,dict(map_projection=projection))
@@ -292,8 +298,14 @@ def plot_AGBseq_final(nc,country_code,version,path2output='./'):
     axgr[0].set_facecolor('0.5')
     axgr.cbar_axes[0].set_facecolor('0.5')
     #plot setup
-    xlim = (np.min(nc.lon.values),np.max(nc.lon.values))
-    ylim = (np.min(nc.lat.values),np.max(nc.lat.values))
+    if clip: # use mask to limit plot extent
+        lonmask = np.any(mask==1,axis=0)
+        latmask = np.any(mask==1,axis=1)
+        xlim = (np.min(nc.lon.values[lonmask]),np.max(nc.lon.values[lonmask]))
+        ylim = (np.min(nc.lat.values[latmask]),np.max(nc.lat.values[latmask]))
+    else:
+        xlim = (np.min(nc.lon.values),np.max(nc.lon.values))
+        ylim = (np.min(nc.lat.values),np.max(nc.lat.values))
     cmap = 'viridis'
     title = 'Sequestration\n potential'
     map2plot = nc['AGBpot']-nc['AGBobs']
@@ -316,7 +328,8 @@ def plot_AGBseq_final(nc,country_code,version,path2output='./'):
 """
 Plot uncertainty
 """
-def plot_AGBpot_uncertainty(nc,country_code,version,path2output='./'):
+def plot_AGBpot_uncertainty(nc,country_code,version,path2output='./',clip=False,
+    mask=np.array([])):
     #create a figure using the axesgrid to make the colorbar fit on the axis
     projection = ccrs.PlateCarree()
     axes_class = (GeoAxes,dict(map_projection=projection))
@@ -331,8 +344,14 @@ def plot_AGBpot_uncertainty(nc,country_code,version,path2output='./'):
                     cbar_location = 'bottom')
 
     #plot setup
-    xlim = (np.min(nc.lon.values),np.max(nc.lon.values))
-    ylim = (np.min(nc.lat.values),np.max(nc.lat.values))
+    if clip: # use mask to limit plot extent
+        lonmask = np.any(mask==1,axis=0)
+        latmask = np.any(mask==1,axis=1)
+        xlim = (np.min(nc.lon.values[lonmask]),np.max(nc.lon.values[lonmask]))
+        ylim = (np.min(nc.lat.values[latmask]),np.max(nc.lat.values[latmask]))
+    else:
+        xlim = (np.min(nc.lon.values),np.max(nc.lon.values))
+        ylim = (np.min(nc.lat.values),np.max(nc.lat.values))
     cmap = 'viridis'
     titles = ['a) uncertainty\nrange','b) relative\nuncertainty\nrange']
     unc = nc.AGBpot_max-nc.AGBpot_min
@@ -363,7 +382,8 @@ def plot_AGBpot_uncertainty(nc,country_code,version,path2output='./'):
 """
 Plot residuals from training data spatially
 """
-def plot_training_residuals(nc,iteration,country_code,version,path2output='./',vmin=[0,0,-50],vmax=[200,200,50]):
+def plot_training_residuals(nc,iteration,country_code,version,path2output='./',
+    vmin=[0,0,-50],vmax=[200,200,50],clip=False,mask=np.array([])):
 
     #create a figure using the axesgrid to make the colorbar fit on the axis
     projection = ccrs.PlateCarree()
@@ -378,8 +398,14 @@ def plot_training_residuals(nc,iteration,country_code,version,path2output='./',v
                     cbar_mode='each',cbar_pad = 0.25,cbar_size="3%",axes_pad=.5)
 
     #plot setup
-    xlim = (np.min(nc.lon.values),np.max(nc.lon.values))
-    ylim = (np.min(nc.lat.values),np.max(nc.lat.values))
+    if clip: # use mask to limit plot extent
+        lonmask = np.any(mask==1,axis=0)
+        latmask = np.any(mask==1,axis=1)
+        xlim = (np.min(nc.lon.values[lonmask]),np.max(nc.lon.values[lonmask]))
+        ylim = (np.min(nc.lat.values[latmask]),np.max(nc.lat.values[latmask]))
+    else:
+        xlim = (np.min(nc.lon.values),np.max(nc.lon.values))
+        ylim = (np.min(nc.lat.values),np.max(nc.lat.values))
     cmap = ['viridis','viridis','bwr']
     titles = ['a) training data', 'b) predicted', 'c) residuals']
     residuals = nc['AGBpot%i' % (iteration)]-nc.AGBobs
