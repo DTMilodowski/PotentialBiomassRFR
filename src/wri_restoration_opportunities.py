@@ -84,11 +84,11 @@ opp_class = ['existing forest','wide-scale','mosaic','remote','urban-agriculture
 for cc,opp in enumerate(opp_class):
     masks[opp] = (opportunity.values==cc)*masks['Brazil']
 
-# Load ESACCI data for 2008
-esacci2005 = #useful.load_mapbiomas('BRA',timestep=20,aggregate=1)
+# Load ESACCI data for 2005
+esacci2005 = useful.load_esacci('EAFR',timestep=14,aggregate=1)
 
 # Load ESACCI data for latest year (2017)
-esacci2017 = #useful.load_mapbiomas('BRA',timestep=-1,aggregate=1)
+esacci2017 = useful.load_esacci('EAFR',timestep=-1,aggregate=1)
 
 """
 #===============================================================================
