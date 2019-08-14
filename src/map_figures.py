@@ -180,7 +180,8 @@ def plot_AGB_AGBpot_training(nc,iterations,country_code,version,path2output='./'
     fig.savefig('%s/%s_%s_AGB_AGBpot_training.png' % (path2output,country_code,version),bbox_inches='tight',dpi=300)
 
 def plot_AGB_AGBpot_training_final(nc,country_code,version,path2output='./',
-                                    vmin=0,vmax=200):
+                                    vmin=0,vmax=200,
+                                    clip=False,mask=np.array([])):
     #create a figure using the axesgrid to make the colorbar fit on the axis
     projection = ccrs.PlateCarree()
     axes_class = (GeoAxes,dict(map_projection=projection))
@@ -195,8 +196,14 @@ def plot_AGB_AGBpot_training_final(nc,country_code,version,path2output='./',
                     cbar_location = 'bottom')
 
     #plot setup
-    xlim = (np.min(nc.lon.values),np.max(nc.lon.values))
-    ylim = (np.min(nc.lat.values),np.max(nc.lat.values))
+    if clip: # use mask to limit plot extent
+        lonmask = np.any(mask==1,axis=0)
+        latmask = np.any(mask==1,axis=1)
+        xlim = (np.min(nc.lon.values[lonmask]),np.max(nc.lon.values[lonmask]))
+        ylim = (np.min(nc.lat.values[latmask]),np.max(nc.lat.values[latmask]))
+    else:
+        xlim = (np.min(nc.lon.values),np.max(nc.lon.values))
+        ylim = (np.min(nc.lat.values),np.max(nc.lat.values))
     cmap = 'viridis'
     titles = ['a) AGB$_{obs}$','b) AGB$_{pot}$','c) training\nset']
     maps2plot = [nc.AGBobs]
