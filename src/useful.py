@@ -21,7 +21,7 @@ from copy import deepcopy
 
 # Load predictor variables
 def get_predictors(country_code,return_landmask = True, training_subset=False,
-                    subset_def=1):
+                    subset_def=1,apply_unc_mask=True):
 
     path = '/disk/scratch/local.2/dmilodow/PotentialBiomass/processed/%s/' % country_code
     path2wc = path+'wc2/'
@@ -62,18 +62,25 @@ def get_predictors(country_code,return_landmask = True, training_subset=False,
     agb_file = '%sAvitabile_AGB_%s_1km.tif' % (path2agb,country_code)
     agb = xr.open_rasterio(agb_file)
     agb_mask = agb.values[0]!=np.float32(agb.nodatavals[0])
+    agb_mask[agb.values[0]<-3e38]=False
 
-    unc_file = '%sAvitabile_AGB_%s_1km.tif' % (path2agb,country_code)
+    unc_file = '%sAvitabile_AGB_Uncertainty_%s_1km.tif' % (path2agb,country_code)
     unc = xr.open_rasterio(unc_file)
-    unc_mask = unc[0]!=unc.nodatavals[0]
-
+    unc_mask = unc.values[0]!=np.float32(unc.nodatavals[0])
+    unc_mask[unc.values[0]<-3e38]=False
     #create the land mask knowing that top left pixels (NW) are all empty
     # for now, ignoring uncertainty as want to include N. Australia in training
     if training_subset:
         training_mask = set_training_areas.set(path,subset=subset_def)
-        landmask = (training_mask & wc2_mask.values & soil_mask.values & agb_mask)# & unc_mask.values)
+        if apply_unc_mask:
+            landmask = (training_mask & wc2_mask.values & soil_mask.values & agb_mask & unc_mask)
+        else:
+            landmask = (training_mask & wc2_mask.values & soil_mask.values & agb_mask)
     else:
-        landmask = (wc2_mask.values & soil_mask.values & agb_mask)# & unc_mask.values)
+        if apply_unc_mask:
+            landmask = (wc2_mask.values & soil_mask.values & agb_mask & unc_mask)
+        else:
+            landmask = (wc2_mask.values & soil_mask.values & agb_mask)
 
     #create the empty array to store the predictors
     predictors = np.zeros([landmask.sum(),soil.shape[0]+wc2.shape[0]])
@@ -794,15 +801,15 @@ def load_mapbiomas(country_code,timestep=-1,aggregate=0):
 # 11. Ice
 #   220 Permanent snow and ice
 #  -----------------------
-def load_esacci(country_code,timestep=-1,aggregate=0):
+def load_esacci(country_code,year=2015,aggregate=0):
     path = '/disk/scratch/local.2/dmilodow/PotentialBiomass/processed/%s/' % country_code
-    files = sorted(glob.glob('%s/esacci/*lccs-class*tif' % path))
+    files = sorted(glob.glob('%s/esacci/*%i*lccs-class*tif' % (path,year)))
     # option 0 -> no aggregation
     if aggregate == 0:
-        landcover = xr.open_rasterio(files[0]).values[timestep]
+        landcover = xr.open_rasterio(files[0]).values[0]
     # option 1 -> aggregate to 8 classes
     elif aggregate == 1:
-        landcover = xr.open_rasterio(files[0]).values[timestep]
+        landcover = xr.open_rasterio(files[0]).values[0]
         # Agri
         landcover[np.all((landcover>=10,landcover<50),axis=0)]=1
         # Forest
@@ -827,5 +834,5 @@ def load_esacci(country_code,timestep=-1,aggregate=0):
         # Ice
         landcover[landcover==220]=11
     else:
-        landcover = xr.open_rasterio(files[0]).values[timestep]
+        landcover = xr.open_rasterio(files[0]).values[0]
     return landcover
