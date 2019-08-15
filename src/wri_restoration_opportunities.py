@@ -85,17 +85,17 @@ for cc,opp in enumerate(opp_class):
     masks[opp] = (opportunity.values==cc)*masks[country]
 
 # Load ESACCI data for 2005
-esacci2005 = useful.load_esacci('EAFR',timestep=14,aggregate=1)
+esacci2005 = useful.load_esacci('EAFR',year=2005,aggregate=1)
 
-# Load ESACCI data for latest year (2017)
-esacci2017 = useful.load_esacci('EAFR',timestep=-1,aggregate=1)
+# Load ESACCI data for latest year (2015)
+esacci2015 = useful.load_esacci('EAFR',year=2015,aggregate=1)
 
 """
 #===============================================================================
 PART B: National summaries
 #-------------------------------------------------------------------------------
 """
-# Summarise each of the opportunity classes for Brazil
+# Summarise each of the opportunity classes for country
 areas_ha = np.zeros(5)
 potC_Mg = np.zeros(5)
 seqC_Mg = np.zeros(5)
@@ -315,7 +315,7 @@ df2005 = pd.DataFrame({'landcover':landcover_class,
 # Now plot up summaries
 fig,axes = plt.subplots(nrows=1,ncols=3,sharex='all',figsize=[8,3.4])
 
-df_=df2005.groupby('landcover',as_index=False).agg(sum)
+df=df2005.groupby('landcover',as_index=False).agg(sum)
 
 sns.barplot(x='landcover',y='area_ha',hue='landcover',
                 palette='Greens_d',dodge=False,ax=axes[0],
@@ -369,7 +369,7 @@ fig.show()
 """
 #===============================================================================
 PART E: Breakdown of potential biomass by landcover type for feasible
-restoration areas in 2017.
+restoration areas in 2015.
 
 Not applicable for natural land cover, since there is no information on regrowth/
 degradation impact on biomass in these areas. For new non-natural land cover
@@ -379,58 +379,59 @@ allowing estimation of restoration potential
 #-------------------------------------------------------------------------------
 """
 lc2005_masks={}
-lc2017_masks={}
+lc2015_masks={}
 lc_class = ['Forest','Grass','Shrub','Sparse','Bare','Wetland','Agriculture','Urban']
 lc_idx = [2,3,6,8,9,4,1,5]
 for cc,lc in enumerate(lc_class):
     lc2005_masks[lc] = (esacci2005==lc_idx[cc])
-    lc2017_masks[lc] = (esacci2017==lc_idx[cc])
+    lc2015_masks[lc] = (esacci2015==lc_idx[cc])
 
 # Update biomass maps
-AGBest_2017 = AGBobs.copy()
-AGBest_2017_min = AGBobs_min.copy()
-AGBest_2017_max = AGBobs_max.copy()
+AGBest_2015 = AGBobs.copy()
+AGBest_2015_min = AGBobs_min.copy()
+AGBest_2015_max = AGBobs_max.copy()
 for cc,lc in enumerate(lc_class):
-    mask = lc2017_masks[lc]*masks[country]*np.isfinite(AGBobs)
+    mask = lc2015_masks[lc]*masks[country]*np.isfinite(AGBobs)
     mask[lc2005_masks[lc]]=False # only update areas that have changed
-    dfmask = np.all((df2005['landcover']==lc),axis=0)
+    #dfmask = np.all((df2005['landcover']==lc),axis=0)
+    dfmask = (df2005['landcover']==lc)
     #print(bio,lc,float(df2005['AGBobs'][dfmask]/df2005['area_ha'][dfmask]))
-    AGBest_2017[mask] = float(df2005['AGBobs'][dfmask]/df2005['area_ha'][dfmask])
-    AGBest_2017_min[mask] = float(df2005['AGBobs_min'][dfmask]/df2005['area_ha'][dfmask])
-    AGBest_2017_max[mask] = float(df2005['AGBobs_max'][dfmask]/df2005['area_ha'][dfmask])
+    AGBest_2015[mask] = float(df2005['AGBobs'][dfmask]/df2005['area_ha'][dfmask])
+    AGBest_2015_min[mask] = float(df2005['AGBobs_min'][dfmask]/df2005['area_ha'][dfmask])
+    AGBest_2015_max[mask] = float(df2005['AGBobs_max'][dfmask]/df2005['area_ha'][dfmask])
 
 
 # Create pandas data frame for ease of plotting with seaborn
 # - column variables
-#   landcover class (2017), area_ha, AGBobs, AGBpot, AGBseq
+#   landcover class (2015), area_ha, AGBobs, AGBpot, AGBseq
 landcover_class = []; area = []; agbobs = []; agbpot = []; agbseq = []
 agbobs_min = []; agbpot_min = []; agbseq_min = []; agbobs_max = []; agbpot_max = []
 agbseq_max = []
 
 for cc,lc in enumerate(lc_class):
-    mask = lc2017_masks[lc]*masks[bio]*np.isfinite(AGBobs)
-    dfmask = np.all((df2005['biome']==bio, df2005['landcover']==lc),axis=0)
+    mask = lc2015_masks[lc]*np.isfinite(AGBobs)
+    dfmask = df2005['landcover']==lc
     landcover_class.append(lc)
     area.append(np.sum(cell_areas[mask])*1.)
     agbpot.append(np.sum(AGBpot[mask]*cell_areas[mask]))
-    agbobs.append(np.sum(AGBest_2017[mask]*cell_areas[mask]))
+    agbobs.append(np.sum(AGBest_2015[mask]*cell_areas[mask]))
     agbpot_min.append(np.sum(AGBpot_min[mask]*cell_areas[mask]))
-    agbobs_min.append(np.sum(AGBest_2017_min[mask]*cell_areas[mask]))
+    agbobs_min.append(np.sum(AGBest_2015_min[mask]*cell_areas[mask]))
     agbpot_max.append(np.sum(AGBpot_max[mask]*cell_areas[mask]))
-    agbobs_max.append(np.sum(AGBest_2017_max[mask]*cell_areas[mask]))
+    agbobs_max.append(np.sum(AGBest_2015_max[mask]*cell_areas[mask]))
 
     agbseq.append(agbpot[-1]-agbobs[-1])
     agbseq_min.append(agbpot_min[-1]-agbobs_min[-1])
     agbseq_max.append(agbpot_max[-1]-agbobs_max[-1])
 
-df2017 = pd.DataFrame({'landcover':landcover_class,'area_ha':area,
+df2015 = pd.DataFrame({'landcover':landcover_class,'area_ha':area,
                     'AGBobs':agbobs,'AGBobs_min':agbobs_min,'AGBobs_max':agbobs_max,
                     'AGBpot':agbpot,'AGBpot_min':agbpot_min,'AGBpot_max':agbpot_max,
                     'AGBseq':agbseq,'AGBseq_min':agbseq_min,'AGBseq_max':agbseq_max})
 
 # Now plot up summaries according to the subset in question
 fig,axes = plt.subplots(nrows=1,ncols=3,sharex='all',figsize=[8,3.4])
-df=df2017.groupby('landcover',as_index=False).agg(sum)
+df=df2015.groupby('landcover',as_index=False).agg(sum)
 
 sns.barplot(x='landcover',y='area_ha',hue='landcover',
                 palette='Greens_d',dodge=False,ax=axes[0],
@@ -461,7 +462,7 @@ for ax in axes:
 axes[1].set_ylim(bottom=0)
 axes[2].set_ylim(bottom=0)#axes[1].get_ylim())
 # convert areas to 10^6 km
-axes[0].set_title('Area of landcover class (2017)')
+axes[0].set_title('Area of landcover class (2015)')
 y_ticks = axes[0].get_yticks()
 axes[0].set_yticklabels(['{:3.1f}'.format(i/(10.**8)) for i in y_ticks])
 axes[0].set_ylabel('Area / 10$^6$ km$^2$')
@@ -478,7 +479,7 @@ y_ticks = axes[2].get_yticks()
 axes[2].set_yticklabels(['{:3.0f}'.format(i/(10**9)) for i in y_ticks])
 axes[2].set_ylabel('Aboveground carbon / 10$^9$ Mg')
 fig.tight_layout()
-fig.savefig('%s%s_%s_national_summary_by_landcover_2017.png' % (path2output,country_code,version))
+fig.savefig('%s%s_%s_national_summary_by_landcover_2015.png' % (path2output,country_code,version))
 fig.show()
 
 """
@@ -491,9 +492,9 @@ sequestration for (i) random restoration; (ii) optimal restoration, based on
 
 #-------------------------------------------------------------------------------
 """
-AGBseq2017 = AGBpot-AGBest_2017
-AGBseq2017_min = AGBpot_min-AGBest_2017_min
-AGBseq2017_max = AGBpot_max-AGBest_2017_max
+AGBseq2015 = AGBpot-AGBest_2015
+AGBseq2015_min = AGBpot_min-AGBest_2015_min
+AGBseq2015_max = AGBpot_max-AGBest_2015_max
 restoration_percentage = np.arange(0,110,5)
 n_perc = restoration_percentage.size
 agri_seq_opt = np.zeros(n_perc)
@@ -501,8 +502,8 @@ agri_seq_ran = np.zeros((n_perc,25))
 pasture_seq_opt = np.zeros(n_perc)
 pasture_seq_ran = np.zeros((n_perc,25))
 
-AGBseq_agri = AGBseq2017[lc2017_masks['Agriculture']]
-AGBseq_pasture = AGBseq2017[lc2017_masks['Grass']]
+AGBseq_agri = AGBseq2015[lc2015_masks['Agriculture']]
+AGBseq_pasture = AGBseq2015[lc2015_masks['Grass']]
 AGBseq_agri=AGBseq_agri[np.isfinite(AGBseq_agri)]
 AGBseq_pasture=AGBseq_pasture[np.isfinite(AGBseq_pasture)]
 
@@ -553,5 +554,5 @@ axes[0].legend()
 axes[0].set_xlabel('Percentage of land restored')
 axes[1].set_xlabel('Percentage of land restored')
 fig.tight_layout()
-fig.savefig('%s%s_%s_restoration_scenarios_2017.png' % (path2output,country_code,version))
+fig.savefig('%s%s_%s_restoration_scenarios_2015.png' % (path2output,country_code,version))
 fig.show()
