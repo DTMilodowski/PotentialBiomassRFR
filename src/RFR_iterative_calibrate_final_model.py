@@ -66,6 +66,7 @@ training_mask = AGBpot_ds[key].values>0*landmask
 # load the AGB data and the uncertainty
 agb = xr.open_rasterio('%sAvitabile_AGB_%s_1km.tif' % (path2agb,country_code))[0]
 agb_unc = xr.open_rasterio('%sAvitabile_AGB_Uncertainty_%s_1km.tif' % (path2agb,country_code))[0]
+
 yall = agb.values[landmask]
 yunc = agb_unc.values[landmask]
 
@@ -115,7 +116,7 @@ rf = RandomForestRegressor(bootstrap=True,
             min_impurity_split=None,   # threshold impurity within an internal node before it will be split
             min_samples_leaf=int(trace['min_samples_leaf'][idx]),       # ***The minimum number of samples required to be at a leaf node
             min_samples_split=int(trace['min_samples_split'][idx]),       # ***The minimum number of samples required to split an internal node
-            n_estimators=int(trace['n_estimators'][idx],#trace['n_estimators'],          # ***Number of trees in the random forest
+            n_estimators=int(trace['n_estimators'][idx]),#trace['n_estimators'],          # ***Number of trees in the random forest
             n_jobs=10,                 # The number of jobs to run in parallel for both fit and predict
             oob_score=True,            # use out-of-bag samples to estimate the R^2 on unseen data
             random_state=112358,         # seed used by the random number generator
@@ -129,7 +130,7 @@ rf_max = RandomForestRegressor(bootstrap=True,
             min_impurity_split=None,   # threshold impurity within an internal node before it will be split
             min_samples_leaf=int(trace['min_samples_leaf'][idx]),       # ***The minimum number of samples required to be at a leaf node
             min_samples_split=int(trace['min_samples_split'][idx]),       # ***The minimum number of samples required to split an internal node
-            n_estimators=int(trace['n_estimators'][idx],#trace['n_estimators'],          # ***Number of trees in the random forest
+            n_estimators=int(trace['n_estimators'][idx]),#trace['n_estimators'],          # ***Number of trees in the random forest
             n_jobs=10,                 # The number of jobs to run in parallel for both fit and predict
             oob_score=True,            # use out-of-bag samples to estimate the R^2 on unseen data
             random_state=112358,         # seed used by the random number generator
@@ -143,7 +144,7 @@ rf_min = RandomForestRegressor(bootstrap=True,
             min_impurity_split=None,   # threshold impurity within an internal node before it will be split
             min_samples_leaf=int(trace['min_samples_leaf'][idx]),       # ***The minimum number of samples required to be at a leaf node
             min_samples_split=int(trace['min_samples_split'][idx]),       # ***The minimum number of samples required to split an internal node
-            n_estimators=int(trace['n_estimators'][idx],#trace['n_estimators'],          # ***Number of trees in the random forest
+            n_estimators=int(trace['n_estimators'][idx]),#trace['n_estimators'],          # ***Number of trees in the random forest
             n_jobs=10,                 # The number of jobs to run in parallel for both fit and predict
             oob_score=True,            # use out-of-bag samples to estimate the R^2 on unseen data
             random_state=112358,         # seed used by the random number generator
@@ -254,7 +255,6 @@ else:
                             path2output = path2output)
     mf.plot_AGBseq_final(agb_rf,country_code,version,path2output = path2output)
 
-training_mask_final = (training_set[-1]>0)*landmask
 cal_r2,val_r2 = cv.cal_val_train_test(Xall[training_mask[landmask]],
                                 agb.values[training_mask],rf,path2calval,
                                 country_code, version)
