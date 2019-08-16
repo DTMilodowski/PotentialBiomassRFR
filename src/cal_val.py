@@ -50,11 +50,15 @@ def cal_val_train_test(X,y,rf,path2calval,country_code,version,hue_var = 'densit
 
     #create some pandas df
     df_train = pd.DataFrame({'obs':y_train[idx_train],'sim':y_train_predict[idx_train],
-                            'density':z_train[idx_train],'logdensity':np.log(z_train[idx_train])})
+                            'density':z_train[idx_train],
+                            'logdensity':np.log(z_train[idx_train]),
+                            'density_50':z_train_50[idx_train]})
     df_train.sim[df_train.sim<0] = 0.
 
     df_test =  pd.DataFrame({'obs':y_test[idx_test],'sim':y_test_predict[idx_test],
-                            'density':z_test[idx_test],'logdensity':np.log(z_test[idx_test])})
+                            'density':z_test[idx_test],
+                            'logdensity':np.log(z_test[idx_test]),
+                            'density_50':z_test_50[idx_test]})
     df_test.sim[df_test.sim<0] = 0.
 
     #plot
