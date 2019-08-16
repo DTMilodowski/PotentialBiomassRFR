@@ -9,7 +9,7 @@ from sklearn.metrics import r2_score, mean_squared_error
 from sklearn.linear_model import LinearRegression
 
 # function to carry out cal/val for a random forest regression
-def cal_val_train_test(X,y,rf,path2calval,country_code,version):
+def cal_val_train_test(X,y,rf,path2calval,country_code,version,hue_var = 'density'):
 
     #split train and test subset, specifying random seed
     X_train, X_test, y_train, y_test = train_test_split(X,y,test_size = 0.25, random_state=29)
@@ -34,6 +34,15 @@ def cal_val_train_test(X,y,rf,path2calval,country_code,version):
                         method = "splinef2d", bounds_error = False )
     idx_train = z_train.argsort()
     idx_test = z_test.argsort()
+
+    # create an additional density variable that is limited to the maximum
+    # density above 50 Mg C ha-1
+    z_train_50 = z_train.copy()
+    density_lim = np.max(z_train[y_train>=50])
+    z_train_50[z_train>density_lim]=density_lim
+    z_test_50 = z_test.copy()
+    density_lim = np.max(z_test[y_test>=50])
+    z_test_50[z_test>density_lim]=density_lim
 
     # regression obs vs. model
     cal_reg = LinearRegression().fit(y_train.reshape(-1, 1),y_train_predict)
@@ -62,7 +71,7 @@ def cal_val_train_test(X,y,rf,path2calval,country_code,version):
     #for dd, df in enumerate([df_train.sample(1000),df_test.sample(1000)]):
     for dd, df in enumerate([df_train,df_test]):
         ax = fig.add_subplot(1,2,dd+1,aspect='equal')
-        sns.scatterplot(x='obs',y='sim', data=df, marker='.', hue='density',
+        sns.scatterplot(x='obs',y='sim', data=df, marker='.', hue=hue_var,
                     palette=cmap, edgecolor='none', legend=False, ax=ax)
         x_range = np.array([np.min(df['obs']),np.max(df['obs'])])
         ax.plot(x_range,cal_reg.predict(x_range.reshape(-1, 1)),'-',color='black')
