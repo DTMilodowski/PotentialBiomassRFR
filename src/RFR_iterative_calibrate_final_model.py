@@ -256,5 +256,5 @@ else:
     mf.plot_AGBseq_final(agb_rf,country_code,version,path2output = path2output)
 
 cal_r2,val_r2 = cv.cal_val_train_test(Xall[training_mask[landmask]],
-                                agb.values[training_mask],rf,path2calval,
-                                country_code, version)
+                                agb.values[landmask][training_mask[landmask]],
+                                rf,path2calval,country_code, version)
