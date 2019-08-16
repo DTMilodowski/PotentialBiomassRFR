@@ -20,7 +20,7 @@ import seaborn as sns
 sns.set()
 
 country_code = 'BRA'
-version = '010'
+version = '011'
 iterations = 5
 
 path2alg = '/home/dmilodow/DataStore_DTM/FOREST2020/PotentialBiomassRFR/saved_algorithms'
@@ -175,6 +175,11 @@ mf.plot_training_residuals(agb_rf,iterations,country_code,version,path2output=pa
 mf.plot_training_areas_iterative(agb_rf,iterations,country_code,version,path2output = path2output)
 mf.plot_AGB_AGBpot_training(agb_rf,iterations,country_code,version,path2output = path2output)
 
-training_mask_final = (training_set[-1]>0)*landmask
-cal_r2,val_r2 = cv.cal_val_train_test(Xall[training_mask_final[landmask]],agb.values[training_mask_final],
-                                rf,path2calval, country_code, version)
+training_mask_final = (training_set[3]>0)*landmask
+
+X_train, X_test, y_train, y_test = train_test_split(Xall[training_mask_final[landmask]],agb.values[training_mask_final],test_size = 0.25, random_state=29)
+rf.fit(X_train,y_train)
+y_train_predict = rf.predict(X_train)
+y_test_predict = rf.predict(X_test)
+cal_r2,val_r2 = cv.cal_val_train_test_post_fit(y_train,y_train_predict,y_test,y_test_predict,
+                                                path2calval, country_code, version)
