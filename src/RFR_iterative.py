@@ -13,6 +13,7 @@ from sklearn.decomposition import PCA
 from sklearn.pipeline import make_pipeline
 from sklearn.metrics import mean_squared_error
 from sklearn.externals import joblib
+import pickle
 
 from matplotlib import pyplot as plt
 import seaborn as sns
@@ -28,6 +29,30 @@ path2data = '/disk/scratch/local.2/dmilodow/PotentialBiomass/processed/%s/' % co
 path2agb = path2data+'agb/'
 path2calval = '/home/dmilodow/DataStore_DTM/FOREST2020/PotentialBiomassRFR/calval/'
 path2output = '/home/dmilodow/DataStore_DTM/FOREST2020/PotentialBiomassRFR/output/'
+
+# load hyperopt trials object to get hyperparameters for rf
+hyperopt_trials = '%s/%s_%s_rf_hyperopt_trials.p' % (path2alg,'BRA','011')
+trials = pickle.load(open(hyperopt_trials, "rb"))
+parameters = ['n_estimators','max_depth', 'max_features', 'min_impurity_decrease','min_samples_leaf', 'min_samples_split']
+trace = {}
+n_trials = len(trials)
+trace['scores'] = np.zeros(n_trials)
+for pp in parameters:
+    trace[pp] = np.zeros(n_trials)
+for ii,tt in enumerate(trials.trials):
+    if tt['result']['status']=='ok':
+        trace['scores'][ii] = -tt['result']['loss']
+        for pp in parameters:
+            trace[pp][ii] = tt['misc']['vals'][pp][0]
+    else:
+        trace['scores'][ii] = np.nan
+        for pp in parameters:
+            trace[pp][ii] = np.nan
+mask = np.isfinite(trace['scores'])
+for key in trace.keys():
+    trace[key]=trace[key][mask]
+
+idx = np.argsort(trace['scores'])[-1]
 
 #pca = joblib.load('%s/%s_%s_pca_pipeline.pkl' % (path2alg,country_code,version))
 pca = make_pipeline(StandardScaler(),PCA(n_components=0.999))
@@ -52,13 +77,6 @@ yall = agb.values[landmask]
 # First run of random forest regression model, with inital training set.
 # Create the random forest object with predefined parameters
 """
-rf = RandomForestRegressor(bootstrap=True, criterion='mse', max_depth=None,
-           max_features='auto', max_leaf_nodes=None,
-           min_impurity_decrease=0.0, min_impurity_split=None,
-           min_samples_leaf=20, min_samples_split=2,
-           min_weight_fraction_leaf=0.0, n_estimators=500, n_jobs=-1,
-           oob_score=True, random_state=None, verbose=0, warm_start=False)
-"""
 rf = RandomForestRegressor(bootstrap=True,
             criterion='mse',
             max_depth=393,
@@ -69,6 +87,21 @@ rf = RandomForestRegressor(bootstrap=True,
             n_estimators=250,
             n_jobs=-1,
             random_state=2909)
+"""
+rf = RandomForestRegressor(bootstrap=True,
+            criterion='mse',           # criteria used to choose split point at each node
+            max_depth= int(trace['max_depth'][idx]),            # ***maximum number of branching levels within each tree
+            max_features=int(trace['max_features'][idx]),       # ***the maximum number of variables used in a given tree
+            max_leaf_nodes=None,       # the maximum number of leaf nodes per tree
+            min_impurity_decrease=trace['min_impurity_decrease'][idx], # the miminum drop in the impurity of the clusters to justify splitting further
+            min_impurity_split=None,   # threshold impurity within an internal node before it will be split
+            min_samples_leaf=int(trace['min_samples_leaf'][idx]),       # ***The minimum number of samples required to be at a leaf node
+            min_samples_split=int(trace['min_samples_split'][idx]),       # ***The minimum number of samples required to split an internal node
+            n_estimators=int(trace['n_estimators'][idx]),#trace['n_estimators'],          # ***Number of trees in the random forest
+            n_jobs=10,                 # The number of jobs to run in parallel for both fit and predict
+            oob_score=True,            # use out-of-bag samples to estimate the R^2 on unseen data
+            random_state=112358,         # seed used by the random number generator
+            )
 
 # get subset of predictors for initial training set
 X = Xall[initial_training_mask[landmask]]
