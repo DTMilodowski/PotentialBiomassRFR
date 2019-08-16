@@ -57,7 +57,7 @@ pca.fit(predictors_full)
 joblib.dump(pca,'%s/%s_%s_pca_pipeline.pkl' % (path2alg,country_code,version))
 
 # Get additional data masks
-initial_training_mask = useful.get_mask(country_code,mask_def=7)
+initial_training_mask = useful.get_mask(country_code,mask_def=10)
 initial_training_mask[mapbiomas==0]=0
 
 # get subset of predictors for initial training set
@@ -98,7 +98,7 @@ param_space = { "max_depth":scope.int(hp.quniform("max_depth",20,400,1)),       
                     "min_samples_split":scope.int(hp.quniform("min_samples_split",3,50,1)),  # ***The minimum number of samples required to split an internal node
                     "n_estimators":scope.int(hp.quniform("n_estimators",100,150,1)),          # ***Number of trees in the random forest
                     "min_impurity_decrease":hp.uniform("min_impurity_decrease",0.0,0.02),
-                    "n_jobs":hp.choice("n_jobs",[20,20]) }
+                    "n_jobs":hp.choice("n_jobs",[30,30]) }
 
 # define a function to quantify the objective function
 def f(params):
@@ -137,8 +137,8 @@ def f(params):
 # - percentage of hyperparameter combos identified as "good" (gamma)
 # - number of sampled candidates to calculate expected improvement (n_EI_candidates)
 trials=Trials()
-#trials=pickle.load(open('%s/%s_%s_rf_hyperopt_trials' % (path2alg,country_code,version), "rb"))
-max_evals_target = 200
+#trials=pickle.load(open('%s/%s_%s_rf_hyperopt_trials.p' % (path2alg,country_code,version), "rb"))
+max_evals_target = 300
 spin_up_target = 50
 best_score = -np.inf
 seed=0
@@ -174,6 +174,7 @@ print(best)
 # save trials for future reference
 print('saving trials to file for future reference')
 pickle.dump(trials, open('%s/%s_%s_rf_hyperopt_trials.p' % (path2alg,country_code,version), "wb"))
+# trials = pickle.load(open('%s/%s_%s_rf_hyperopt_trials.p' % (path2alg,country_code,version), "rb"))
 
 # plot summary of optimisation runs
 print('Basic plots summarising optimisation results')
