@@ -96,7 +96,7 @@ def cal_val_train_test(X,y,rf,path2calval,country_code,version,hue_var = 'densit
 
 # function to carry out cal/val for a random forest regression
 def cal_val_train_test_post_fit(y_train,y_train_predict,y_test,y_test_predict,
-                                path2calval,country_code,version):
+                                path2calval,country_code,version,hue_var = 'density'):
 
     #split train and test subset, specifying random seed
     r2 = [r2_score(y_train,y_train_predict),
@@ -117,17 +117,31 @@ def cal_val_train_test_post_fit(y_train,y_train_predict,y_test,y_test_predict,
     idx_train = z_train.argsort()
     idx_test = z_test.argsort()
 
+
+    # create an additional density option for a convenient clip for cal-val
+    # visualisation that is limited to the maximum density above 50 Mg C ha-1
+    z_train_50 = z_train.copy()
+    density_lim = np.max(z_train[y_train>=50])
+    z_train_50[z_train>density_lim]=density_lim
+    z_test_50 = z_test.copy()
+    density_lim = np.max(z_test[y_test>=50])
+    z_test_50[z_test>density_lim]=density_lim
+
     # regression obs vs. model
     cal_reg = LinearRegression().fit(y_train.reshape(-1, 1),y_train_predict)
     val_reg = LinearRegression().fit(y_test.reshape(-1, 1),y_test_predict)
 
     #create some pandas df
     df_train = pd.DataFrame({'obs':y_train[idx_train],'sim':y_train_predict[idx_train],
-                            'density':z_train[idx_train],'density':np.log(z_train[idx_train])})
+                            'density':z_train[idx_train],
+                            'logdensity':np.log(z_train[idx_train]),
+                            'density_50':z_train_50[idx_train]})
     df_train.sim[df_train.sim<0] = 0.
 
     df_test =  pd.DataFrame({'obs':y_test[idx_test],'sim':y_test_predict[idx_test],
-                            'density':z_test[idx_test],'density':np.log(z_test[idx_test])})
+                            'density':z_test[idx_test],
+                            'logdensity':np.log(z_test[idx_test]),
+                            'density_50':z_test_50[idx_test]})
     df_test.sim[df_test.sim<0] = 0.
 
     #plot
@@ -144,7 +158,7 @@ def cal_val_train_test_post_fit(y_train,y_train_predict,y_test,y_test_predict,
     #for dd, df in enumerate([df_train.sample(1000),df_test.sample(1000)]):
     for dd, df in enumerate([df_train,df_test]):
         ax = fig.add_subplot(1,2,dd+1,aspect='equal')
-        sns.scatterplot(x='obs',y='sim', data=df, marker='.', hue='logdensity',
+        sns.scatterplot(x='obs',y='sim', data=df, marker='.', hue=hue_var,
                     palette=cmap, edgecolor='none', legend=False, ax=ax)
         x_range = np.array([np.min(df['obs']),np.max(df['obs'])])
         ax.plot(x_range,cal_reg.predict(x_range.reshape(-1, 1)),'-',color='black')
