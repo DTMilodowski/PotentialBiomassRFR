@@ -257,4 +257,4 @@ else:
 
 cal_r2,val_r2 = cv.cal_val_train_test(Xall[training_mask[landmask]],
                                 agb.values[landmask][training_mask[landmask]],
-                                rf,path2calval,country_code, version,hue_var = 'density50')
+                                rf,path2calval,country_code, version,hue_var = 'density_50')
