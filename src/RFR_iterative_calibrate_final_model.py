@@ -44,7 +44,7 @@ path2agb = path2data+'agb/'
 path2calval = '/home/dmilodow/DataStore_DTM/FOREST2020/PotentialBiomassRFR/calval/'
 path2output = '/home/dmilodow/DataStore_DTM/FOREST2020/PotentialBiomassRFR/output/'
 
-hyperopt_trials = '%s/%s_%s_rf_hyperopt_trials.p' % (path2alg,'BRA','010')
+hyperopt_trials = '%s/%s_%s_rf_hyperopt_trials.p' % (path2alg,'BRA','011')
 boundaries_shp = '/home/dmilodow/DataStore_DTM/EOlaboratory/Areas/ne_50m_admin_0_tropical_countries_small_islands_removed.shp'
 
 pca = joblib.load('%s/%s_%s_pca_pipeline.pkl' % (path2alg,country_code,version))
@@ -76,6 +76,7 @@ X = Xall[training_mask[landmask]]
 y = yall[training_mask[landmask]]
 ymin = (yall-yunc)[training_mask[landmask]]
 ymax = (yall+yunc)[training_mask[landmask]]
+ymin[ymin<0]=0
 
 """
 #===============================================================================
