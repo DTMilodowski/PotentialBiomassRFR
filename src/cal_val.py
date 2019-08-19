@@ -39,10 +39,10 @@ def cal_val_train_test(X,y,rf,path2calval,country_code,version,hue_var = 'densit
     # density above 50 Mg C ha-1
     z_train_50 = z_train.copy()
     density_lim = np.max(z_train[y_train>=50])
-    z_train_50[z_train>density_lim]=density_lim
+    z_train_50[y_train>density_lim]=density_lim
     z_test_50 = z_test.copy()
     density_lim = np.max(z_test[y_test>=50])
-    z_test_50[z_test>density_lim]=density_lim
+    z_test_50[y_test>density_lim]=density_lim
 
     # regression obs vs. model
     cal_reg = LinearRegression().fit(y_train.reshape(-1, 1),y_train_predict)
@@ -122,10 +122,10 @@ def cal_val_train_test_post_fit(y_train,y_train_predict,y_test,y_test_predict,
     # visualisation that is limited to the maximum density above 50 Mg C ha-1
     z_train_50 = z_train.copy()
     density_lim = np.max(z_train[y_train>=50])
-    z_train_50[z_train>density_lim]=density_lim
+    z_train_50[y_train>density_lim]=density_lim
     z_test_50 = z_test.copy()
     density_lim = np.max(z_test[y_test>=50])
-    z_test_50[z_test>density_lim]=density_lim
+    z_test_50[y_test>density_lim]=density_lim
 
     # regression obs vs. model
     cal_reg = LinearRegression().fit(y_train.reshape(-1, 1),y_train_predict)
