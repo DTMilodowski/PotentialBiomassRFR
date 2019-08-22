@@ -212,8 +212,8 @@ rf2.fit(X_train,y_oob)
 # Make prediction including bias correction
 y_hat_train = 2*rf.predict(X_train)-rf2.predict(X_train)
 y_hat_test = 2*rf.predict(X_test)-rf2.predict(X_test)
-mask_test = y_test>50
-mask_train = y_train>50
-cal_r2,val_r2 = cv.cal_val_train_test_post_fit(y_train[mask_train], y_hat_train[mask_train], y_test[mask_test],
-                                    y_hat_test[mask_test], path2calval, country_code,
+y_hat_test[y_hat_test<0]=0
+y_hat_train[y_hat_train<0]=0
+cal_r2,val_r2 = cv.cal_val_train_test_post_fit(y_train, y_hat_train, y_test,
+                                    y_hat_test, path2calval, country_code,
                                     version, hue_var='density_50')
