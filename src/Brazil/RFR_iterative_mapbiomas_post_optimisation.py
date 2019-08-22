@@ -21,7 +21,7 @@ sns.set()
 
 country_code = 'BRA'
 version = '011'
-iterations = 5
+iterations = 7
 
 path2alg = '/home/dmilodow/DataStore_DTM/FOREST2020/PotentialBiomassRFR/saved_algorithms'
 path2data = '/disk/scratch/local.2/dmilodow/PotentialBiomass/processed/%s/' % country_code
@@ -181,5 +181,39 @@ X_train, X_test, y_train, y_test = train_test_split(Xall[training_mask_final[lan
 rf.fit(X_train,y_train)
 y_train_predict = rf.predict(X_train)
 y_test_predict = rf.predict(X_test)
-cal_r2,val_r2 = cv.cal_val_train_test_post_fit(y_train,y_train_predict,y_test,y_test_predict,
-                                                path2calval, country_code, version)
+cal_r2,val_r2 = cv.cal_val_train_test_post_fit(y_train, y_train_predict, y_test,
+                                    y_test_predict, path2calval, country_code,
+                                    version, hue_var='density_50')
+
+
+# Test bias correction
+rf.fit(X_train,y_train)
+y_oob = rf.oob_prediction_
+# New target variable = y_oob - residual
+# Note that this is more biased than the RF estimate
+y_new = 2*y_oob-y_train
+# Fit second random forest regression to predict y_new
+rf2 = RandomForestRegressor(bootstrap=True,
+            criterion='mse',           # criteria used to choose split point at each node
+            max_depth= int(trace['max_depth'][idx]),            # ***maximum number of branching levels within each tree
+            max_features=int(trace['max_features'][idx]),       # ***the maximum number of variables used in a given tree
+            max_leaf_nodes=None,       # the maximum number of leaf nodes per tree
+            min_impurity_decrease=trace['min_impurity_decrease'][idx], # the miminum drop in the impurity of the clusters to justify splitting further
+            min_impurity_split=None,   # threshold impurity within an internal node before it will be split
+            min_samples_leaf=int(trace['min_samples_leaf'][idx]),       # ***The minimum number of samples required to be at a leaf node
+            min_samples_split=int(trace['min_samples_split'][idx]),       # ***The minimum number of samples required to split an internal node
+            n_estimators=200,#trace['n_estimators'],          # ***Number of trees in the random forest
+            n_jobs=10,                 # The number of jobs to run in parallel for both fit and predict
+            oob_score=True,            # use out-of-bag samples to estimate the R^2 on unseen data
+            )
+
+rf2.fit(X_train,y_oob)
+
+# Make prediction including bias correction
+y_hat_train = 2*rf.predict(X_train)-rf2.predict(X_train)
+y_hat_test = 2*rf.predict(X_test)-rf2.predict(X_test)
+mask_test = y_test>50
+mask_train = y_train>50
+cal_r2,val_r2 = cv.cal_val_train_test_post_fit(y_train[mask_train], y_hat_train[mask_train], y_test[mask_test],
+                                    y_hat_test[mask_test], path2calval, country_code,
+                                    version, hue_var='density_50')
