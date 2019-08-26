@@ -626,8 +626,11 @@ def iterative_augmentation_of_training_set_obs_vs_pot_v3(ytest, y, Xtest, X, Xal
     col_idx = col_idx[subset]
     row_idx = row_idx[subset]
 
-
     y_added_stable_forest_predict_previous = np.mean(rf.predict(Xadditional_forest))
+
+    # create a list that will host the combined AGBpot of the additional stable
+    # forest pixels
+    y_added_sfp = [y_added_stable_forest_predict_previous]
 
     # fit new random forest with new training subset
     Xiter=np.concatenate((X,Xtest),axis=0)
@@ -644,6 +647,8 @@ def iterative_augmentation_of_training_set_obs_vs_pot_v3(ytest, y, Xtest, X, Xal
     rmse = np.sqrt(np.mean((ytest_predict-ytest)**2))
     n_additional = ytest.size
     y_added_stable_forest_predict = np.mean(rf.predict(Xadditional_forest))
+
+    y_added_sfp.append(y_added_stable_forest_predict)
 
     print("Iteration 1 complete")
     print("RMSE: %.02f" % rmse)
@@ -694,6 +699,8 @@ def iterative_augmentation_of_training_set_obs_vs_pot_v3(ytest, y, Xtest, X, Xal
         # predict potential biomass for the full added stable forest class
         y_added_stable_forest_predict = np.mean(rf.predict(Xadditional_forest))
 
+        y_added_sfp.append(y_added_stable_forest_predict)
+
         # Check how many pixels were removed from the additional training set
         n_removed = n_additional-subset.sum()
         print("Iteration %i complete, removed %i out of %i pixels from training, %.1f" %
@@ -704,9 +711,10 @@ def iterative_augmentation_of_training_set_obs_vs_pot_v3(ytest, y, Xtest, X, Xal
                 (y_added_stable_forest_predict_previous,y_added_stable_forest_predict))
 
         ii+=1
-    np.save('AGBpot_test.npy',AGBpot)
-    np.save('training_test.npy',training_set)
-    return AGBpot, training_set, rf
+
+    iteration_to_use = np.argmax(y_added_sfp)
+
+    return AGBpot[:iteration_to_use+1], training_set[:iteration_to_use+1], rf
 
 """
 #===============================================================================
