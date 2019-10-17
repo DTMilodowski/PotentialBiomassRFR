@@ -28,7 +28,7 @@ def plot_bar_CIs(lc,uc,ax,jitter=0):
 
 
 country_code = 'BRA'
-version = '008'
+version = '011'
 
 """
 #===============================================================================
@@ -38,8 +38,8 @@ PART A: DEFINE PATHS AND LOAD IN DATA
 - WRI opportunity map
 #-------------------------------------------------------------------------------
 """
-path2data = '/disk/scratch/local.2/dmilodow/PotentialBiomass/processed/%s/' % country_code
-path2output = '/home/dmilodow/DataStore_DTM/FOREST2020/PotentialBiomassRFR/output/'
+path2data = '/disk/scratch/local.2/PotentialBiomass/processed/%s/' % country_code
+path2output = '/home/dmilodow/DataStore_DTM/FOREST2020/PotentialBiomassRFR/output/' # change to either your own storage space or create a directory on racadal scratch ('/disk/scratch/local.2/)
 path2mapbiomas = '/scratch/local.2/MAPBIOMAS/'
 
 # load potential biomass models from netdf file
