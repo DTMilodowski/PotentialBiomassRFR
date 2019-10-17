@@ -21,6 +21,8 @@ from sklearn.pipeline import make_pipeline
 from sklearn.metrics import mean_squared_error
 from sklearn.externals import joblib
 
+from scipy import ndimage as image
+
 from hyperopt import tpe, rand, fmin, hp, Trials, STATUS_OK, STATUS_FAIL
 from hyperopt.pyll.base import scope
 from functools import partial
@@ -110,7 +112,6 @@ cal_blocks = cal_blocks_array[landmask][initial_training_mask[landmask]]
 
 # now filter the blocks based on proximity to validation data to avoid
 # neighbouring pixels biasing the validation
-from scipy import ndimage as image
 buffer_width = 0.5
 buffer = int(np.ceil(buffer_width/raster_res))
 val_blocks_array = cal_blocks_array.copy()
