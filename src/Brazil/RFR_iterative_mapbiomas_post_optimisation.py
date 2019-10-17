@@ -20,7 +20,7 @@ import seaborn as sns
 sns.set()
 
 country_code = 'BRA'
-version = '011'
+version = '013'
 iterations = 7
 
 path2alg = '/home/dmilodow/DataStore_DTM/FOREST2020/PotentialBiomassRFR/saved_algorithms'
@@ -72,7 +72,7 @@ PART B: FIT FIRST RANDOM FOREST MODEL
 # but boost number of trees in forest as not running as many times, so can
 # afford computational expense
 trials = pickle.load(open('%s/%s_%s_rf_hyperopt_trials.p' % (path2alg,country_code,version), "rb"))
-parameters = ['n_estimators','max_depth', 'max_features', 'min_impurity_decrease','min_samples_leaf', 'min_samples_split']
+parameters = ['n_estimators','max_depth', 'max_features','min_samples_leaf', 'min_samples_split']
 trace = {}
 n_trials = len(trials)
 trace['scores'] = np.zeros(n_trials)
@@ -97,7 +97,7 @@ rf = RandomForestRegressor(bootstrap=True,
             max_depth= int(trace['max_depth'][idx]),            # ***maximum number of branching levels within each tree
             max_features=int(trace['max_features'][idx]),       # ***the maximum number of variables used in a given tree
             max_leaf_nodes=None,       # the maximum number of leaf nodes per tree
-            min_impurity_decrease=trace['min_impurity_decrease'][idx], # the miminum drop in the impurity of the clusters to justify splitting further
+            min_impurity_decrease=0,#trace['min_impurity_decrease'][idx], # the miminum drop in the impurity of the clusters to justify splitting further
             min_impurity_split=None,   # threshold impurity within an internal node before it will be split
             min_samples_leaf=int(trace['min_samples_leaf'][idx]),       # ***The minimum number of samples required to be at a leaf node
             min_samples_split=int(trace['min_samples_split'][idx]),       # ***The minimum number of samples required to split an internal node
@@ -199,7 +199,7 @@ rf2 = RandomForestRegressor(bootstrap=True,
             max_features=int(trace['max_features'][idx]),       # ***the maximum number of variables used in a given tree
             max_leaf_nodes=None,       # the maximum number of leaf nodes per tree
             min_impurity_decrease=trace['min_impurity_decrease'][idx], # the miminum drop in the impurity of the clusters to justify splitting further
-            min_impurity_split=None,   # threshold impurity within an internal node before it will be split
+            min_impurity_split=0,   # threshold impurity within an internal node before it will be split
             min_samples_leaf=int(trace['min_samples_leaf'][idx]),       # ***The minimum number of samples required to be at a leaf node
             min_samples_split=int(trace['min_samples_split'][idx]),       # ***The minimum number of samples required to split an internal node
             n_estimators=200,#trace['n_estimators'],          # ***Number of trees in the random forest
