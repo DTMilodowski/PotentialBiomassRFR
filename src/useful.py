@@ -23,7 +23,7 @@ from copy import deepcopy
 def get_predictors(country_code,return_landmask = True, training_subset=False,
                     subset_def=1,apply_unc_mask=True):
 
-    path = '/disk/scratch/local.2/dmilodow/PotentialBiomass/processed/%s/' % country_code
+    path = '/disk/scratch/local.2/PotentialBiomass/processed/%s/' % country_code
     path2wc = path+'wc2/'
     path2sg = path+'soilgrids/'
     path2agb = path+'agb/'
@@ -111,7 +111,7 @@ def get_predictors(country_code,return_landmask = True, training_subset=False,
 # equivalent function to above, but for specified mask, rather than creating mask within function
 def get_predictors_for_defined_mask(country_code,mask):
 
-    path = '/disk/scratch/local.2/dmilodow/PotentialBiomass/processed/%s/' % country_code
+    path = '/disk/scratch/local.2/PotentialBiomass/processed/%s/' % country_code
     path2wc = path+'wc2/'
     path2sg = path+'soilgrids/'
     path2agb = path+'agb/'
@@ -201,7 +201,7 @@ def get_predictors_for_defined_mask(country_code,mask):
 #                    extent only
 def get_mask(country_code, mask_def=0):
 
-    path = '/disk/scratch/local.2/dmilodow/PotentialBiomass/processed/%s/' % country_code
+    path = '/disk/scratch/local.2/PotentialBiomass/processed/%s/' % country_code
     path2wc = path+'wc2/'; path2sg = path+'soilgrids/'; path2agb = path+'agb/'
 
     #worldclim2 data
@@ -723,7 +723,7 @@ def iterative_augmentation_of_training_set_obs_vs_pot_v3(ytest, y, Xtest, X, Xal
 """
 # load in mapbiomas for a given timestep
 def load_mapbiomas(country_code,timestep=-1,aggregate=0):
-    path = '/disk/scratch/local.2/dmilodow/PotentialBiomass/processed/%s/' % country_code
+    path = '/disk/scratch/local.2/PotentialBiomass/processed/%s/' % country_code
     mbfiles = sorted(glob.glob('%s/mapbiomas/*tif' % path))
     # option 0 -> no aggregation
     if aggregate == 0:
@@ -810,7 +810,7 @@ def load_mapbiomas(country_code,timestep=-1,aggregate=0):
 #   220 Permanent snow and ice
 #  -----------------------
 def load_esacci(country_code,year=2015,aggregate=0):
-    path = '/disk/scratch/local.2/dmilodow/PotentialBiomass/processed/%s/' % country_code
+    path = '/disk/scratch/local.2/PotentialBiomass/processed/%s/' % country_code
     files = sorted(glob.glob('%s/esacci/*%i*lccs-class*tif' % (path,year)))
     # option 0 -> no aggregation
     if aggregate == 0:
