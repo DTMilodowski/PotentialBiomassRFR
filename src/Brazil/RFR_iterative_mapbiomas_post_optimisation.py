@@ -24,7 +24,7 @@ version = '013'
 iterations = 7
 
 path2alg = '/home/dmilodow/DataStore_DTM/FOREST2020/PotentialBiomassRFR/saved_algorithms'
-path2data = '/disk/scratch/local.2/dmilodow/PotentialBiomass/processed/%s/' % country_code
+path2data = '/disk/scratch/local.2/PotentialBiomass/processed/%s/' % country_code
 path2agb = path2data+'agb/'
 path2calval = '/home/dmilodow/DataStore_DTM/FOREST2020/PotentialBiomassRFR/calval/'
 path2output = '/home/dmilodow/DataStore_DTM/FOREST2020/PotentialBiomassRFR/output/'
