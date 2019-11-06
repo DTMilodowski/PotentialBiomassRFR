@@ -9,7 +9,7 @@ from sklearn.metrics import r2_score, mean_squared_error
 from sklearn.linear_model import LinearRegression
 
 # function to carry out cal/val for a random forest regression
-def cal_val_train_test(X,y,rf,path2calval,country_code,version,hue_var = 'density'):
+def cal_val_train_test(X,y,rf,path2calval,country_code,version,hue_var = 'density',subsample=1,agb_source=''):
 
     #split train and test subset, specifying random seed
     X_train, X_test, y_train, y_test = train_test_split(X,y,test_size = 0.25, random_state=29)
@@ -97,6 +97,8 @@ def cal_val_train_test(X,y,rf,path2calval,country_code,version,hue_var = 'densit
     val_reg = LinearRegression().fit(y_test_predict.reshape(-1, 1),y_test)
 
     #create some pandas df
+    idx_train = z_train.argsort()
+    idx_test = z_test.argsort()
     df_train = pd.DataFrame({'obs':y_train[idx_train],'sim':y_train_predict[idx_train],
                             'density':z_train[idx_train],
                             'logdensity':np.log(z_train[idx_train]),
@@ -138,13 +140,13 @@ def cal_val_train_test(X,y,rf,path2calval,country_code,version,hue_var = 'densit
         plt.ylabel('AGB from Avitabile et al. (2016) [Mg ha $^{-1}$]')
         plt.xlabel('Reconstructed AGB [Mg ha $^{-1}$]')
 
-    plt.savefig('%s/%s_%s_rf_iterative_calval.png' % (path2calval,country_code,version))
+    plt.savefig('%s/%s_%s%s_rf_iterative_calval.png' % (path2calval,country_code,version,agb_source))
     return r2,rmse
 
 
 # function to carry out cal/val for a random forest regression
 def cal_val_train_test_post_fit(y_train,y_train_predict,y_test,y_test_predict,
-                                path2calval,country_code,version,hue_var = 'density',subsample = 1):
+                                path2calval,country_code,version,hue_var = 'density',subsample = 1,agb_source=''):
 
     #split train and test subset, specifying random seed
     r2 = [r2_score(y_train,y_train_predict),
@@ -249,5 +251,5 @@ def cal_val_train_test_post_fit(y_train,y_train_predict,y_test,y_test_predict,
         plt.ylabel('AGB from Avitabile et al. (2016) [Mg ha $^{-1}$]')
         plt.xlabel('Reconstructed AGB [Mg ha $^{-1}$]')
 
-    plt.savefig('%s/%s_%s_rf_iterative_calval.png' % (path2calval,country_code,version))
+    plt.savefig('%s/%s_%s%s_rf_iterative_calval.png' % (path2calval,country_code,version,agb_source))
     return r2,rmse
