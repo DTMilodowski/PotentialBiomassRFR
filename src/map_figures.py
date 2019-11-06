@@ -30,7 +30,7 @@ def plot_AGBpot_iterations(path,country_code,version,iterations,vmin=0,vmax=200)
     nc = xr.open_dataset(ncfile)
     #nc.values[nc.values == nc.nodatavals[0]] = np.nan
 """
-def plot_AGBpot_iterations(nc,iterations,country_code,version,path2output = './',vmin=0,vmax=200):
+def plot_AGBpot_iterations(nc,iterations,country_code,version,path2output = './',agb_source='',vmin=0,vmax=200):
     #create a figure using the axesgrid to make the colorbar fit on the axis
     projection = ccrs.PlateCarree()
     axes_class = (GeoAxes,dict(map_projection=projection))
@@ -77,14 +77,14 @@ def plot_AGBpot_iterations(nc,iterations,country_code,version,path2output = './'
                         va='bottom',weight='bold')
 
     #fig.show()
-    fig.savefig('%s/%s_%s_iterative_AGBpot.png' % (path2output,country_code,version),bbox_inches='tight',dpi=300)
+    fig.savefig('%s/%s_%s%s_iterative_AGBpot.png' % (path2output,country_code,version,agb_source),bbox_inches='tight',dpi=300)
 
 """
 Plot the iterative changes in training areas, alongside the original AGB map for
 comparison. Note that a maximum of five iterations are plotted - the first, and
 the final four (or fewer).
 """
-def plot_training_areas_iterative(nc,iterations,country_code,version,path2output='./'):
+def plot_training_areas_iterative(nc,iterations,country_code,version,path2output='./',agb_source=''):
     #create a figure using the axesgrid to make the colorbar fit on the axis
     projection = ccrs.PlateCarree()
     axes_class = (GeoAxes,dict(map_projection=projection))
@@ -130,12 +130,12 @@ def plot_training_areas_iterative(nc,iterations,country_code,version,path2output
                         va='bottom',weight='bold')
 
     #fig.show()
-    fig.savefig('%s/%s_%s_iterative_training.png' % (path2output,country_code,version),bbox_inches='tight',dpi=300)
+    fig.savefig('%s/%s_%s%s_iterative_training.png' % (path2output,country_code,version,agb_source),bbox_inches='tight',dpi=300)
 
 """
 Plot the original AGB map, the potential map and the training set used
 """
-def plot_AGB_AGBpot_training(nc,iterations,country_code,version,path2output='./',vmin=0,vmax=200):
+def plot_AGB_AGBpot_training(nc,iterations,country_code,version,path2output='./',agb_source='',vmin=0,vmax=200):
     #create a figure using the axesgrid to make the colorbar fit on the axis
     projection = ccrs.PlateCarree()
     axes_class = (GeoAxes,dict(map_projection=projection))
@@ -177,9 +177,9 @@ def plot_AGB_AGBpot_training(nc,iterations,country_code,version,path2output='./'
                         va='bottom',weight='bold')
 
     #fig.show()
-    fig.savefig('%s/%s_%s_AGB_AGBpot_training.png' % (path2output,country_code,version),bbox_inches='tight',dpi=300)
+    fig.savefig('%s/%s_%s%s_AGB_AGBpot_training.png' % (path2output,country_code,version,agb_source),bbox_inches='tight',dpi=300)
 
-def plot_AGB_AGBpot_training_final(nc,country_code,version,path2output='./',
+def plot_AGB_AGBpot_training_final(nc,country_code,version,path2output='./',agb_source='',
                                     vmin=0,vmax=200,
                                     clip=False,mask=np.array([])):
     #create a figure using the axesgrid to make the colorbar fit on the axis
@@ -230,13 +230,13 @@ def plot_AGB_AGBpot_training_final(nc,country_code,version,path2output='./',
                         va='top',weight='bold')
 
     #fig.show()
-    fig.savefig('%s/%s_%s_AGB_AGBpot_training_final.png' % (path2output,country_code,version),bbox_inches='tight',dpi=300)
+    fig.savefig('%s/%s_%s%s_AGB_AGBpot_training_final.png' % (path2output,country_code,version,agb_source),bbox_inches='tight',dpi=300)
 
 """
 Plot defecit
 """
 import seaborn as sns
-def plot_AGBdef_final(nc,country_code,version,path2output='./',clip=False,mask=np.array([])):
+def plot_AGBdef_final(nc,country_code,version,path2output='./',agb_source='',clip=False,mask=np.array([])):
     #create a figure using the axesgrid to make the colorbar fit on the axis
     projection = ccrs.PlateCarree()
     axes_class = (GeoAxes,dict(map_projection=projection))
@@ -277,12 +277,12 @@ def plot_AGBdef_final(nc,country_code,version,path2output='./',clip=False,mask=n
                         va='top',weight='bold')
 
     #fig.show()
-    fig.savefig('%s/%s_%s_AGBdef_final.png' % (path2output,country_code,version),bbox_inches='tight',dpi=300)
+    fig.savefig('%s/%s_%s%s_AGBdef_final.png' % (path2output,country_code,version,agb_source),bbox_inches='tight',dpi=300)
 
 """
 Plot sequestration potential
 """
-def plot_AGBseq_final(nc,country_code,version,path2output='./',clip=False,mask=np.array([])):
+def plot_AGBseq_final(nc,country_code,version,path2output='./',agb_source='',clip=False,mask=np.array([])):
     #create a figure using the axesgrid to make the colorbar fit on the axis
     projection = ccrs.PlateCarree()
     axes_class = (GeoAxes,dict(map_projection=projection))
@@ -323,12 +323,12 @@ def plot_AGBseq_final(nc,country_code,version,path2output='./',clip=False,mask=n
                         va='top',weight='bold')
 
     #fig.show()
-    fig.savefig('%s/%s_%s_AGBseq_final.png' % (path2output,country_code,version),bbox_inches='tight',dpi=300)
+    fig.savefig('%s/%s_%s%s_AGBseq_final.png' % (path2output,country_code,version,agb_source),bbox_inches='tight',dpi=300)
 
 """
 Plot uncertainty
 """
-def plot_AGBpot_uncertainty(nc,country_code,version,path2output='./',clip=False,
+def plot_AGBpot_uncertainty(nc,country_code,version,path2output='./',agb_source='',clip=False,
     mask=np.array([])):
     #create a figure using the axesgrid to make the colorbar fit on the axis
     projection = ccrs.PlateCarree()
@@ -376,13 +376,13 @@ def plot_AGBpot_uncertainty(nc,country_code,version,path2output='./',clip=False,
                         ha='right',va='top',weight='bold')
 
     #fig.show()
-    fig.savefig('%s/%s_%s_AGBpot_uncertainty.png' % (path2output,country_code,version),bbox_inches='tight',dpi=300)
+    fig.savefig('%s/%s_%s%s_AGBpot_uncertainty.png' % (path2output,country_code,version,agb_source),bbox_inches='tight',dpi=300)
 
 
 """
 Plot residuals from training data spatially
 """
-def plot_training_residuals(nc,iteration,country_code,version,path2output='./',
+def plot_training_residuals(nc,iteration,country_code,version,path2output='./',agb_source='',
     vmin=[0,0,-50],vmax=[200,200,50],clip=False,mask=np.array([])):
 
     #create a figure using the axesgrid to make the colorbar fit on the axis
@@ -434,4 +434,4 @@ def plot_training_residuals(nc,iteration,country_code,version,path2output='./',
 
 
     #fig.show()
-    fig.savefig('%s/%s_%s_training_residuals.png' % (path2output,country_code,version),bbox_inches='tight',dpi=300)
+    fig.savefig('%s/%s_%s%s_training_residuals.png' % (path2output,country_code,version,agb_source),bbox_inches='tight',dpi=300)
