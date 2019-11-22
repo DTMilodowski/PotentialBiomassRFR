@@ -78,7 +78,7 @@ key = train_keys[-1]
 training_mask = AGBpot_ds[key].values>0*landmask
 
 # load the AGB data and the uncertainty
-if source == 'globiomass':
+if source == 'globbiomass':
     agb = xr.open_rasterio('%s/globiomass/%s_globiomass_agb_1km.tif' % (path2agb,country_code))[0]
     agb_unc = xr.open_rasterio('%s/globiomass/%s_globiomass_agb_err_1km.tif' % (path2agb,country_code))[0]
     agb.values=agb.values.astype('float')
@@ -137,7 +137,7 @@ rf = RandomForestRegressor(bootstrap=True,
             max_features=int(trace['max_features'][idx]),       # ***the maximum number of variables used in a given tree
             min_samples_leaf=int(trace['min_samples_leaf'][idx]),       # ***The minimum number of samples required to be at a leaf node
             min_samples_split=int(trace['min_samples_split'][idx]),       # ***The minimum number of samples required to split an internal node
-            n_estimators=2000,#int(trace['n_estimators'][idx]),#trace['n_estimators'],          # ***Number of trees in the random forest
+            n_estimators=1000,#int(trace['n_estimators'][idx]),#trace['n_estimators'],          # ***Number of trees in the random forest
             n_jobs=10,                 # The number of jobs to run in parallel for both fit and predict
             oob_score=True,            # use out-of-bag samples to estimate the R^2 on unseen data
             random_state=112358,         # seed used by the random number generator
@@ -148,7 +148,7 @@ rf_max = RandomForestRegressor(bootstrap=True,
             max_features=int(trace['max_features'][idx]),       # ***the maximum number of variables used in a given tree
             min_samples_leaf=int(trace['min_samples_leaf'][idx]),       # ***The minimum number of samples required to be at a leaf node
             min_samples_split=int(trace['min_samples_split'][idx]),       # ***The minimum number of samples required to split an internal node
-            n_estimators=2000,#int(trace['n_estimators'][idx]),#trace['n_estimators'],          # ***Number of trees in the random forest
+            n_estimators=1000,#int(trace['n_estimators'][idx]),#trace['n_estimators'],          # ***Number of trees in the random forest
             n_jobs=10,                 # The number of jobs to run in parallel for both fit and predict
             oob_score=True,            # use out-of-bag samples to estimate the R^2 on unseen data
             random_state=112358,         # seed used by the random number generator
@@ -159,7 +159,7 @@ rf_min = RandomForestRegressor(bootstrap=True,
             max_features=int(trace['max_features'][idx]),       # ***the maximum number of variables used in a given tree
             min_samples_leaf=int(trace['min_samples_leaf'][idx]),       # ***The minimum number of samples required to be at a leaf node
             min_samples_split=int(trace['min_samples_split'][idx]),       # ***The minimum number of samples required to split an internal node
-            n_estimators=2000,#int(trace['n_estimators'][idx]),#trace['n_estimators'],          # ***Number of trees in the random forest
+            n_estimators=1000,#int(trace['n_estimators'][idx]),#trace['n_estimators'],          # ***Number of trees in the random forest
             n_jobs=10,                 # The number of jobs to run in parallel for both fit and predict
             oob_score=True,            # use out-of-bag samples to estimate the R^2 on unseen data
             random_state=112358,         # seed used by the random number generator
