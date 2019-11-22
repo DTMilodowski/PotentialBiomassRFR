@@ -30,7 +30,8 @@ path2agb = path2data+'agb/'
 path2calval = '/home/dmilodow/DataStore_DTM/FOREST2020/PotentialBiomassRFR/calval/'
 path2output = '/home/dmilodow/DataStore_DTM/FOREST2020/PotentialBiomassRFR/output/'
 
-agb_source = 'avitabile'
+#agb_source = 'avitabile'
+agb_source = 'globbiomass'
 
 # load hyperopt trials object to get hyperparameters for rf
 hyperopt_trials = '%s/%s_%s_rf_hyperopt_trials.p' % (path2alg,'BRA','013')
@@ -81,18 +82,6 @@ yall = agb_avitabile.values[landmask]
 
 # First run of random forest regression model, with inital training set.
 # Create the random forest object with predefined parameters
-"""
-rf = RandomForestRegressor(bootstrap=True,
-            criterion='mse',
-            max_depth=393,
-            max_features=16,
-            min_impurity_decrease=0.00467,
-            min_samples_leaf=3,
-            min_samples_split=7,
-            n_estimators=250,
-            n_jobs=-1,
-            random_state=2909)
-"""
 rf = RandomForestRegressor(bootstrap=True,
             criterion='mse',           # criteria used to choose split point at each node
             max_depth= int(trace['max_depth'][idx]),            # ***maximum number of branching levels within each tree
@@ -119,13 +108,6 @@ ytest = yall[other_stable_forest_mask[landmask]]
 
 # now iterate, filtering out other stable forest pixels for which the observed biomass
 # is not within error of the predicted potential biomass
-"""
-AGBpot, training_set, rf = useful.iterative_augmentation_of_training_set_obs_vs_pot(ytest,
-                                            y, Xtest, X, Xall, iterations,
-                                            landmask, initial_training_mask,
-                                            other_stable_forest_mask, rf,
-                                            stopping_condition=0.01)
-"""
 AGBpot, training_set, rf = useful.iterative_augmentation_of_training_set_obs_vs_pot_v3(ytest,
                                             y, Xtest, X, Xall, iterations,
                                             landmask, initial_training_mask,
@@ -134,8 +116,7 @@ AGBpot, training_set, rf = useful.iterative_augmentation_of_training_set_obs_vs_
 iterations = AGBpot.shape[0]
 
 # Save rf model for future reference
-#joblib.dump(rf,'%s/%s_%s_globiomass_rf_iterative.pkl' % (path2alg,country_code,version))
-joblib.dump(rf,'%s/%s_%s_avitabile_rf_iterative.pkl' % (path2alg,country_code,version))
+joblib.dump(rf,'%s/%s_%s_%s_rf_iterative.pkl' % (path2alg,country_code,version,agb_source))
 
 # convert training set and AGBpot to xdarray for easy plotting and export to
 # netcdf
@@ -173,7 +154,7 @@ for ii in range(0,iterations):
 comp = dict(zlib=True, complevel=1)
 encoding = {var: comp for var in agb_rf.data_vars}
 #nc_file = '%s%s_%s_AGB_globiomass_potential_RFR_worldclim_soilgrids.nc' % (path2output,country_code,version)
-nc_file = '%s%s_%s_AGB_avitabile_potential_RFR_worldclim_soilgrids.nc' % (path2output,country_code,version)
+nc_file = '%s%s_%s_AGB_%s_potential_RFR_worldclim_soilgrids.nc' % (path2output,country_code,version,agb_source)
 agb_rf.to_netcdf(path=nc_file)#,encoding=encoding)
 
 # plot stuff
