@@ -1,5 +1,6 @@
 import numpy as np
 import sys
+sys.path.append('../')
 import xarray as xr #xarray to read all types of formats
 from affine import Affine
 import useful
@@ -32,6 +33,8 @@ path2output = '/home/dmilodow/DataStore_DTM/FOREST2020/PotentialBiomassRFR/outpu
 pca = joblib.load('%s/%s_%s_pca_pipeline.pkl' % (path2alg,country_code,version))
 #pca = make_pipeline(StandardScaler(),PCA(n_components=0.999))
 
+agb_source = 'avitabile'
+
 """
 #===============================================================================
 PART A: LOAD IN DATA, PROCESS AS REQUIRED AND SUBSET THE TRAINING DATA
@@ -40,7 +43,15 @@ PART A: LOAD IN DATA, PROCESS AS REQUIRED AND SUBSET THE TRAINING DATA
 # load all predictors to generate preprocessing minmax scaler transformation
 predictors_full,landmask = useful.get_predictors(country_code, training_subset=False)
 #get the agb data
-agb = xr.open_rasterio('%sAvitabile_AGB_%s_1km.tif' % (path2agb,country_code))[0]
+#agb = xr.open_rasterio('%sAvitabile_AGB_%s_1km.tif' % (path2agb,country_code))[0]
+agb_avitabile = xr.open_rasterio('%sAvitabile_AGB_%s_1km.tif' % (path2agb,country_code))[0]
+if agb_source == 'avitabile':
+    agb = agb_avitabile.copy()
+elif agb_source == 'globbiomass':
+    agb_avitabile = xr.open_rasterio('%sAvitabile_AGB_%s_1km.tif' % (path2agb,country_code))[0]
+    agb = xr.open_rasterio('%s/globiomass/%s_globiomass_agb_1km.tif' % (path2agb,country_code))[0]
+    agb.values=agb.values.astype('float')
+    agb.values[np.isnan(agb_avitabile.values)]=np.nan
 
 # Get additional data masks
 initial_training_mask = useful.get_mask(country_code,mask_def=8)
@@ -127,8 +138,7 @@ AGBpot, training_set, rf = useful.iterative_augmentation_of_training_set_obs_vs_
 iterations = AGBpot.shape[0]
 
 # Save rf model for future reference
-joblib.dump(rf,'%s/%s_%s_rf_iterative.pkl' % (path2alg,country_code,
-                                                version))
+joblib.dump(rf,'%s/%s_%s_%s_rf_iterative.pkl' % (path2alg,country_code,version,agb_source))
 
 # convert training set and AGBpot to xdarray for easy plotting and export to
 # netcdf
@@ -164,17 +174,17 @@ for ii in range(0,iterations):
 #save to a nc file
 comp = dict(zlib=True, complevel=1)
 encoding = {var: comp for var in agb_rf.data_vars}
-nc_file = '%s%s_%s_AGB_potential_RFR_worldclim_soilgrids.nc' % (path2output,
-                                country_code,version)
+nc_file = '%s%s_%s_%s_AGB_%s_potential_RFR_worldclim_soilgrids.nc' % (path2output,country_code,version,agb_source)
 agb_rf.to_netcdf(path=nc_file)#,encoding=encoding)
 
 # plot stuff
 # Initial cal-val plot
-mf.plot_AGBpot_iterations(agb_rf,iterations,country_code,version,path2output = path2output)
+mf.plot_AGBpot_iterations(agb_rf,iterations,country_code,version,path2output = path2output,agb_source=agb_source)
+"""
 mf.plot_training_residuals(agb_rf,iterations,country_code,version,path2output=path2output,vmin=[0,0,-50],vmax=[200,200,50])
 mf.plot_training_areas_iterative(agb_rf,iterations,country_code,version,path2output = path2output)
 mf.plot_AGB_AGBpot_training(agb_rf,iterations,country_code,version,path2output = path2output)
-
+"""
 training_mask_final = (training_set[3]>0)*landmask
 
 X_train, X_test, y_train, y_test = train_test_split(Xall[training_mask_final[landmask]],agb.values[training_mask_final],test_size = 0.25, random_state=29)
@@ -185,7 +195,7 @@ cal_r2,val_r2 = cv.cal_val_train_test_post_fit(y_train, y_train_predict, y_test,
                                     y_test_predict, path2calval, country_code,
                                     version, hue_var='density_50')
 
-
+"""
 # Test bias correction
 rf.fit(X_train,y_train)
 y_oob = rf.oob_prediction_
@@ -217,3 +227,4 @@ y_hat_train[y_hat_train<0]=0
 cal_r2,val_r2 = cv.cal_val_train_test_post_fit(y_train, y_hat_train, y_test,
                                     y_hat_test, path2calval, country_code,
                                     version, hue_var='density_50')
+"""
