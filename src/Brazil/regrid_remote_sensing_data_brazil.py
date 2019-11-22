@@ -45,6 +45,8 @@ os.system('mkdir %s%s/forestcover' % (outdir,prefix))
 os.system('mkdir %s%s/mapbiomas' % (outdir,prefix))
 os.system('mkdir %s%s/WRI_restoration' % (outdir,prefix))
 os.system('mkdir %s%s/IUCN_protected_areas' % (outdir,prefix))
+os.system('mkdir %s%s/agb/globbiomass' % (outdir,prefix))
+os.system('mkdir %s%s/agb/globbiomass/temp' % (outdir,prefix))
 
 
 # Start with the worldclim2 data. This should be straightforward using gdal as are just clipping
@@ -114,3 +116,21 @@ os.system("gdalwarp -overwrite -te %f %f %f %f -tr 0.008333333333333 -0.00833333
 # IUCN Protected Areas
 pa_file = '/disk/scratch/local.2/IUCN/WDPA_Jul2019_land.shp'
 os.system('gdal_rasterize -burn 1 -te %f %f %f %f -tr 0.008333333333333 -0.008333333333333 -of GTIFF %s %s%s/IUCN_protected_areas/IUCN_protected_areas_%s.tif' % (W,S,E,N,pa_file,outdir,prefix,prefix))
+
+
+gbdir = '/disk/scratch/local.2/GlobBIOMASS/'
+gbdir_out = '%s%s/agb/globbiomass/' % (outdir,prefix)
+tempdir = '%s%s/agb/globbiomass/temp/' % (outdir,prefix)
+gbfiles = glob.glob('%s*_agb.tif' % gbdir);gbfiles.sort()
+for ff,fname in enumerate(gbfiles):
+    outfname =  gbfiles[ff].split('/')[-1].split('.')[0]
+    print(fname)
+    os.system("gdalwarp -overwrite -te %f %f %f %f -tr 0.008333333333333 -0.008333333333333 -r average -of GTIFF %s %s%s_1km.tif" % (W,S,E,N,fname,tempdir,outfname))
+os.system("gdal_merge.py -init 0 -n 0 -a_nodata -0 -ul_lr %f %f %f %f -ps 0.008333333333333 -0.008333333333333 -o %s%s_globbiomass_agb_1km.tif %s*_1km.tif" % (W,N,E,S,gbdir_out,prefix,tempdir))
+
+gbfiles = glob.glob('%s*_agb_err.tif' % gbdir);gbfiles.sort()
+for ff,fname in enumerate(gbfiles):
+    outfname =  gbfiles[ff].split('/')[-1].split('.')[0]
+    print(fname)
+    os.system("gdalwarp -overwrite -te %f %f %f %f -tr 0.008333333333333 -0.008333333333333 -r average -of GTIFF %s %s%s_1km.tif" % (W,S,E,N,fname,tempdir,outfname))
+os.system("gdal_merge.py -init 0 -n 0 -a_nodata -0 -ul_lr %f %f %f %f -ps 0.008333333333333 -0.008333333333333 -o %s%s_globbiomass_agb_err_1km.tif %s*_1km.tif" % (W,N,E,S,gbdir_out,prefix,tempdir))
