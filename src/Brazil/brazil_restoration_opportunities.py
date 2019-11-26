@@ -14,13 +14,17 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import useful as useful
-sns.set(style="whitegrid")
+sns.set()#style="whitegrid")
 
 """
 A quick function to plot error bars onto bar plot
 """
-def plot_bar_CIs(lc,uc,ax,jitter=0):
-    positions = np.arange(uc.size)+jitter
+def plot_bar_CIs(lc,uc,ax,jitter=0,positions=[]):
+    if len(positions)==0:
+        positions = np.arange(uc.size,dtype='float')
+    else:
+        positions=np.asarray(positions)
+    positions+=jitter
     for ii,pos in enumerate(positions):
         ax.plot([pos,pos],[lc[ii],uc[ii]],'-',lw=3.8,color='white')
         ax.plot([pos,pos],[lc[ii],uc[ii]],'-',lw=2,color='0.5')
@@ -28,7 +32,7 @@ def plot_bar_CIs(lc,uc,ax,jitter=0):
 
 
 country_code = 'BRA'
-version = '011'
+version = '013'
 
 """
 #===============================================================================
@@ -43,16 +47,19 @@ path2output = '/home/dmilodow/DataStore_DTM/FOREST2020/PotentialBiomassRFR/outpu
 path2mapbiomas = '/scratch/local.2/MAPBIOMAS/'
 
 # load potential biomass models from netdf file
-AGBpot_ds = xr.open_dataset('%s%s_%s_AGB_potential_RFR_worldclim_soilgrids_final.nc' %
+AGBpot_ds = xr.open_dataset('%s%s_%s_AGB_potential_RFR_avitabile_worldclim_soilgrids_final.nc' %
                                 (path2output, country_code,version))
-AGBpot     = AGBpot_ds['AGBpot'].values
-AGBobs     = AGBpot_ds['AGBobs'].values
+toC = 0.48
+AGBpot     = AGBpot_ds['AGBpot'].values*toC
+AGBobs     = AGBpot_ds['AGBobs'].values*toC
 AGBseq     = AGBpot-AGBobs
-AGBpot_min = AGBpot_ds['AGBpot_min'].values
-AGBobs_min = AGBpot_ds['AGBobs_min'].values
+AGBpot_min = AGBpot_ds['AGBpot_min'].values*toC
+AGBobs_min = AGBpot_ds['AGBobs_min'].values*toC
+AGBpot_min[AGBpot_min<0]=0
+AGBobs_min[AGBobs_min<0]=0
 AGBseq_min = AGBpot_min-AGBobs_min
-AGBpot_max = AGBpot_ds['AGBpot_max'].values
-AGBobs_max = AGBpot_ds['AGBobs_max'].values
+AGBpot_max = AGBpot_ds['AGBpot_max'].values*toC
+AGBobs_max = AGBpot_ds['AGBobs_max'].values*toC
 AGBseq_max = AGBpot_max-AGBobs_max
 
 cell_areas =  useful.get_areas(latorig=AGBpot_ds.coords['lat'].values,
@@ -397,7 +404,7 @@ subset = 'Brazil'
 # create landcover masks
 lc_masks={}
 lc_class = ['Natural Forest','Natural Non-Forest','Plantation','Pasture',
-                'Agriculture','Urban']#,'Other']
+                'Agriculture','Urban','Other']
 for cc,lc in enumerate(lc_class):
     lc_masks[lc] = (mb2005==cc+1)
 
@@ -697,4 +704,130 @@ axes[0].set_xlabel('Percentage of land restored')
 axes[1].set_xlabel('Percentage of land restored')
 fig.tight_layout()
 fig.savefig('%s%s_%s_restoration_scenarios_2017.png' % (path2output,country_code,version))
+fig.show()
+
+
+"""
+#===============================================================================
+PART F: Breakdown of potential biomass by landcover type for feasible
+restoration areas in 2005.
+
+Not applicable for natural land cover, since there is no information on regrowth/
+degradation impact on biomass in these areas. For new non-natural land cover
+classes, assume mean biomass values, following Chazdon et al., Science, 2014(?),
+allowing estimation of restoration potential
+
+#-------------------------------------------------------------------------------
+"""
+lc_class = ['Natural Forest','Natural Non-Forest','Plantation','Pasture','Agriculture','Urban','Other']
+lc_idx = [1,2,3,4,5,6,7]
+
+# Now plot up summaries according to the subset in question
+fig,axes = plt.subplots(nrows=1,ncols=2,sharex='all',figsize=[6,3.4])
+if subset in biome_labels:
+    df_sub=df2005[df2005['biome']==subset]
+    positions = []
+    colours = np.asarray(['#1f4423', '#bbfcac', '#d5d5e5', '#ffd966', '#e974ed', '#935132', '#af2a2a'])
+elif subset in ['Brazil','all']:
+    df_sub=df2005.groupby('landcover',as_index=False).agg(sum)
+    positions=[4.,0.,1.,6.,3.,2.,5.]
+    colours = np.asarray(['#e974ed', '#1f4423', '#bbfcac', '#d5d5e5', '#ffd966', '#935132', '#af2a2a'])
+
+# Create discrete color ramp
+lc_palette = sns.color_palette(colours).as_hex()
+
+for var in df_sub.keys():
+    if 'AGB' in var:
+        df_sub[var]=df_sub[var].div(10**9)
+
+sns.barplot(x='landcover',y='AGBpot',hue='landcover',palette=lc_palette,dodge=False,
+            facecolor='white',ax=axes[0],order=lc_class,data=df_sub)
+sns.barplot(x='landcover',y='AGBobs',hue='landcover',palette=lc_palette,dodge=False,
+            ax=axes[0],order=lc_class,data=df_sub)
+sns.barplot(x='landcover',y='AGBseq',hue='landcover',palette=lc_palette,dodge=False,
+            ax=axes[1],order=lc_class,data=df_sub)
+
+plot_bar_CIs(np.asarray(df_sub['AGBpot_min']),np.asarray(df_sub['AGBpot_max']),axes[0],jitter=0.1,positions=positions)
+plot_bar_CIs(np.asarray(df_sub['AGBobs_min']),np.asarray(df_sub['AGBobs_max']),axes[0],jitter=-0.1,positions=positions)
+plot_bar_CIs(np.asarray(df_sub['AGBseq_min']),np.asarray(df_sub['AGBseq_max']),axes[1],positions=positions)
+
+colours=[]
+for patch in axes[1].patches:
+    colours.append(patch.get_facecolor())
+for ax in axes:
+    ax.legend_.remove()
+    ax.set_xlabel(None)
+    ax.set_xticklabels(ax.get_xticklabels(),rotation=45, ha='right')
+    for ii,patch in enumerate(ax.patches):
+        patch.set_edgecolor(colours[ii%len(colours)])
+
+axes[0].set_ylim(bottom=0)
+axes[1].set_ylim(bottom=0)#axes[1].get_ylim())
+
+# convert Mg to 10^9 Mg
+axes[0].set_title('Aboveground carbon stock')
+axes[0].annotate('potential (open)\nobserved (filled)',xy=(0.95,0.95),
+                xycoords='axes fraction',backgroundcolor='white',ha='right',
+                va='top',fontsize=10)
+#y_ticks = axes[0].get_yticks()
+#axes[0].set_yticklabels(['{:3.0f}'.format(i/(10.**9)) for i in y_ticks])
+axes[0].set_ylabel('Aboveground carbon / Pg')
+axes[1].set_title('Potential carbon defecit')
+#y_ticks = axes[1].get_yticks()
+#axes[1].set_yticklabels(['{:3.1f}'.format(i/(10.**9)) for i in y_ticks])
+axes[1].set_ylabel('Aboveground carbon / Pg')
+fig.tight_layout()
+if subset in biome_labels:
+    fig.savefig('%s%s_%s_%s_summary_by_landcover.png' % (path2output,country_code,version,subset))
+elif subset in ['Brazil','all']:
+    fig.savefig('%s%s_%s_national_summary_by_landcover.png' % (path2output,country_code,version))
+fig.show()
+
+
+"""
+Plot biome level aggregation
+"""
+# Now plot up summaries according to the subset in question
+biome_order = ['Amazonia','Cerrado','Mataatlantica','Caatinga','Pantanal','Pampa']
+df_sub=df2005.groupby('biome',as_index=False).agg(sum)
+fig,axes = plt.subplots(nrows=1,ncols=2,sharex='all',figsize=[6,3.4])
+
+sns.barplot(x='biome',y='AGBpot',hue='biome',palette='Greens_d',dodge=False,
+            facecolor='white',ax=axes[0],order=biome_order,data=df_sub)
+sns.barplot(x='biome',y='AGBobs',hue='biome',palette='Greens_d',dodge=False,
+            ax=axes[0],order=biome_order,data=df_sub)
+sns.barplot(x='biome',y='AGBseq',hue='biome',palette='Greens_d',dodge=False,
+            ax=axes[1],order=biome_order,data=df_sub)
+
+positions = [0.,3.,1.,2.,5.,4.]
+plot_bar_CIs(np.asarray(df_sub['AGBpot_min']),np.asarray(df_sub['AGBpot_max']),axes[0],jitter=0.1,positions=positions)
+plot_bar_CIs(np.asarray(df_sub['AGBobs_min']),np.asarray(df_sub['AGBobs_max']),axes[0],jitter=-0.1,positions=positions)
+plot_bar_CIs(np.asarray(df_sub['AGBseq_min']),np.asarray(df_sub['AGBseq_max']),axes[1],positions=positions)
+
+colours=[]
+for patch in axes[1].patches:
+    colours.append(patch.get_facecolor())
+for ax in axes:
+    ax.legend_.remove()
+    ax.set_xlabel(None)
+    ax.set_xticklabels(biome_display_labels,rotation=45, ha='right')
+    for ii,patch in enumerate(ax.patches):
+        patch.set_edgecolor(colours[ii%len(colours)])
+
+axes[0].set_ylim(bottom=0)
+axes[0].set_ylim(bottom=0)#axes[1].get_ylim())
+# convert Mg to 10^9 Mg
+axes[0].set_title('Aboveground carbon stock')
+axes[0].annotate('potential (open)\nobserved (filled)',xy=(0.95,0.95),
+                xycoords='axes fraction',backgroundcolor='white',ha='right',
+                va='top',fontsize=10)
+y_ticks = axes[0].get_yticks()
+axes[0].set_yticklabels(['{:3.0f}'.format(i/(10**9)) for i in y_ticks])
+axes[0].set_ylabel('Aboveground carbon / Pg')
+axes[1].set_title('Potential carbon defecit')
+y_ticks = axes[1].get_yticks()
+axes[1].set_yticklabels(['{:3.0f}'.format(i/(10**9)) for i in y_ticks])
+axes[1].set_ylabel('Aboveground carbon / Pg')
+fig.tight_layout()
+fig.savefig('%s%s_%s_national_summary_by_biome.png' % (path2output,country_code,version))
 fig.show()
