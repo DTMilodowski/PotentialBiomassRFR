@@ -242,6 +242,8 @@ if clip_to_boundary:
     agb_rf.AGBpot_min.values[mask==0]  = np.nan
     agb_rf.AGBpot_max.values[mask==0]  = np.nan
 
+    mf.plot_AGB_AGBpot_final(agb_rf,country,version,path2output = path2output,clip=True,mask=mask,agb_source=source)
+
     mf.plot_AGB_AGBpot_training_final(agb_rf,country,version,path2output = path2output,clip=True,mask=mask,agb_source=source)
     mf.plot_AGBpot_uncertainty(agb_rf,country,version,path2output = path2output,clip=True,mask=mask,agb_source=source)
     mf.plot_AGBseq_final(agb_rf,country,version,path2output = path2output,clip=True,mask=mask,agb_source=source)

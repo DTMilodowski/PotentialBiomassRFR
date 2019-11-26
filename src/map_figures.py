@@ -232,6 +232,57 @@ def plot_AGB_AGBpot_training_final(nc,country_code,version,path2output='./',agb_
     #fig.show()
     fig.savefig('%s/%s_%s%s_AGB_AGBpot_training_final.png' % (path2output,country_code,version,agb_source),bbox_inches='tight',dpi=300)
 
+def plot_AGB_AGBpot_final(nc,country_code,version,path2output='./',agb_source='',
+                                    vmin=0,vmax=200,
+                                    clip=False,mask=np.array([])):
+    #create a figure using the axesgrid to make the colorbar fit on the axis
+    projection = ccrs.PlateCarree()
+    axes_class = (GeoAxes,dict(map_projection=projection))
+
+    #create figure
+    fig = plt.figure('AGBpot_final',figsize=(10,5))
+    fig.clf()
+
+    #create axes grid
+    axgr = AxesGrid(fig,111,nrows_ncols=(1,2),axes_class=axes_class,label_mode='',
+                    cbar_mode='single',cbar_pad = 0.3,cbar_size="5%",axes_pad=.6,
+                    cbar_location = 'right')
+
+    #plot setup
+    if clip: # use mask to limit plot extent
+        lonmask = np.any(mask==1,axis=0)
+        latmask = np.any(mask==1,axis=1)
+        xlim = (np.min(nc.lon.values[lonmask]),np.max(nc.lon.values[lonmask]))
+        ylim = (np.min(nc.lat.values[latmask]),np.max(nc.lat.values[latmask]))
+    else:
+        xlim = (np.min(nc.lon.values),np.max(nc.lon.values))
+        ylim = (np.min(nc.lat.values),np.max(nc.lat.values))
+    cmap = 'viridis'
+    titles = ['a) AGB$_{obs}$','b) AGB$_{pot}$']
+    maps2plot = [nc.AGBobs,nc.AGBpot]
+
+    # now plot maps onto axes
+    for mm,map2plot in enumerate(maps2plot):
+        if mm<2:
+            (map2plot*.48).plot.imshow(ax=axgr[mm],cbar_ax=axgr.cbar_axes[mm],vmin=vmin,vmax=vmax,
+                            extend='max',interpolation='nearest',
+                            cbar_kwargs={'label':'AGB / Mg C ha$^{-1}$','orientation':'vertical'},
+                            cmap=cmap,xticks=np.arange(-120,161,20),yticks=np.arange(-60,41,20),
+                            add_labels=False,ylim=ylim,xlim=xlim)
+        else:
+            (map2plot*.48).plot.imshow(ax=axgr[mm],interpolation='nearest',add_colorbar=False,
+                            cmap=cmap,xticks=np.arange(-120,161,20),yticks=np.arange(-60,41,20),
+                            add_labels=False,ylim=ylim,xlim=xlim)
+
+        #set labels
+        axgr[mm].yaxis.set_major_formatter(LatitudeFormatter())
+        axgr[mm].xaxis.set_major_formatter(LongitudeFormatter())
+        axgr[mm].text(0.98,0.98,titles[mm],transform=axgr[mm].transAxes,ha='right',
+                        va='top',weight='bold')
+
+    #fig.show()
+    fig.savefig('%s/%s_%s%s_AGB_AGBpot_final.png' % (path2output,country_code,version,agb_source),bbox_inches='tight',dpi=300)
+
 """
 Plot defecit
 """
