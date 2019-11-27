@@ -87,6 +87,7 @@ for cc,opp in enumerate(opp_class):
 
 # Load mapbiomas data for 2008
 mb2005 = useful.load_mapbiomas('BRA',timestep=20,aggregate=1)
+mb2005_full = useful.load_mapbiomas('BRA',timestep=20,aggregate=0)
 
 # Load mapbiomas data for latest year (2017)
 mb2017 = useful.load_mapbiomas('BRA',timestep=-1,aggregate=1)
@@ -407,7 +408,6 @@ lc_class = ['Natural Forest','Natural Non-Forest','Plantation','Pasture',
                 'Agriculture','Urban','Other']
 for cc,lc in enumerate(lc_class):
     lc_masks[lc] = (mb2005==cc+1)
-
 # Create pandas data frame for ease of plotting with seaborn
 # - column variables
 #   biome, landcover class (2005), area_ha, AGBobs, AGBpot, AGBseq
@@ -830,4 +830,167 @@ axes[1].set_yticklabels(['{:3.0f}'.format(i/(10**9)) for i in y_ticks])
 axes[1].set_ylabel('Aboveground carbon / Pg')
 fig.tight_layout()
 fig.savefig('%s%s_%s_national_summary_by_biome.png' % (path2output,country_code,version))
+fig.show()
+
+
+"""
+More detailed breakdown by landcover type
+"""
+subset='Cerrado'
+lc_class = ['Forest formation','Savanna formation','Mangrove','Plantation','Wetland','Grassland',
+                'Pasture','Agriculture','Mosaic agri-pasture','Urban','Other']
+
+colours = np.asarray(['#1f4423','#32cd32','#687537','#935132','#45c2a5','#b8af4f',
+                    '#ffd966','#e974ed','#ffefc3', '#af2a2a','#d5d5e5'])
+lc_val = [[3],[4],[5],[9],[11],[12],[15],[19,20],[21],[24],[23,29,30,32,13]]
+lc_masks={}
+for cc,lc in enumerate(lc_class):
+    lc_masks[lc] = np.zeros(mb2005_full.shape,dtype='bool')
+    for val in lc_val[cc]:
+        lc_masks[lc][mb2005_full==val]=True
+# Create pandas data frame for ease of plotting with seaborn
+# - column variables
+#   biome, landcover class (2005), area_ha, AGBobs, AGBpot, AGBseq
+biome = []
+landcover_class = []
+area = []
+agbobs = []
+agbpot = []
+agbseq = []
+agbobs_min = []
+agbpot_min = []
+agbseq_min = []
+agbobs_max = []
+agbpot_max = []
+agbseq_max = []
+
+for bb, bio in enumerate(biome_labels):
+    for cc,lc in enumerate(lc_class):
+        mask = lc_masks[lc]*masks[bio]*np.isfinite(AGBobs)
+        biome.append(bio)
+        landcover_class.append(lc)
+        area.append(np.sum(cell_areas[mask])*1.)
+        agbpot.append(np.sum(AGBpot[mask]*cell_areas[mask]))
+        agbseq.append(np.sum(AGBseq[mask]*cell_areas[mask]))
+        agbobs.append(np.sum(AGBobs[mask]*cell_areas[mask]))
+        agbpot_min.append(np.sum(AGBpot_min[mask]*cell_areas[mask]))
+        agbseq_min.append(np.sum(AGBseq_min[mask]*cell_areas[mask]))
+        agbobs_min.append(np.sum(AGBobs_min[mask]*cell_areas[mask]))
+        agbpot_max.append(np.sum(AGBpot_max[mask]*cell_areas[mask]))
+        agbseq_max.append(np.sum(AGBseq_max[mask]*cell_areas[mask]))
+        agbobs_max.append(np.sum(AGBobs_max[mask]*cell_areas[mask]))
+
+df2005 = pd.DataFrame({'biome':biome,'landcover':landcover_class,
+                    'area_ha':area,'AGBobs':agbobs,
+                    'AGBobs_min':agbobs_min,'AGBobs_max':agbobs_max,
+                    'AGBpot':agbpot,'AGBpot_min':agbpot_min,'AGBpot_max':agbpot_max,
+                    'AGBseq':agbseq,'AGBseq_min':agbseq_min,'AGBseq_max':agbseq_max})
+
+fig,axes = plt.subplots(nrows=1,ncols=2,sharex='all',figsize=[8,3.4])
+if subset in biome_labels:
+    df_sub=df2005[df2005['biome']==subset]
+elif subset in ['Brazil','all']:
+    df_sub=df2005.groupby('landcover',as_index=False).agg(sum)
+
+# Create discrete color ramp
+lc_palette = sns.color_palette(colours).as_hex()
+
+for var in df_sub.keys():
+    if 'AGB' in var:
+        df_sub[var]=df_sub[var].div(10**9)
+
+sns.barplot(x='landcover',y='AGBpot',hue='landcover',palette=lc_palette,dodge=False,
+            facecolor='white',ax=axes[0],order=lc_class,data=df_sub)
+sns.barplot(x='landcover',y='AGBobs',hue='landcover',palette=lc_palette,dodge=False,
+            ax=axes[0],order=lc_class,data=df_sub)
+sns.barplot(x='landcover',y='AGBseq',hue='landcover',palette=lc_palette,dodge=False,
+            ax=axes[1],order=lc_class,data=df_sub)
+
+plot_bar_CIs(np.asarray(df_sub['AGBpot_min']),np.asarray(df_sub['AGBpot_max']),axes[0],jitter=0.1,positions=positions)
+plot_bar_CIs(np.asarray(df_sub['AGBobs_min']),np.asarray(df_sub['AGBobs_max']),axes[0],jitter=-0.1,positions=positions)
+plot_bar_CIs(np.asarray(df_sub['AGBseq_min']),np.asarray(df_sub['AGBseq_max']),axes[1],positions=positions)
+
+colours=[]
+for patch in axes[1].patches:
+    colours.append(patch.get_facecolor())
+for ax in axes:
+    ax.legend_.remove()
+    ax.set_xlabel(None)
+    ax.set_xticklabels(ax.get_xticklabels(),rotation=45, ha='right')
+    for ii,patch in enumerate(ax.patches):
+        patch.set_edgecolor(colours[ii%len(colours)])
+
+axes[0].set_ylim(bottom=0)
+axes[1].set_ylim(bottom=0)#axes[1].get_ylim())
+
+# convert Mg to 10^9 Mg
+axes[0].set_title('Aboveground carbon stock')
+axes[0].annotate('potential (open)\nobserved (filled)',xy=(0.95,0.95),
+                xycoords='axes fraction',backgroundcolor='white',ha='right',
+                va='top',fontsize=10)
+#y_ticks = axes[0].get_yticks()
+#axes[0].set_yticklabels(['{:3.0f}'.format(i/(10.**9)) for i in y_ticks])
+axes[0].set_ylabel('Aboveground carbon / Pg')
+axes[1].set_title('Potential carbon defecit')
+#y_ticks = axes[1].get_yticks()
+#axes[1].set_yticklabels(['{:3.1f}'.format(i/(10.**9)) for i in y_ticks])
+axes[1].set_ylabel('Aboveground carbon / Pg')
+fig.tight_layout()
+if subset in biome_labels:
+    fig.savefig('%s%s_%s_%s_summary_by_landcover_detail.png' % (path2output,country_code,version,subset))
+elif subset in ['Brazil','all']:
+    fig.savefig('%s%s_%s_national_summary_by_landcover_detail.png' % (path2output,country_code,version))
+fig.show()
+
+"""
+Same plot but for carbon density
+"""
+fig,axes = plt.subplots(nrows=1,ncols=2,sharex='all',figsize=[8,3.4])
+# Create discrete color ramp
+df_sub_dens = df_sub.copy()
+for var in df_sub.keys():
+    if 'AGB' in var:
+        df_sub_dens[var]=df_sub[var]/df_sub['area_ha']
+
+sns.barplot(x='landcover',y='AGBpot',hue='landcover',palette=lc_palette,dodge=False,
+            facecolor='white',ax=axes[0],order=lc_class,data=df_sub_dens)
+sns.barplot(x='landcover',y='AGBobs',hue='landcover',palette=lc_palette,dodge=False,
+            ax=axes[0],order=lc_class,data=df_sub_dens)
+sns.barplot(x='landcover',y='AGBseq',hue='landcover',palette=lc_palette,dodge=False,
+            ax=axes[1],order=lc_class,data=df_sub_dens)
+
+plot_bar_CIs(np.asarray(df_sub_dens['AGBpot_min']),np.asarray(df_sub_dens['AGBpot_max']),axes[0],jitter=0.1,positions=positions)
+plot_bar_CIs(np.asarray(df_sub_dens['AGBobs_min']),np.asarray(df_sub_dens['AGBobs_max']),axes[0],jitter=-0.1,positions=positions)
+plot_bar_CIs(np.asarray(df_sub_dens['AGBseq_min']),np.asarray(df_sub_dens['AGBseq_max']),axes[1],positions=positions)
+
+colours=[]
+for patch in axes[1].patches:
+    colours.append(patch.get_facecolor())
+for ax in axes:
+    ax.legend_.remove()
+    ax.set_xlabel(None)
+    ax.set_xticklabels(ax.get_xticklabels(),rotation=45, ha='right')
+    for ii,patch in enumerate(ax.patches):
+        patch.set_edgecolor(colours[ii%len(colours)])
+
+axes[0].set_ylim(bottom=0)
+axes[1].set_ylim(bottom=0)#axes[1].get_ylim())
+
+# convert Mg to 10^9 Mg
+axes[0].set_title('Aboveground carbon stock')
+axes[0].annotate('potential (open)\nobserved (filled)',xy=(0.95,0.95),
+                xycoords='axes fraction',backgroundcolor='white',ha='right',
+                va='top',fontsize=10)
+#y_ticks = axes[0].get_yticks()
+#axes[0].set_yticklabels(['{:3.0f}'.format(i/(10.**9)) for i in y_ticks])
+axes[0].set_ylabel('Aboveground carbon density /\nMg C ha$^{-1}$')
+axes[1].set_title('Potential carbon defecit')
+#y_ticks = axes[1].get_yticks()
+#axes[1].set_yticklabels(['{:3.1f}'.format(i/(10.**9)) for i in y_ticks])
+axes[1].set_ylabel('Aboveground carbon density /\nMg C ha$^{-1}$')
+fig.tight_layout()
+if subset in biome_labels:
+    fig.savefig('%s%s_%s_%s_summary_by_landcover_detail_density.png' % (path2output,country_code,version,subset))
+elif subset in ['Brazil','all']:
+    fig.savefig('%s%s_%s_national_summary_by_landcover_detail_density.png' % (path2output,country_code,version))
 fig.show()
