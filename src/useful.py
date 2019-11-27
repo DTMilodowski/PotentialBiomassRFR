@@ -756,6 +756,25 @@ def load_mapbiomas(country_code,timestep=-1,aggregate=0):
         lc[np.any((mb[0]==23,mb[0]==29,mb[0]==30,mb[0]==25),axis=0)]    # other
         for ii in range(1,mb.shape[0]):
             lc[lc!=mb[ii]] = np.nan
+    # option 3 -> aggregation to 11 classes:
+    # Forest formation, Savanna formation, Mangrove, Plantation, Wetland,
+    #       Grassland, Pasture, Agriculture, Mosaic agri-pasture,Urban, Other
+    elif aggregate == 3:
+        mb = xr.open_rasterio(mbfiles[0]).values[timestep]
+        lc = np.zeros(mb.shape)*np.nan
+        lc[mb[0]==3] = 1                                                # Forest formation
+        lc[mb[0]==4] = 2                                                # Savanna formation
+        lc[mb[0]==5] = 3                                                # Mangrove
+        lc[mb[0]==9] = 4                                                # Plantation
+        lc[mb[0]==11] = 5                                               # Wetland
+        lc[mb[0]==12] = 6                                               # Grassland
+        lc[mb[0]==15] = 7                                               # Pasture
+        lc[np.any((mb[0]==19,mb[0]==20),axis=0)] = 8                    # Agriculture
+        lc[mb[0]==21] = 9                                               # Mosaic Agriculture-Pasture
+        lc[mb[0]==24] = 10                                              # Urban
+        lc[np.any((mb[0]==23,mb[0]==29,mb[0]==30,mb[0]==32,mb[0]==13),axis=0)] = 11 # Other
+        for ii in range(1,mb.shape[0]):
+            lc[lc!=mb[ii]] = np.nan
     else:
         mb = xr.open_rasterio(mbfiles[0]).values[timestep]
         lc = mb.copy()
