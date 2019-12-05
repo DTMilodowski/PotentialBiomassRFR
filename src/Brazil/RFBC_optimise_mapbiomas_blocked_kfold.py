@@ -10,8 +10,10 @@ import seaborn as sns
 sns.set()
 
 sys.path.append('../')
+sys.path/append('../random_forest/')
 import useful
 import cal_val as cv
+import random_forest_functions as rff
 
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import train_test_split, StratifiedShuffleSplit, cross_val_score
@@ -28,7 +30,7 @@ from hyperopt.pyll.base import scope
 from functools import partial
 
 country_code = 'BRA'
-version = '013'
+version = '014'
 
 path2alg = '/home/dmilodow/DataStore_DTM/FOREST2020/PotentialBiomassRFR/saved_algorithms'
 path2data = '/disk/scratch/local.2/PotentialBiomass/processed/%s/' % country_code
@@ -216,7 +218,7 @@ print(best)
 
 # save trials for future reference
 print('saving trials to file for future reference')
-pickle.dump(trials, open('%s/%s_%s_rf_hyperopt_trials.p' % (path2alg,country_code,version), "wb"))
+pickle.dump(trials, open('%s/%s_%s_rfbc_hyperopt_trials.p' % (path2alg,country_code,version), "wb"))
 # trials = pickle.load(open('%s/%s_%s_rf_hyperopt_trials.p' % (path2alg,country_code,version), "rb"))
 
 # plot summary of optimisation runs
@@ -255,7 +257,7 @@ sns.scatterplot(x='iteration',y='RMSE',data=df,marker='o',hue='iteration',palett
 axes[2,1].set_xlabel('iteration')
 axes[2,1].set_ylabel('RMSE')
 plt.tight_layout()
-fig2.savefig('%s%s_%s_hyperpar_search_score.png' % (path2calval,country_code,version))
+fig2.savefig('%s%s_%s_rfbc_hyperpar_search_score.png' % (path2calval,country_code,version))
 
 # Plot traces to see progression of hyperparameter selection
 fig3, axes = plt.subplots(nrows=3, ncols=2, figsize=(8,8))
@@ -270,38 +272,4 @@ sns.scatterplot(x='iteration',y='RMSE',data=df,marker='o',hue='RMSE',palette=cma
 axes[2,1].set_xlabel('iteration')
 axes[2,1].set_ylabel('RMSE')
 plt.tight_layout()
-fig3.savefig('%s%s_%s_hyperpar_search_trace.png' % (path2calval,country_code,version))
-
-"""
-#===============================================================================
-PART C: USE BEST HYPERPARAMETER VALUE FROM THE OPTIMISATION AND FIT NEW RF MODEL
-USING THE FULL TRAINING SET AND VALIDATE AGAINST THE EXCLUDED TEST DATASET
-Boost number of trees in the forest for this analysis, as only running once
-#-------------------------------------------------------------------------------
-
-idx = np.argsort(trace['scores'])[-1]
-rf = RandomForestRegressor(bootstrap=True,
-            criterion='mse',           # criteria used to choose split point at each node
-            max_depth= int(trace['max_depth'][idx]),            # ***maximum number of branching levels within each tree
-            max_features=int(trace['max_features'][idx]),       # ***the maximum number of variables used in a given tree
-            max_leaf_nodes=None,       # the maximum number of leaf nodes per tree
-            min_impurity_decrease=None, # the miminum drop in the impurity of the clusters to justify splitting further
-            min_impurity_split=None,   # threshold impurity within an internal node before it will be split
-            min_samples_leaf=int(trace['min_samples_leaf'][idx]),       # ***The minimum number of samples required to be at a leaf node
-            min_samples_split=int(trace['min_samples_split'][idx]),       # ***The minimum number of samples required to split an internal node
-            n_estimators=int(trace['n_estimators'][idx]),#trace['n_estimators'],          # ***Number of trees in the random forest
-            n_jobs=30,                 # The number of jobs to run in parallel for both fit and predict
-            oob_score=True,            # use out-of-bag samples to estimate the R^2 on unseen data
-            random_state=112358,         # seed used by the random number generator
-            )
-
-rf.fit(X_train,y_train)
-y_train_rf = rf.predict(X_train)
-cal_score = rf.score(X_train,y_train) # calculate coefficeint of determination R^2 of the calibration
-print("Calibration R^2 = %.02f" % cal_score)
-
-# fit the validation sample
-y_test_rf = rf.predict(X_test)
-val_score = rf.score(X_test,y_test)
-print("Validation R^2 = %.02f" % val_score)
-"""
+fig3.savefig('%s%s_%s_rfbc_hyperpar_search_trace.png' % (path2calval,country_code,version))
