@@ -100,8 +100,8 @@ hfl_file = '/disk/scratch/local.2/global_hinterland_forests/source_files/SAM_201
 os.system("gdalwarp -overwrite -te %f %f %f %f -tr 0.008333333333333 -0.008333333333333 -r mode -of GTIFF %s %s%s/forestcover/HFL_2013_%s.tif" % (W,S,E,N,hfl_file,outdir,prefix,prefix))
 
 # MAPBIOMAS
-mbdir = '/disk/scratch/local.2/MAPBIOMAS/'
-mbfiles = glob.glob('%s*_1km.tif' % mbdir);mbfiles.sort()
+mbdir = '/disk/scratch/local.2/MAPBIOMAS/Collection4/'
+mbfiles = glob.glob('%s*.tif' % mbdir);mbfiles.sort()
 for ff,fname in enumerate(mbfiles):
     outfname =  mbfiles[ff].split('/')[-1].split('.')[0]
     print(fname)
