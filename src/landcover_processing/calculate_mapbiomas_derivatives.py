@@ -14,7 +14,7 @@ import xarray as xr
 from scipy import ndimage
 from affine import Affine
 import sys
-sys.path.append('../../')
+sys.path.append('../')
 import raster_io as io
 import land_cover_functions as lcf
 import cython_functions as cf
