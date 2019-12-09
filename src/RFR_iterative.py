@@ -30,8 +30,8 @@ path2agb = path2data+'agb/'
 path2calval = '/home/dmilodow/DataStore_DTM/FOREST2020/PotentialBiomassRFR/calval/'
 path2output = '/home/dmilodow/DataStore_DTM/FOREST2020/PotentialBiomassRFR/output/'
 
-#agb_source = 'avitabile'
-agb_source = 'globbiomass'
+agb_source = 'avitabile'
+#agb_source = 'globbiomass'
 
 # load hyperopt trials object to get hyperparameters for rf
 hyperopt_trials = '%s/%s_%s_rf_hyperopt_trials.p' % (path2alg,'BRA','013')
@@ -63,10 +63,16 @@ pca = make_pipeline(StandardScaler(),PCA(n_components=0.999))
 # load all predictors to generate preprocessing minmax scaler transformation
 predictors_full,landmask = useful.get_predictors(country_code, training_subset=False)
 #get the agb data
-agb_avitabile = xr.open_rasterio('%sAvitabile_AGB_%s_1km.tif' % (path2agb,country_code))[0]
-agb_globiomass = xr.open_rasterio('%s/globiomass/%s_globiomass_agb_1km.tif' % (path2agb,country_code))[0]
-agb_globiomass.values=agb_globiomass.values.astype('float')
-agb_globiomass.values[np.isnan(agb_avitabile.values)]=np.nan
+if agb_source == 'avitabile':
+    agb = xr.open_rasterio('%sAvitabile_AGB_%s_1km.tif' % (path2agb,country_code))[0]
+elif agb_source == 'globbiomass':
+    agb_avitabile = xr.open_rasterio('%sAvitabile_AGB_%s_1km.tif' % (path2agb,country_code))[0]
+    agb = xr.open_rasterio('%s/globiomass/%s_globiomass_agb_1km.tif' % (path2agb,country_code))[0]
+    agb.values=agb.values.astype('float')
+    agb.values[np.isnan(agb_avitabile.values)]=np.nan
+else:
+    agb = xr.open_rasterio('%sAvitabile_AGB_%s_1km.tif' % (path2agb,country_code))[0] # default is avitabile
+
 # Get additional data masks
 initial_training_mask = useful.get_mask(country_code,mask_def=1)
 other_stable_forest_mask = useful.get_mask(country_code,mask_def=2)
@@ -78,7 +84,7 @@ joblib.dump(pca,'%s/%s_%s_pca_pipeline.pkl' % (path2alg,country_code,version))
 Xall = pca.transform(predictors_full)
 
 #yall = agb_globiomass.values[landmask]
-yall = agb_avitabile.values[landmask]
+yall = agb.values[landmask]
 
 # First run of random forest regression model, with inital training set.
 # Create the random forest object with predefined parameters
@@ -121,9 +127,9 @@ joblib.dump(rf,'%s/%s_%s_%s_rf_iterative.pkl' % (path2alg,country_code,version,a
 # convert training set and AGBpot to xdarray for easy plotting and export to
 # netcdf
 # first deal with metadata and coordinates
-tr = agb_globiomass.attrs['transform']
+tr = agb.attrs['transform']
 transform = Affine(tr[0],tr[1],tr[2],tr[3],tr[4],tr[5])
-nx, ny = agb_globiomass.sizes['x'], agb_globiomass.sizes['y']
+nx, ny = agb.sizes['x'], agb.sizes['y']
 col,row = np.meshgrid(np.arange(nx)+0.5, np.arange(ny)+0.5)
 lon, lat = transform * (col,row)
 
@@ -143,7 +149,7 @@ for ii in range(0,iterations):
 
 agb_rf = xr.Dataset(data_vars=data_vars,coords=coords)
 #agb_rf.AGBobs.values[landmask]  = agb_globiomass.values[landmask]
-agb_rf.AGBobs.values[landmask]  = agb_avitabile.values[landmask]
+agb_rf.AGBobs.values[landmask]  = agb.values[landmask]
 for ii in range(0,iterations):
     key = 'AGBpot%i' % (ii+1)
     agb_rf[key].values[landmask]= AGBpot[ii][landmask]
@@ -167,5 +173,5 @@ mf.plot_AGB_AGBpot_training(agb_rf,iterations,country_code,version,path2output =
 training_mask_final = (training_set[-1]>0)*landmask
 #cal_r2,val_r2 = cv.cal_val_train_test(Xall[training_mask_final[landmask]],agb_globiomass.values[training_mask_final],
 #                                rf,path2calval, country_code, version)
-cal_r2,val_r2 = cv.cal_val_train_test(Xall[training_mask_final[landmask]],agb_avitabile.values[training_mask_final],
+cal_r2,val_r2 = cv.cal_val_train_test(Xall[training_mask_final[landmask]],agb.values[training_mask_final],
                                 rf,path2calval, country_code, version)
