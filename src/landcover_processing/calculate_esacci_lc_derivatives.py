@@ -31,9 +31,9 @@ n_years = lc.shape[0]
 PART B: DISTANCE TO NONFOREST (AND SIMILAR)
 --------------------------------------------------------------------------------
 """
-nonforest_mask = np.all((np.isfinite(lc),lc!=2),axis=0)
+nonforest_mask = np.all((np.isfinite(lc),lc!=2,lc!=10),axis=0)
 human_mask = np.any((lc==1,lc==5),axis=0)
-nodata_mask = ~np.isfinite(lc)
+nodata_mask = np.all((~np.isfinite(lc),lc==10),axis=0)
 
 print("Building trees\t")
 nonforest_boundary = nonforest_mask.astype(int)-ndimage.binary_erosion(nonforest_mask).astype(int)
