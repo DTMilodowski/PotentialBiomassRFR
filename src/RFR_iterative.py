@@ -76,7 +76,7 @@ else:
 # Get additional data masks
 initial_training_mask = useful.get_mask(country_code,mask_def=1)
 other_stable_forest_mask = useful.get_mask(country_code,mask_def=2)
-
+other_stable_forest_mask[~landmask]=False
 # Run PCA transformation on predictor variables
 # fit PCA
 pca.fit(predictors_full)
