@@ -32,12 +32,12 @@ from matplotlib import pyplot as plt
 import seaborn as sns
 sns.set()
 
-country_code = 'EAFR'
-version = '013'
+country_code = sys.argv[1]#'EAFR'
+version = sys.argv[2]#'013'
 #iteration_to_use = 3 no longer needed as stopping criterion applied
 clip_to_boundary = True
-country = 'Kenya'
-source='globbiomass'
+country = sys.argv[3]#'Kenya'
+source='avitabile'
 
 path2alg = '/home/dmilodow/DataStore_DTM/FOREST2020/PotentialBiomassRFR/saved_algorithms'
 path2data = '/disk/scratch/local.2/PotentialBiomass/processed/%s/' % country_code
