@@ -69,7 +69,7 @@ cell_areas/=10**4 # m^2 -> ha
 # load biome boundaries
 # - for each biome, load in the 1km regridded mapbiomas dataset for that biome
 #   and create a mask based on the pixels for which there is data
-biome_files = glob.glob('%s*1km.tif' % path2mapbiomas)
+biome_files = glob.glob('%s/Collection4/*1km.tif' % path2mapbiomas)
 masks = {}
 biome_labels = ['Amazonia','Cerrado','Pampa','Mataatlantica','Caatinga','Pantanal']
 for ii, file in enumerate(biome_files):
@@ -185,35 +185,32 @@ kde.fit(df.AGB_globbiomass[np.isfinite(df.AGB_globbiomass)][:,None])
 AGBdist['Globbiomass plots'] = np.exp(kde.score_samples(grid[:,None]))
 kde.fit(df.AGBpot[np.isfinite(df.AGBpot)][:,None])
 AGBdist['Potential plots'] = np.exp(kde.score_samples(grid[:,None]))
+# Savanna formation
 kde.fit(AGBobs[masks['Cerrado']*np.isfinite(AGBobs)*(mb2005==2)][:,None])
 AGBdist['Avitabile et al'] = np.exp(kde.score_samples(grid[:,None]))
 kde.fit(gb.values[masks['Cerrado']*np.isfinite(gb.values)*(mb2005==2)][:,None])
 AGBdist['Globbiomass'] = np.exp(kde.score_samples(grid[:,None]))
 kde.fit(AGBpot[masks['Cerrado']*np.isfinite(AGBpot)*(mb2005==2)][:,None])
 AGBdist['Potential'] = np.exp(kde.score_samples(grid[:,None]))
+# Forest formation
+kde.fit(AGBobs[masks['Cerrado']*np.isfinite(AGBobs)*(mb2005==1)][:,None])
+AGBdist['Avitabile et al FF'] = np.exp(kde.score_samples(grid[:,None]))
+kde.fit(gb.values[masks['Cerrado']*np.isfinite(gb.values)*(mb2005==1)][:,None])
+AGBdist['Globbiomass FF'] = np.exp(kde.score_samples(grid[:,None]))
+kde.fit(AGBpot[masks['Cerrado']*np.isfinite(AGBpot)*(mb2005==1)][:,None])
+AGBdist['Potential FF'] = np.exp(kde.score_samples(grid[:,None]))
 
 # apply reflective lower boundary at 0
 n_neg = np.sum(grid<0)
-AGBdist['Roitman et al'][n_neg:2*n_neg]+=AGBdist['Roitman et al'][:n_neg][::-1]
-AGBdist['Roitman et al'][:n_neg]=np.nan
-AGBdist['Avitabile et al'][n_neg:2*n_neg]+=AGBdist['Avitabile et al'][:n_neg][::-1]
-AGBdist['Avitabile et al'][:n_neg]=np.nan
-AGBdist['Avitabile et al plots'][n_neg:2*n_neg]+=AGBdist['Avitabile et al plots'][:n_neg][::-1]
-AGBdist['Avitabile et al plots'][:n_neg]=np.nan
-AGBdist['Globbiomass'][n_neg:2*n_neg]+=AGBdist['Globbiomass'][:n_neg][::-1]
-AGBdist['Globbiomass'][:n_neg]=np.nan
-AGBdist['Potential'][n_neg:2*n_neg]+=AGBdist['Potential'][:n_neg][::-1]
-AGBdist['Potential'][:n_neg]=np.nan
-AGBdist['Globbiomass plots'][n_neg:2*n_neg]+=AGBdist['Globbiomass plots'][:n_neg][::-1]
-AGBdist['Globbiomass plots'][:n_neg]=np.nan
-AGBdist['Potential plots'][n_neg:2*n_neg]+=AGBdist['Potential plots'][:n_neg][::-1]
-AGBdist['Potential plots'][:n_neg]=np.nan
+for kk in AGBdist.keys():
+    AGBdist[kk][n_neg:2*n_neg]+=AGBdist[kk][:n_neg][::-1]
+    AGBdist[kk][:n_neg]=np.nan
 
 fig,ax = plt.subplots(nrows=1,ncols=1,figsize=(6,6))
 ax.plot(grid,AGBdist['Roitman et al'],'-',color='black',linewidth=2,label='Roitman et al (field)')
-ax.plot(grid,AGBdist['Avitabile et al plots'],'-',color='red',linewidth=2,label='Avitabile et al (plots)')
-ax.plot(grid,AGBdist['Globbiomass plots'],'-',color='blue',linewidth=2,label='Globbiomass (plots)')
-ax.plot(grid,AGBdist['Potential plots'],'-',color='orange',linewidth=2,label='Potential (plots)')
+ax.plot(grid,AGBdist['Avitabile et al FF'],'-',color='red',linewidth=2,label='Avitabile et al (FF)')
+ax.plot(grid,AGBdist['Globbiomass FF'],'-',color='blue',linewidth=2,label='Globbiomass (FF)')
+ax.plot(grid,AGBdist['Potential FF'],'-',color='orange',linewidth=2,label='Potential (FF)')
 ax.plot(grid,AGBdist['Avitabile et al'],':',color='red',linewidth=2,label='Avitabile et al')
 ax.plot(grid,AGBdist['Globbiomass'],':',color='blue',linewidth=2,label='Globbiomass')
 ax.plot(grid,AGBdist['Potential'],':',color='orange',linewidth=2,label='Potential')
